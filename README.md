@@ -1,5 +1,9 @@
 # Steam MCP Server
 
+[![npm](https://img.shields.io/npm/v/@tmhs/steam-mcp)](https://www.npmjs.com/package/@tmhs/steam-mcp)
+[![license](https://img.shields.io/npm/l/@tmhs/steam-mcp)](LICENSE)
+[![node](https://img.shields.io/node/v/@tmhs/steam-mcp)](package.json)
+
 MCP (Model Context Protocol) server for Steam and Steamworks APIs. Provides structured tools for querying Steam store data, player statistics, achievements, workshop items, leaderboards, and player profiles from AI-powered IDEs.
 
 Built as the companion MCP server for the [Steam Developer Tools](https://github.com/TMHSDigital/Steam-Cursor-Plugin) Cursor plugin.
@@ -142,6 +146,13 @@ These require `STEAM_API_KEY` to be set:
 | `ISteamRemoteStorage/GetPublishedFileDetails/v1` | None |
 | `IPublishedFileService/QueryFiles/v1` | API key |
 | `ISteamLeaderboards/GetLeaderboardEntries/v1` | Publisher key + IP allowlist |
+
+## Testing
+
+```bash
+npm test          # Run all tests (vitest)
+npm run test:watch  # Watch mode
+```
 
 ## Development
 

@@ -5,7 +5,7 @@ import { steamApiUrl, steamFetch, errorResponse } from "../utils/steam-api.js";
 const inputSchema = {
   publishedfileid: z
     .string()
-    .min(1)
+    .regex(/^\d+$/, "Must be a numeric Workshop item ID")
     .describe("Workshop item ID (the numeric ID from the workshop URL)"),
 };
 

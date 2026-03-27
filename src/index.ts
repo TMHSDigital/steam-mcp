@@ -16,7 +16,7 @@ import { register as registerResolveVanityURL } from "./tools/resolveVanityURL.j
 
 const server = new McpServer({
   name: "steam-mcp",
-  version: "0.2.0",
+  version: "0.2.1",
 });
 
 registerGetAppDetails(server);

@@ -41,6 +41,7 @@ const inputSchema = {
     ),
   steamid: z
     .string()
+    .regex(/^\d{17}$/, "Must be a 17-digit Steam64 ID")
     .optional()
     .describe("Steam ID required for AroundUser (1) and Friends (2) requests"),
 };
@@ -59,6 +60,14 @@ export function register(server: McpServer): void {
       steamid,
     }) => {
       try {
+        if ((datarequest === 1 || datarequest === 2) && !steamid) {
+          return errorResponse(
+            new Error(
+              "steamid is required when datarequest is 1 (AroundUser) or 2 (Friends).",
+            ),
+          );
+        }
+
         const key = requireApiKey();
         const url = steamPartnerUrl(
           "/ISteamLeaderboards/GetLeaderboardEntries/v1/",

@@ -32,3 +32,12 @@ export class SteamUnavailableError extends SteamApiError {
     this.name = "SteamUnavailableError";
   }
 }
+
+export class TimeoutError extends SteamApiError {
+  constructor(public readonly timeoutMs: number = 15_000) {
+    super(
+      `Steam API request timed out after ${(timeoutMs / 1000).toFixed(0)}s. The server may be slow or unreachable.`,
+    );
+    this.name = "TimeoutError";
+  }
+}

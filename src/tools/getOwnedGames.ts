@@ -10,8 +10,8 @@ import {
 const inputSchema = {
   steamid: z
     .string()
-    .min(1)
-    .describe("64-bit Steam ID of the player"),
+    .regex(/^\d{17}$/, "Must be a 17-digit Steam64 ID")
+    .describe("64-bit Steam ID of the player (e.g. 76561197960435530)"),
   include_played_free_games: z
     .boolean()
     .optional()

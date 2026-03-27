@@ -10,7 +10,7 @@ import {
 const inputSchema = {
   steamid: z
     .string()
-    .min(1)
+    .regex(/^\d{17}$/, "Must be a 17-digit Steam64 ID")
     .describe("64-bit Steam ID of the player (e.g. 76561197960435530)"),
 };
 

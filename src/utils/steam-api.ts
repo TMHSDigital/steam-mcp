@@ -3,6 +3,7 @@ import {
   MissingApiKeyError,
   RateLimitError,
   SteamUnavailableError,
+  TimeoutError,
 } from "./errors.js";
 
 const DEFAULT_TIMEOUT_MS = 15_000;
@@ -58,54 +59,80 @@ export function steamPartnerUrl(
   return buildUrl(STEAM_PARTNER_BASE, path, params);
 }
 
+const MAX_RETRIES = 2;
+const BASE_RETRY_DELAY_MS = 1_000;
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 export async function steamFetch(
   url: string,
   options: RequestInit = {},
 ): Promise<unknown> {
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), DEFAULT_TIMEOUT_MS);
+  let lastError: unknown;
 
-  try {
-    const response = await fetch(url, {
-      ...options,
-      signal: controller.signal,
-    });
+  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), DEFAULT_TIMEOUT_MS);
 
-    if (response.status === 429) {
-      throw new RateLimitError();
-    }
-
-    if (response.status >= 500) {
-      throw new SteamUnavailableError();
-    }
-
-    if (!response.ok) {
-      throw new SteamApiError(
-        `Steam API returned HTTP ${response.status}`,
-        response.status,
-        url,
-      );
-    }
-
-    const text = await response.text();
     try {
-      return JSON.parse(text);
-    } catch {
-      throw new SteamApiError("Unexpected response from Steam API.");
+      const response = await fetch(url, {
+        ...options,
+        signal: controller.signal,
+      });
+
+      if (response.status === 429) {
+        const retryAfter = response.headers.get("Retry-After");
+        const delayMs = retryAfter
+          ? Math.min(parseInt(retryAfter, 10) * 1000, 10_000)
+          : BASE_RETRY_DELAY_MS * 2 ** attempt;
+
+        if (attempt < MAX_RETRIES) {
+          await sleep(delayMs);
+          continue;
+        }
+        throw new RateLimitError();
+      }
+
+      if (response.status >= 500) {
+        throw new SteamUnavailableError();
+      }
+
+      if (!response.ok) {
+        throw new SteamApiError(
+          `Steam API returned HTTP ${response.status}`,
+          response.status,
+          url,
+        );
+      }
+
+      const text = await response.text();
+      try {
+        return JSON.parse(text);
+      } catch {
+        throw new SteamApiError("Unexpected response from Steam API.");
+      }
+    } catch (error) {
+      if (error instanceof SteamApiError) {
+        throw error;
+      }
+      if (error instanceof DOMException && error.name === "AbortError") {
+        throw new TimeoutError(DEFAULT_TIMEOUT_MS);
+      }
+      lastError = error;
+      throw new SteamApiError(
+        `Failed to reach Steam API: ${error instanceof Error ? error.message : String(error)}`,
+      );
+    } finally {
+      clearTimeout(timeout);
     }
-  } catch (error) {
-    if (error instanceof SteamApiError) {
-      throw error;
-    }
-    if (error instanceof DOMException && error.name === "AbortError") {
-      throw new SteamUnavailableError();
-    }
-    throw new SteamApiError(
-      `Failed to reach Steam API: ${error instanceof Error ? error.message : String(error)}`,
-    );
-  } finally {
-    clearTimeout(timeout);
   }
+
+  throw (
+    lastError ??
+    new SteamApiError("Steam API request failed after retries.")
+  );
 }
 
 export function errorResponse(error: unknown): {
