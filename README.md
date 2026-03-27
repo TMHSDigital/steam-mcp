@@ -46,7 +46,7 @@ Tools that don't need a key work out of the box with zero configuration.
 
 Add the Steam MCP server to your Cursor MCP settings (`.cursor/mcp.json` in your project or global settings):
 
-**Via npx (recommended once published to npm):**
+**Via npx (recommended):**
 
 ```json
 {
@@ -103,7 +103,7 @@ These require `STEAM_API_KEY` to be set:
 | `steam.getPlayerSummary` | Player profile: name, avatar, online status |
 | `steam.getOwnedGames` | Game library with playtime data |
 | `steam.queryWorkshop` | Search/browse Workshop items with filters |
-| `steam.getLeaderboardEntries` | Leaderboard scores and rankings |
+| `steam.getLeaderboardEntries` | Leaderboard scores and rankings (publisher API key + IP allowlist required) |
 | `steam.resolveVanityURL` | Convert vanity URL to 64-bit Steam ID |
 
 ## Planned Tools
@@ -141,7 +141,7 @@ These require `STEAM_API_KEY` to be set:
 | `ISteamUser/ResolveVanityURL/v1` | API key |
 | `ISteamRemoteStorage/GetPublishedFileDetails/v1` | None |
 | `IPublishedFileService/QueryFiles/v1` | API key |
-| `ISteamLeaderboards/GetLeaderboardEntries/v1` | API key |
+| `ISteamLeaderboards/GetLeaderboardEntries/v1` | Publisher key + IP allowlist |
 
 ## Development
 
@@ -155,7 +155,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for how to add new tools and submit PRs.
 
 ## Related
 
-- [Steam Developer Tools](https://github.com/TMHSDigital/Steam-Cursor-Plugin) - Cursor IDE plugin with 14 skills and 3 rules for Steam/Steamworks development
+- [Steam Developer Tools](https://github.com/TMHSDigital/Steam-Cursor-Plugin) - Cursor IDE plugin with 14 skills and 4 rules for Steam/Steamworks development
 
 ## License
 

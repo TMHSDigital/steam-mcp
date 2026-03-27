@@ -7,10 +7,16 @@
   "bin": {
     "steam-mcp": "dist/index.js"
   },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
   "scripts": {
     "build": "tsc",
     "dev": "tsx watch src/index.ts",
-    "start": "node dist/index.js"
+    "start": "node dist/index.js",
+    "prepublishOnly": "npm run build"
   },
   "author": "TMHSDigital",
   "license": "CC-BY-NC-ND-4.0",

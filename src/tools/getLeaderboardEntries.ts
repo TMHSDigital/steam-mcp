@@ -48,7 +48,7 @@ const inputSchema = {
 export function register(server: McpServer): void {
   server.tool(
     "steam.getLeaderboardEntries",
-    "Get leaderboard scores and rankings for a Steam app. Supports global, around-user, and friends-only views. Requires STEAM_API_KEY.",
+    "Get leaderboard scores and rankings for a Steam app. Uses the partner API (partner.steam-api.com) which requires a publisher API key with server IP allowlisted in Steamworks. Supports global, around-user, and friends-only views.",
     inputSchema,
     async ({
       appid,
