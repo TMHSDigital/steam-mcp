@@ -53,7 +53,7 @@ Add the Steam MCP server to your Cursor MCP settings (`.cursor/mcp.json` in your
   "mcpServers": {
     "steam": {
       "command": "npx",
-      "args": ["-y", "steam-mcp"],
+      "args": ["-y", "@tmhs/steam-mcp"],
       "env": {
         "STEAM_API_KEY": "your_key_here"
       }
