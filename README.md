@@ -4,24 +4,91 @@ MCP (Model Context Protocol) server for Steam and Steamworks APIs. Provides stru
 
 Built as the companion MCP server for the [Steam Developer Tools](https://github.com/TMHSDigital/Steam-Cursor-Plugin) Cursor plugin.
 
-> **Status:** In development. See the [planned tools](#planned-tools) below.
+## Getting Started
+
+### Prerequisites
+
+- Node.js 18 or later
+- npm
+
+### Install
+
+```bash
+git clone https://github.com/TMHSDigital/Steam-MCP.git
+cd Steam-MCP
+npm install
+npm run build
+```
+
+### Steam API Key
+
+Some tools require a Steam Web API key. Get one free at [steamcommunity.com/dev/apikey](https://steamcommunity.com/dev/apikey).
+
+Set it as an environment variable:
+
+```bash
+# Bash / macOS / Linux
+export STEAM_API_KEY="your_key_here"
+
+# PowerShell
+$env:STEAM_API_KEY = "your_key_here"
+```
+
+Or in a `.env` file:
+
+```
+STEAM_API_KEY=your_key_here
+```
+
+Tools that don't need a key work out of the box with zero configuration.
+
+## Usage with Cursor
+
+Add this to your Cursor MCP settings (`.cursor/mcp.json` in your project or global settings):
+
+```json
+{
+  "mcpServers": {
+    "steam": {
+      "command": "node",
+      "args": ["/absolute/path/to/Steam-MCP/dist/index.js"],
+      "env": {
+        "STEAM_API_KEY": "your_key_here"
+      }
+    }
+  }
+}
+```
+
+Once configured, the tools are available to Cursor's AI agent. Pair with the [Steam Developer Tools](https://github.com/TMHSDigital/Steam-Cursor-Plugin) plugin for the full skill set.
+
+## Available Tools (v0.2.0)
+
+### No-Auth Tools
+
+These work without an API key:
+
+| Tool | Description |
+|------|-------------|
+| `steam.getAppDetails` | Store data: price, description, reviews, tags, platforms, system requirements |
+| `steam.searchApps` | Search for games/apps by name |
+| `steam.getPlayerCount` | Current concurrent player count |
+| `steam.getAchievementStats` | Global achievement unlock percentages |
+| `steam.getWorkshopItem` | Workshop item details (title, description, tags, subscribers) |
+
+### API Key Tools
+
+These require `STEAM_API_KEY` to be set:
+
+| Tool | Description |
+|------|-------------|
+| `steam.getPlayerSummary` | Player profile: name, avatar, online status |
+| `steam.getOwnedGames` | Game library with playtime data |
+| `steam.queryWorkshop` | Search/browse Workshop items with filters |
+| `steam.getLeaderboardEntries` | Leaderboard scores and rankings |
+| `steam.resolveVanityURL` | Convert vanity URL to 64-bit Steam ID |
 
 ## Planned Tools
-
-### Read-Only (v0.2.0 of Steam Developer Tools)
-
-| Tool | Description | Auth |
-|------|-------------|------|
-| `steam.getAppDetails` | Store data: price, reviews, tags, platforms | None |
-| `steam.searchApps` | Search for games/apps by name | None |
-| `steam.getPlayerCount` | Current concurrent player count | None |
-| `steam.getAchievementStats` | Global achievement unlock percentages | None |
-| `steam.getPlayerSummary` | Player profile: name, avatar, status | API key |
-| `steam.getOwnedGames` | Game library with playtime | API key |
-| `steam.getWorkshopItem` | Workshop item details | None |
-| `steam.queryWorkshop` | Search/browse Workshop items | API key |
-| `steam.getLeaderboardEntries` | Leaderboard scores and rankings | API key |
-| `steam.resolveVanityURL` | Convert vanity URL to 64-bit Steam ID | API key |
 
 ### Additional Tools (v0.3.0+)
 
@@ -43,36 +110,6 @@ Built as the companion MCP server for the [Steam Developer Tools](https://github
 | `steam.uploadLeaderboardScore` | Upload leaderboard scores | SDK |
 | `steam.grantInventoryItem` | Grant inventory items (dev/test) | SDK |
 
-## Configuration
-
-### Steam API Key
-
-Some tools require a Steam Web API key. Get one free at [steamcommunity.com/dev/apikey](https://steamcommunity.com/dev/apikey).
-
-Set it as an environment variable:
-
-```bash
-export STEAM_API_KEY="your_key_here"
-```
-
-Or in a `.env` file:
-
-```
-STEAM_API_KEY=your_key_here
-```
-
-### No-Key Tools
-
-These tools work without an API key:
-
-- `steam.getAppDetails`
-- `steam.searchApps`
-- `steam.getPlayerCount`
-- `steam.getAchievementStats`
-- `steam.getWorkshopItem`
-- `steam.getReviews`
-- `steam.getPriceOverview`
-
 ## Steam API Endpoints
 
 | Endpoint | Auth |
@@ -87,6 +124,16 @@ These tools work without an API key:
 | `ISteamRemoteStorage/GetPublishedFileDetails/v1` | None |
 | `IPublishedFileService/QueryFiles/v1` | API key |
 | `ISteamLeaderboards/GetLeaderboardEntries/v1` | API key |
+
+## Development
+
+```bash
+npm run dev       # Watch mode with auto-reload
+npm run build     # Compile TypeScript to dist/
+npm start         # Run the compiled server
+```
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for how to add new tools and submit PRs.
 
 ## Related
 

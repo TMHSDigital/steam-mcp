@@ -1,0 +1,41 @@
+{
+  "name": "steam-mcp",
+  "version": "0.2.0",
+  "description": "MCP server for Steam and Steamworks APIs - provides structured tools for querying Steam store data, player statistics, achievements, workshop items, leaderboards, and player profiles from AI-powered IDEs.",
+  "type": "module",
+  "main": "dist/index.js",
+  "bin": {
+    "steam-mcp": "dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsx watch src/index.ts",
+    "start": "node dist/index.js"
+  },
+  "author": "TMHSDigital",
+  "license": "CC-BY-NC-ND-4.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/TMHSDigital/Steam-MCP"
+  },
+  "keywords": [
+    "steam",
+    "mcp",
+    "model-context-protocol",
+    "steamworks",
+    "cursor",
+    "ai-tools"
+  ],
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.12.1",
+    "zod": "^3.24.4"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.3",
+    "tsx": "^4.19.4",
+    "typescript": "^5.8.3"
+  }
+}

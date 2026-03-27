@@ -1,0 +1,2 @@
+- Never use em dashes (-). Use a regular dash (-) or rewrite the sentence instead.
+- Never hardcode Steam API keys. Always read from STEAM_API_KEY environment variable.

@@ -1,0 +1,108 @@
+import { z } from "zod";
+import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import {
+  steamPartnerUrl,
+  steamFetch,
+  requireApiKey,
+  errorResponse,
+} from "../utils/steam-api.js";
+
+const inputSchema = {
+  appid: z
+    .number()
+    .int()
+    .positive()
+    .describe("Steam application ID"),
+  leaderboardid: z
+    .number()
+    .int()
+    .positive()
+    .describe("Numeric leaderboard ID for the app"),
+  rangestart: z
+    .number()
+    .int()
+    .min(0)
+    .optional()
+    .describe("Start index for entries (default: 0)"),
+  rangeend: z
+    .number()
+    .int()
+    .min(0)
+    .optional()
+    .describe("End index for entries (default: 100)"),
+  datarequest: z
+    .number()
+    .int()
+    .min(0)
+    .max(2)
+    .optional()
+    .describe(
+      "Request type: 0 = Global, 1 = Around user, 2 = Friends (default: 0)",
+    ),
+  steamid: z
+    .string()
+    .optional()
+    .describe("Steam ID required for AroundUser (1) and Friends (2) requests"),
+};
+
+export function register(server: McpServer): void {
+  server.tool(
+    "steam.getLeaderboardEntries",
+    "Get leaderboard scores and rankings for a Steam app. Supports global, around-user, and friends-only views. Requires STEAM_API_KEY.",
+    inputSchema,
+    async ({
+      appid,
+      leaderboardid,
+      rangestart,
+      rangeend,
+      datarequest,
+      steamid,
+    }) => {
+      try {
+        const key = requireApiKey();
+        const url = steamPartnerUrl(
+          "/ISteamLeaderboards/GetLeaderboardEntries/v1/",
+          {
+            key,
+            appid,
+            leaderboardid,
+            rangestart: rangestart ?? 0,
+            rangeend: rangeend ?? 100,
+            datarequest: datarequest ?? 0,
+            steamid,
+          },
+        );
+
+        const data = (await steamFetch(url)) as {
+          leaderboardEntryInformation?: {
+            appID?: number;
+            leaderboardID?: number;
+            totalLeaderBoardEntryCount?: number;
+            leaderboardEntries?: Array<Record<string, unknown>>;
+          };
+        };
+
+        const info = data.leaderboardEntryInformation;
+
+        if (!info) {
+          return errorResponse(
+            new Error(
+              `No leaderboard data found for app ${appid}, leaderboard ${leaderboardid}. The IDs may be invalid or the leaderboard may be empty.`,
+            ),
+          );
+        }
+
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(info, null, 2),
+            },
+          ],
+        };
+      } catch (error) {
+        return errorResponse(error);
+      }
+    },
+  );
+}
