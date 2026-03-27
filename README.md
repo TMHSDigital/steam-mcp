@@ -44,7 +44,25 @@ Tools that don't need a key work out of the box with zero configuration.
 
 ## Usage with Cursor
 
-Add this to your Cursor MCP settings (`.cursor/mcp.json` in your project or global settings):
+Add the Steam MCP server to your Cursor MCP settings (`.cursor/mcp.json` in your project or global settings):
+
+**Via npx (recommended once published to npm):**
+
+```json
+{
+  "mcpServers": {
+    "steam": {
+      "command": "npx",
+      "args": ["-y", "steam-mcp"],
+      "env": {
+        "STEAM_API_KEY": "your_key_here"
+      }
+    }
+  }
+}
+```
+
+**Via local clone:**
 
 ```json
 {
