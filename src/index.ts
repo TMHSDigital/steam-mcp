@@ -31,7 +31,7 @@ import { register as registerGetPlayerAchievements } from "./tools/getPlayerAchi
 
 const server = new McpServer({
   name: "steam-mcp",
-  version: "0.6.0",
+  version: "0.6.2",
 });
 
 registerGetAppDetails(server);
