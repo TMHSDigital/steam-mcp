@@ -1,6 +1,6 @@
 {
   "name": "@tmhs/steam-mcp",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "description": "MCP server for Steam and Steamworks APIs - 20 tools for querying and writing Steam store data, player statistics, achievements, reviews, pricing, workshop items, leaderboards, inventory, lobbies, and player profiles from AI-powered IDEs.",
   "type": "module",
   "main": "dist/index.js",

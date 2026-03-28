@@ -17,7 +17,7 @@ const inputSchema = {
     .number()
     .int()
     .positive()
-    .describe("Numeric leaderboard ID for the app"),
+    .describe("Numeric leaderboard ID from your Steamworks dashboard (Settings > Leaderboards). This is NOT the leaderboard name - use the numeric ID."),
   rangestart: z
     .number()
     .int()
@@ -49,7 +49,7 @@ const inputSchema = {
 export function register(server: McpServer): void {
   server.tool(
     "steam_getLeaderboardEntries",
-    "Get leaderboard scores and rankings for a Steam app. Uses the partner API (partner.steam-api.com) which requires a publisher API key with server IP allowlisted in Steamworks. Supports global, around-user, and friends-only views.",
+    "Get leaderboard scores and rankings for a Steam app. Pass the numeric leaderboard ID from your Steamworks dashboard, not the name. Uses the partner API (partner.steam-api.com) which requires a publisher API key with server IP allowlisted in Steamworks. Supports global, around-user, and friends-only views.",
     inputSchema,
     async ({
       appid,

@@ -6,6 +6,7 @@ import {
   requireApiKey,
   errorResponse,
 } from "../utils/steam-api.js";
+import { SteamApiError } from "../utils/errors.js";
 
 const inputSchema = {
   steamid: z
@@ -76,6 +77,13 @@ export function register(server: McpServer): void {
           ],
         };
       } catch (error) {
+        if (error instanceof SteamApiError && (error.statusCode === 400 || error.statusCode === 403)) {
+          return errorResponse(
+            new Error(
+              `HTTP ${error.statusCode} - This tool requires a Steam Publisher API key with the server's IP allowlisted in your Steamworks partner settings. Set STEAM_API_KEY to a publisher key and add the server IP to your Web API key's allowed IP list at https://partner.steamgames.com/doc/webapi_overview/auth`,
+            ),
+          );
+        }
         return errorResponse(error);
       }
     },

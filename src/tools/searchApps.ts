@@ -3,7 +3,7 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { steamStoreUrl, steamFetch, errorResponse } from "../utils/steam-api.js";
 
 const inputSchema = {
-  term: z.string().min(1).describe("Search query for games or apps"),
+  query: z.string().min(1).describe("Search query for games or apps (e.g. 'Hades', 'Counter-Strike')"),
   cc: z
     .string()
     .length(2)
@@ -18,12 +18,12 @@ const inputSchema = {
 export function register(server: McpServer): void {
   server.tool(
     "steam_searchApps",
-    "Search the Steam store for games and apps by name. Returns app IDs, names, icons, and price info. No API key required.",
+    "Search the Steam store for games and apps by name or keyword. Returns app IDs, names, icons, and price info. No API key required.",
     inputSchema,
-    async ({ term, cc, l }) => {
+    async ({ query, cc, l }) => {
       try {
         const url = steamStoreUrl("/api/storesearch/", {
-          term,
+          term: query,
           l: l ?? "english",
           cc: cc ?? "US",
         });
@@ -35,7 +35,7 @@ export function register(server: McpServer): void {
             content: [
               {
                 type: "text",
-                text: `No results found for "${term}".`,
+                text: `No results found for "${query}".`,
               },
             ],
           };
