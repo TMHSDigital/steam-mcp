@@ -12,7 +12,7 @@ const inputSchema = {
 
 export function register(server: McpServer): void {
   server.tool(
-    "steam.getAppReviewSummary",
+    "steam_getAppReviewSummary",
     "Get review summary statistics for a Steam app: total positive/negative counts, review score, and score description. No individual reviews returned. No API key required.",
     inputSchema,
     async ({ appid }) => {

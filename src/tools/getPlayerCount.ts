@@ -12,7 +12,7 @@ const inputSchema = {
 
 export function register(server: McpServer): void {
   server.tool(
-    "steam.getPlayerCount",
+    "steam_getPlayerCount",
     "Get the current number of concurrent players for a Steam app. No API key required.",
     inputSchema,
     async ({ appid }) => {

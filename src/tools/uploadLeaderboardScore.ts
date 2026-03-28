@@ -36,7 +36,7 @@ const inputSchema = {
 
 export function register(server: McpServer): void {
   server.tool(
-    "steam.uploadLeaderboardScore",
+    "steam_uploadLeaderboardScore",
     "Upload a score to a Steam leaderboard via the partner API. Requires a publisher API key with server IP allowlisted in Steamworks partner settings.",
     inputSchema,
     async ({ appid, leaderboardid, steamid, score, scoremethod }) => {

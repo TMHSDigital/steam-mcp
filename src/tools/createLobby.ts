@@ -21,7 +21,7 @@ const inputSchema = {
 
 export function register(server: McpServer): void {
   server.tool(
-    "steam.createLobby",
+    "steam_createLobby",
     "Get code examples and documentation for creating Steam multiplayer lobbies. Lobby creation is a client-side SDK operation (ISteamMatchmaking) and cannot be done via HTTP API. This tool returns ready-to-use code for C++, C#, and GDScript.",
     inputSchema,
     async ({ type, max_members, metadata }) => {

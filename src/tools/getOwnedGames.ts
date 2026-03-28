@@ -24,7 +24,7 @@ const inputSchema = {
 
 export function register(server: McpServer): void {
   server.tool(
-    "steam.getOwnedGames",
+    "steam_getOwnedGames",
     "Get a player's game library with playtime data. Shows all owned games, total playtime, and recent playtime. Requires STEAM_API_KEY.",
     inputSchema,
     async ({ steamid, include_played_free_games, include_appinfo }) => {

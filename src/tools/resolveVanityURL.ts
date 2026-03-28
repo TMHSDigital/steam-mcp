@@ -27,7 +27,7 @@ const inputSchema = {
 
 export function register(server: McpServer): void {
   server.tool(
-    "steam.resolveVanityURL",
+    "steam_resolveVanityURL",
     "Convert a Steam vanity URL (custom profile name) to a 64-bit Steam ID. Requires STEAM_API_KEY.",
     inputSchema,
     async ({ vanityurl, url_type }) => {

@@ -26,7 +26,7 @@ import { register as registerGetRegionalPricing } from "./tools/getRegionalPrici
 
 const server = new McpServer({
   name: "steam-mcp",
-  version: "0.4.0",
+  version: "0.5.0",
 });
 
 registerGetAppDetails(server);

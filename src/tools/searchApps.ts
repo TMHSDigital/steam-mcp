@@ -17,7 +17,7 @@ const inputSchema = {
 
 export function register(server: McpServer): void {
   server.tool(
-    "steam.searchApps",
+    "steam_searchApps",
     "Search the Steam store for games and apps by name. Returns app IDs, names, icons, and price info. No API key required.",
     inputSchema,
     async ({ term, cc, l }) => {

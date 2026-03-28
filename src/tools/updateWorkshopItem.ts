@@ -37,7 +37,7 @@ const inputSchema = {
 
 export function register(server: McpServer): void {
   server.tool(
-    "steam.updateWorkshopItem",
+    "steam_updateWorkshopItem",
     "Update metadata for an existing Steam Workshop item (title, description, visibility, tags) via the partner API. Requires a publisher API key with server IP allowlisted. File content updates require the SDK.",
     inputSchema,
     async ({ publishedfileid, appid, title, file_description, visibility, tags }) => {

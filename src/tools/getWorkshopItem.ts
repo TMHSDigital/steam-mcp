@@ -11,7 +11,7 @@ const inputSchema = {
 
 export function register(server: McpServer): void {
   server.tool(
-    "steam.getWorkshopItem",
+    "steam_getWorkshopItem",
     "Get details for a Steam Workshop item including title, description, tags, preview images, and subscriber count. No API key required.",
     inputSchema,
     async ({ publishedfileid }) => {

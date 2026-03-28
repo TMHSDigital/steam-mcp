@@ -38,7 +38,7 @@ const inputSchema = {
 
 export function register(server: McpServer): void {
   server.tool(
-    "steam.grantInventoryItem",
+    "steam_grantInventoryItem",
     "Grant an inventory item to a player via the partner API. Intended for dev/test or server-side rewards. Requires a publisher API key with server IP allowlisted in Steamworks partner settings.",
     inputSchema,
     async ({ appid, steamid, itemdefid, quantity, notify }) => {

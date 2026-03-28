@@ -22,7 +22,7 @@ const inputSchema = {
 
 export function register(server: McpServer): void {
   server.tool(
-    "steam.getRegionalPricing",
+    "steam_getRegionalPricing",
     "Get pricing for a Steam app across multiple regions/countries. Returns price, currency, and discount info for each region. No API key required.",
     inputSchema,
     async ({ appid, countries }) => {

@@ -27,7 +27,7 @@ const inputSchema = {
 
 export function register(server: McpServer): void {
   server.tool(
-    "steam.setAchievement",
+    "steam_setAchievement",
     "Set (unlock) an achievement for a player via the partner API. Intended for dev/test use. Requires a publisher API key with server IP allowlisted in Steamworks partner settings.",
     inputSchema,
     async ({ steamid, appid, achievement }) => {

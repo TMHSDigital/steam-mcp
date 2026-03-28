@@ -17,7 +17,7 @@ const inputSchema = {
 
 export function register(server: McpServer): void {
   server.tool(
-    "steam.getPriceOverview",
+    "steam_getPriceOverview",
     "Batch price check for multiple Steam apps in a specific region. Returns formatted price data including base price, discount, and final price. No API key required.",
     inputSchema,
     async ({ appids, cc }) => {

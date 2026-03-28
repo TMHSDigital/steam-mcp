@@ -32,7 +32,7 @@ const inputSchema = {
 
 export function register(server: McpServer): void {
   server.tool(
-    "steam.uploadWorkshopItem",
+    "steam_uploadWorkshopItem",
     "Get code examples and documentation for uploading new Steam Workshop items. Workshop uploads require the Steamworks SDK (ISteamUGC) running in a client or dedicated tool — there is no HTTP upload endpoint. This tool returns ready-to-use code for C++, C#, and GDScript.",
     inputSchema,
     async ({ appid, title, description, content_path, preview_path, tags, visibility }) => {

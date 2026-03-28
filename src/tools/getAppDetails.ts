@@ -21,7 +21,7 @@ const inputSchema = {
 
 export function register(server: McpServer): void {
   server.tool(
-    "steam.getAppDetails",
+    "steam_getAppDetails",
     "Get Steam store data for an app including price, description, reviews, tags, platforms, and system requirements. No API key required.",
     inputSchema,
     async ({ appid, cc, l }) => {

@@ -16,7 +16,7 @@ const inputSchema = {
 
 export function register(server: McpServer): void {
   server.tool(
-    "steam.getPlayerSummary",
+    "steam_getPlayerSummary",
     "Get a player's Steam profile including display name, avatar, online status, and profile visibility. Requires STEAM_API_KEY.",
     inputSchema,
     async ({ steamid }) => {

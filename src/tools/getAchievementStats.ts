@@ -12,7 +12,7 @@ const inputSchema = {
 
 export function register(server: McpServer): void {
   server.tool(
-    "steam.getAchievementStats",
+    "steam_getAchievementStats",
     "Get global achievement unlock percentages for a Steam app. Shows how many players have unlocked each achievement. No API key required.",
     inputSchema,
     async ({ appid }) => {

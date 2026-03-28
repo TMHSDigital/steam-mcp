@@ -39,7 +39,7 @@ const inputSchema = {
 
 export function register(server: McpServer): void {
   server.tool(
-    "steam.getReviews",
+    "steam_getReviews",
     "Fetch user reviews for a Steam app with filters for language, sentiment, purchase type, and pagination. No API key required.",
     inputSchema,
     async ({ appid, filter, language, review_type, purchase_type, num_per_page, cursor }) => {
