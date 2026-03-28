@@ -88,48 +88,53 @@ Add the Steam MCP server to your Cursor MCP settings (`.cursor/mcp.json` in your
 
 Once configured, the tools are available to Cursor's AI agent. Pair with the [Steam Developer Tools](https://github.com/TMHSDigital/Steam-Cursor-Plugin) plugin for the full skill set.
 
-## Available Tools (v0.4.0) — 20 Total
+## Available Tools (v0.6.0) - 25 Total
 
-### Read Tools (No Auth) — 9 tools
+### Read Tools (No Auth) - 10 tools
 
 These work without an API key:
 
 | Tool | Description |
 |------|-------------|
-| `steam.getAppDetails` | Store data: price, description, reviews, tags, platforms, system requirements |
-| `steam.searchApps` | Search for games/apps by name |
-| `steam.getPlayerCount` | Current concurrent player count |
-| `steam.getAchievementStats` | Global achievement unlock percentages |
-| `steam.getWorkshopItem` | Workshop item details (title, description, tags, subscribers) |
-| `steam.getReviews` | Fetch user reviews with filters for language, sentiment, purchase type |
-| `steam.getPriceOverview` | Batch price check for multiple apps in a specific region |
-| `steam.getAppReviewSummary` | Review score, total counts, and positive percentage (no individual reviews) |
-| `steam.getRegionalPricing` | Pricing breakdown across multiple countries/regions |
+| `steam_getAppDetails` | Store data: price, description, reviews, tags, platforms, system requirements |
+| `steam_searchApps` | Search for games/apps by name or keyword |
+| `steam_getPlayerCount` | Current concurrent player count |
+| `steam_getAchievementStats` | Global achievement unlock percentages |
+| `steam_getWorkshopItem` | Workshop item details (title, description, tags, subscribers) |
+| `steam_getReviews` | Fetch user reviews with filters for language, sentiment, purchase type |
+| `steam_getPriceOverview` | Batch price check for multiple apps in a specific region |
+| `steam_getAppReviewSummary` | Review score, total counts, and positive percentage (no individual reviews) |
+| `steam_getRegionalPricing` | Pricing breakdown across multiple countries/regions |
+| `steam_getNewsForApp` | Recent news articles with title, URL, contents, date, and author |
 
-### Read Tools (API Key) — 5 tools
+### Read Tools (API Key) - 8 tools
 
 These require `STEAM_API_KEY` to be set:
 
 | Tool | Description |
 |------|-------------|
-| `steam.getPlayerSummary` | Player profile: name, avatar, online status |
-| `steam.getOwnedGames` | Game library with playtime data |
-| `steam.queryWorkshop` | Search/browse Workshop items with filters |
-| `steam.getLeaderboardEntries` | Leaderboard scores and rankings (publisher API key + IP allowlist required) |
-| `steam.resolveVanityURL` | Convert vanity URL to 64-bit Steam ID |
+| `steam_getPlayerSummary` | Player profile: name, avatar, online status |
+| `steam_getOwnedGames` | Game library with playtime data |
+| `steam_queryWorkshop` | Search/browse Workshop items with filters |
+| `steam_getLeaderboardEntries` | Leaderboard scores and rankings (pass numeric ID from Steamworks dashboard) |
+| `steam_resolveVanityURL` | Convert vanity URL to 64-bit Steam ID |
+| `steam_getSchemaForGame` | Achievement/stat schema with display names, descriptions, and icon URLs |
+| `steam_getPlayerAchievements` | Per-player achievement unlock status and timestamps |
+| `steam_getLeaderboardsForGame` | List all leaderboards with numeric IDs, names, sort methods (partner API) |
 
-### Write / Guidance Tools (Publisher Key) — 6 tools
+### Write / Guidance Tools (Publisher Key) - 7 tools
 
 These require a publisher API key with server IP allowlisted in Steamworks partner settings. SDK-only tools return code examples instead of making HTTP calls.
 
 | Tool | Type | Description |
 |------|------|-------------|
-| `steam.createLobby` | SDK guide | Returns C++/C#/GDScript code for ISteamMatchmaking lobby creation |
-| `steam.uploadWorkshopItem` | SDK guide | Returns code for ISteamUGC Workshop upload workflow |
-| `steam.updateWorkshopItem` | HTTP POST | Update Workshop item metadata via IPublishedFileService partner API |
-| `steam.setAchievement` | HTTP POST | Set/unlock achievements via ISteamUserStats partner API (dev/test) |
-| `steam.uploadLeaderboardScore` | HTTP POST | Upload scores via ISteamLeaderboards partner API |
-| `steam.grantInventoryItem` | HTTP POST | Grant inventory items via IInventoryService partner API |
+| `steam_createLobby` | SDK guide | Returns C++/C#/GDScript code for ISteamMatchmaking lobby creation |
+| `steam_uploadWorkshopItem` | SDK guide | Returns code for ISteamUGC Workshop upload workflow |
+| `steam_updateWorkshopItem` | HTTP POST | Update Workshop item metadata via IPublishedFileService partner API |
+| `steam_setAchievement` | HTTP POST | Set/unlock achievements via ISteamUserStats partner API (dev/test) |
+| `steam_clearAchievement` | HTTP POST | Clear/re-lock achievements via ISteamUserStats partner API (dev/test) |
+| `steam_uploadLeaderboardScore` | HTTP POST | Upload scores via ISteamLeaderboards partner API |
+| `steam_grantInventoryItem` | HTTP POST | Grant inventory items via IInventoryService partner API |
 
 ## Steam API Endpoints
 
@@ -139,17 +144,21 @@ These require a publisher API key with server IP allowlisted in Steamworks partn
 | `store.steampowered.com/api/storesearch` | None |
 | `ISteamUserStats/GetNumberOfCurrentPlayers/v1` | None |
 | `ISteamUserStats/GetGlobalAchievementPercentagesForApp/v2` | None |
+| `ISteamNews/GetNewsForApp/v2` | None |
+| `ISteamRemoteStorage/GetPublishedFileDetails/v1` | None |
+| `store.steampowered.com/appreviews/{appid}` | None |
 | `ISteamUser/GetPlayerSummaries/v2` | API key |
 | `IPlayerService/GetOwnedGames/v1` | API key |
 | `ISteamUser/ResolveVanityURL/v1` | API key |
-| `ISteamRemoteStorage/GetPublishedFileDetails/v1` | None |
 | `IPublishedFileService/QueryFiles/v1` | API key |
-| `ISteamLeaderboards/GetLeaderboardEntries/v1` | Publisher key + IP allowlist |
-| `IPublishedFileService/UpdateDetails/v1` (POST) | Publisher key + IP allowlist |
-| `ISteamUserStats/SetUserStatsForGame/v1` (POST) | Publisher key + IP allowlist |
-| `ISteamLeaderboards/SetLeaderboardScore/v1` (POST) | Publisher key + IP allowlist |
-| `IInventoryService/AddItem/v1` (POST) | Publisher key + IP allowlist |
-| `store.steampowered.com/appreviews/{appid}` | None |
+| `ISteamUserStats/GetSchemaForGame/v2` | API key |
+| `ISteamUserStats/GetPlayerAchievements/v1` | API key |
+| `ISteamLeaderboards/GetLeaderboardEntries/v1` | Publisher key |
+| `ISteamLeaderboards/GetLeaderboardsForGame/v2` | Publisher key |
+| `IPublishedFileService/UpdateDetails/v1` (POST) | Publisher key |
+| `ISteamUserStats/SetUserStatsForGame/v1` (POST) | Publisher key |
+| `ISteamLeaderboards/SetLeaderboardScore/v1` (POST) | Publisher key |
+| `IInventoryService/AddItem/v1` (POST) | Publisher key |
 
 ## Testing
 
