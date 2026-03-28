@@ -13,10 +13,16 @@ import { register as registerGetWorkshopItem } from "./tools/getWorkshopItem.js"
 import { register as registerQueryWorkshop } from "./tools/queryWorkshop.js";
 import { register as registerGetLeaderboardEntries } from "./tools/getLeaderboardEntries.js";
 import { register as registerResolveVanityURL } from "./tools/resolveVanityURL.js";
+import { register as registerCreateLobby } from "./tools/createLobby.js";
+import { register as registerUploadWorkshopItem } from "./tools/uploadWorkshopItem.js";
+import { register as registerUpdateWorkshopItem } from "./tools/updateWorkshopItem.js";
+import { register as registerSetAchievement } from "./tools/setAchievement.js";
+import { register as registerUploadLeaderboardScore } from "./tools/uploadLeaderboardScore.js";
+import { register as registerGrantInventoryItem } from "./tools/grantInventoryItem.js";
 
 const server = new McpServer({
   name: "steam-mcp",
-  version: "0.2.1",
+  version: "0.3.0",
 });
 
 registerGetAppDetails(server);
@@ -29,6 +35,12 @@ registerGetWorkshopItem(server);
 registerQueryWorkshop(server);
 registerGetLeaderboardEntries(server);
 registerResolveVanityURL(server);
+registerCreateLobby(server);
+registerUploadWorkshopItem(server);
+registerUpdateWorkshopItem(server);
+registerSetAchievement(server);
+registerUploadLeaderboardScore(server);
+registerGrantInventoryItem(server);
 
 async function main(): Promise<void> {
   const transport = new StdioServerTransport();

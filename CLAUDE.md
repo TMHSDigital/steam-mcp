@@ -2,7 +2,7 @@
 
 ## What is this?
 
-An MCP (Model Context Protocol) server that exposes Steam Web API endpoints as structured tools for AI-powered IDEs. It is the companion server for the [Steam Developer Tools](https://github.com/TMHSDigital/Steam-Cursor-Plugin) Cursor plugin, which provides 14 skills and 4 rules for Steam/Steamworks development.
+An MCP (Model Context Protocol) server that exposes Steam Web API endpoints as structured tools for AI-powered IDEs. It is the companion server for the [Steam Developer Tools](https://github.com/TMHSDigital/Steam-Cursor-Plugin) Cursor plugin, which provides 29 skills and 9 rules for Steam/Steamworks development. The server provides 16 tools: 10 read-only and 6 write/guidance tools.
 
 The plugin's skills reference these MCP tools to fetch live data from Steam - player stats, store info, workshop items, leaderboards, and more.
 
@@ -47,7 +47,7 @@ npm test            # single run
 npm run test:watch  # watch mode
 ```
 
-Tests cover error classes, `steamFetch` behavior (mocked fetch), retry logic, and Zod input validation for all 10 tools.
+Tests cover error classes, `steamFetch` behavior (mocked fetch), retry logic, and Zod input validation for tools.
 
 **Manual testing** via MCP inspector or by configuring as an MCP server in Cursor:
 

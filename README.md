@@ -84,9 +84,9 @@ Add the Steam MCP server to your Cursor MCP settings (`.cursor/mcp.json` in your
 
 Once configured, the tools are available to Cursor's AI agent. Pair with the [Steam Developer Tools](https://github.com/TMHSDigital/Steam-Cursor-Plugin) plugin for the full skill set.
 
-## Available Tools (v0.2.0)
+## Available Tools (v0.3.0)
 
-### No-Auth Tools
+### Read Tools (No Auth)
 
 These work without an API key:
 
@@ -98,7 +98,7 @@ These work without an API key:
 | `steam.getAchievementStats` | Global achievement unlock percentages |
 | `steam.getWorkshopItem` | Workshop item details (title, description, tags, subscribers) |
 
-### API Key Tools
+### Read Tools (API Key)
 
 These require `STEAM_API_KEY` to be set:
 
@@ -110,9 +110,22 @@ These require `STEAM_API_KEY` to be set:
 | `steam.getLeaderboardEntries` | Leaderboard scores and rankings (publisher API key + IP allowlist required) |
 | `steam.resolveVanityURL` | Convert vanity URL to 64-bit Steam ID |
 
+### Write Tools (v0.3.0 — Publisher Key)
+
+These require a publisher API key with server IP allowlisted in Steamworks partner settings. SDK-only tools return code examples instead of making HTTP calls.
+
+| Tool | Type | Description |
+|------|------|-------------|
+| `steam.createLobby` | SDK guide | Returns C++/C#/GDScript code for ISteamMatchmaking lobby creation |
+| `steam.uploadWorkshopItem` | SDK guide | Returns code for ISteamUGC Workshop upload workflow |
+| `steam.updateWorkshopItem` | HTTP POST | Update Workshop item metadata via IPublishedFileService partner API |
+| `steam.setAchievement` | HTTP POST | Set/unlock achievements via ISteamUserStats partner API (dev/test) |
+| `steam.uploadLeaderboardScore` | HTTP POST | Upload scores via ISteamLeaderboards partner API |
+| `steam.grantInventoryItem` | HTTP POST | Grant inventory items via IInventoryService partner API |
+
 ## Planned Tools
 
-### Additional Tools (v0.3.0+)
+### Additional Read Tools (future)
 
 | Tool | Description | Auth |
 |------|-------------|------|
@@ -120,17 +133,6 @@ These require `STEAM_API_KEY` to be set:
 | `steam.getPriceOverview` | Batch price check across regions | None |
 | `steam.getAppReviewSummary` | Review histogram and summary | None |
 | `steam.getRegionalPricing` | Pricing breakdown by country | None |
-
-### Write Operations (v0.7.0+)
-
-| Tool | Description | Auth |
-|------|-------------|------|
-| `steam.createLobby` | Create multiplayer lobbies | SDK |
-| `steam.uploadWorkshopItem` | Upload new Workshop items | SDK |
-| `steam.updateWorkshopItem` | Update existing Workshop items | SDK |
-| `steam.setAchievement` | Unlock achievements (dev/test) | SDK |
-| `steam.uploadLeaderboardScore` | Upload leaderboard scores | SDK |
-| `steam.grantInventoryItem` | Grant inventory items (dev/test) | SDK |
 
 ## Steam API Endpoints
 
@@ -146,6 +148,10 @@ These require `STEAM_API_KEY` to be set:
 | `ISteamRemoteStorage/GetPublishedFileDetails/v1` | None |
 | `IPublishedFileService/QueryFiles/v1` | API key |
 | `ISteamLeaderboards/GetLeaderboardEntries/v1` | Publisher key + IP allowlist |
+| `IPublishedFileService/UpdateDetails/v1` (POST) | Publisher key + IP allowlist |
+| `ISteamUserStats/SetUserStatsForGame/v1` (POST) | Publisher key + IP allowlist |
+| `ISteamLeaderboards/SetLeaderboardScore/v1` (POST) | Publisher key + IP allowlist |
+| `IInventoryService/AddItem/v1` (POST) | Publisher key + IP allowlist |
 
 ## Testing
 
@@ -166,7 +172,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for how to add new tools and submit PRs.
 
 ## Related
 
-- [Steam Developer Tools](https://github.com/TMHSDigital/Steam-Cursor-Plugin) - Cursor IDE plugin with 14 skills and 4 rules for Steam/Steamworks development
+- [Steam Developer Tools](https://github.com/TMHSDigital/Steam-Cursor-Plugin) - Cursor IDE plugin with 29 skills and 9 rules for Steam/Steamworks development
 
 ## License
 
