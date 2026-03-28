@@ -1,8 +1,12 @@
 # Steam MCP Server
 
-[![npm](https://img.shields.io/npm/v/@tmhs/steam-mcp)](https://www.npmjs.com/package/@tmhs/steam-mcp)
+[![npm version](https://img.shields.io/npm/v/@tmhs/steam-mcp)](https://www.npmjs.com/package/@tmhs/steam-mcp)
+[![npm downloads](https://img.shields.io/npm/dw/@tmhs/steam-mcp)](https://www.npmjs.com/package/@tmhs/steam-mcp)
 [![license](https://img.shields.io/npm/l/@tmhs/steam-mcp)](LICENSE)
 [![node](https://img.shields.io/node/v/@tmhs/steam-mcp)](package.json)
+[![GitHub stars](https://img.shields.io/github/stars/TMHSDigital/Steam-MCP)](https://github.com/TMHSDigital/Steam-MCP/stargazers)
+[![GitHub last commit](https://img.shields.io/github/last-commit/TMHSDigital/Steam-MCP)](https://github.com/TMHSDigital/Steam-MCP/commits/main)
+[![MCP tools](https://img.shields.io/badge/MCP_tools-25-blue)](https://github.com/TMHSDigital/Steam-MCP#available-tools-v060)
 
 MCP (Model Context Protocol) server for Steam and Steamworks APIs. Provides structured tools for querying Steam store data, player statistics, achievements, workshop items, leaderboards, and player profiles from AI-powered IDEs.
 
