@@ -108,7 +108,8 @@ Once configured, the tools are available to Cursor's AI agent. Pair with the [St
 
 ## Available Tools (v0.6.0) - 25 Total
 
-### Read Tools (No Auth) - 10 tools
+<details>
+<summary><strong>Read Tools (No Auth) - 10 tools</strong></summary>
 
 These work without an API key:
 
@@ -125,7 +126,10 @@ These work without an API key:
 | `steam_getRegionalPricing` | Pricing breakdown across multiple countries/regions |
 | `steam_getNewsForApp` | Recent news articles with title, URL, contents, date, and author |
 
-### Read Tools (API Key) - 8 tools
+</details>
+
+<details>
+<summary><strong>Read Tools (API Key) - 8 tools</strong></summary>
 
 These require `STEAM_API_KEY` to be set:
 
@@ -140,7 +144,10 @@ These require `STEAM_API_KEY` to be set:
 | `steam_getPlayerAchievements` | Per-player achievement unlock status and timestamps |
 | `steam_getLeaderboardsForGame` | List all leaderboards with numeric IDs, names, sort methods (partner API) |
 
-### Write / Guidance Tools (Publisher Key) - 7 tools
+</details>
+
+<details>
+<summary><strong>Write / Guidance Tools (Publisher Key) - 7 tools</strong></summary>
 
 These require a publisher API key with server IP allowlisted in Steamworks partner settings. SDK-only tools return code examples instead of making HTTP calls.
 
@@ -154,7 +161,10 @@ These require a publisher API key with server IP allowlisted in Steamworks partn
 | `steam_uploadLeaderboardScore` | HTTP POST | Upload scores via ISteamLeaderboards partner API |
 | `steam_grantInventoryItem` | HTTP POST | Grant inventory items via IInventoryService partner API |
 
-## Steam API Endpoints
+</details>
+
+<details>
+<summary><strong>Steam API Endpoints (19 endpoints)</strong></summary>
 
 | Endpoint | Auth |
 |----------|------|
@@ -178,22 +188,22 @@ These require a publisher API key with server IP allowlisted in Steamworks partn
 | `ISteamLeaderboards/SetLeaderboardScore/v1` (POST) | Publisher key |
 | `IInventoryService/AddItem/v1` (POST) | Publisher key |
 
-## Testing
+</details>
+
+<details>
+<summary><strong>Development</strong></summary>
 
 ```bash
-npm test          # Run all tests (vitest)
-npm run test:watch  # Watch mode
-```
-
-## Development
-
-```bash
-npm run dev       # Watch mode with auto-reload
-npm run build     # Compile TypeScript to dist/
-npm start         # Run the compiled server
+npm run dev         # Watch mode with auto-reload
+npm run build       # Compile TypeScript to dist/
+npm start           # Run the compiled server
+npm test            # Run all tests (vitest)
+npm run test:watch  # Test watch mode
 ```
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for how to add new tools and submit PRs.
+
+</details>
 
 ## Related
 
