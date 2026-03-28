@@ -1,16 +1,34 @@
-# Steam MCP Server
+<p align="center">
+  <img src="assets/logo.png" alt="Steam MCP Server" width="200">
+</p>
 
-[![npm version](https://img.shields.io/npm/v/@tmhs/steam-mcp)](https://www.npmjs.com/package/@tmhs/steam-mcp)
-[![npm downloads](https://img.shields.io/npm/dw/@tmhs/steam-mcp)](https://www.npmjs.com/package/@tmhs/steam-mcp)
-[![license](https://img.shields.io/npm/l/@tmhs/steam-mcp)](LICENSE)
-[![node](https://img.shields.io/node/v/@tmhs/steam-mcp)](package.json)
-[![GitHub stars](https://img.shields.io/github/stars/TMHSDigital/Steam-MCP)](https://github.com/TMHSDigital/Steam-MCP/stargazers)
-[![GitHub last commit](https://img.shields.io/github/last-commit/TMHSDigital/Steam-MCP)](https://github.com/TMHSDigital/Steam-MCP/commits/main)
-[![MCP tools](https://img.shields.io/badge/MCP_tools-25-blue)](https://github.com/TMHSDigital/Steam-MCP#available-tools-v060)
+<h1 align="center">Steam MCP Server</h1>
 
-MCP (Model Context Protocol) server for Steam and Steamworks APIs. Provides structured tools for querying Steam store data, player statistics, achievements, workshop items, leaderboards, and player profiles from AI-powered IDEs.
+<p align="center">
+  <em>Live Steam API tools for AI-powered IDEs - companion server to <a href="https://github.com/TMHSDigital/Steam-Cursor-Plugin">Steam Developer Tools</a>.</em>
+</p>
 
-Built as the companion MCP server for the [Steam Developer Tools](https://github.com/TMHSDigital/Steam-Cursor-Plugin) Cursor plugin.
+<p align="center">
+  <a href="https://www.npmjs.com/package/@tmhs/steam-mcp"><img src="https://img.shields.io/npm/v/@tmhs/steam-mcp" alt="npm version"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/npm/l/@tmhs/steam-mcp" alt="license"></a>
+  <a href="https://www.npmjs.com/package/@tmhs/steam-mcp"><img src="https://img.shields.io/npm/dw/@tmhs/steam-mcp" alt="npm downloads"></a>
+  <a href="https://github.com/TMHSDigital/Steam-MCP/stargazers"><img src="https://img.shields.io/github/stars/TMHSDigital/Steam-MCP" alt="GitHub stars"></a>
+  <a href="https://github.com/TMHSDigital/Steam-MCP/commits/main"><img src="https://img.shields.io/github/last-commit/TMHSDigital/Steam-MCP" alt="last commit"></a>
+</p>
+
+<p align="center">
+  <a href="package.json"><img src="https://img.shields.io/node/v/@tmhs/steam-mcp" alt="node"></a>
+  <a href="https://github.com/TMHSDigital/Steam-MCP#available-tools-v060"><img src="https://img.shields.io/badge/MCP_tools-25-blue" alt="MCP tools"></a>
+  <img src="https://img.shields.io/badge/Steam_Web_API-powered-1b2838" alt="Steam Web API">
+</p>
+
+---
+
+<p align="center"><strong>25 MCP tools</strong> - 10 no-auth - 8 API key - 7 publisher key</p>
+
+Query Steam store data, player statistics, achievements, reviews, pricing, workshop items, leaderboards, inventory, and player profiles - all as structured MCP tools callable from Cursor's AI agent.
+
+> **No API key required** for most features. Store lookups, player counts, global achievement stats, news, reviews, and app searches all work out of the box.
 
 ## Getting Started
 
@@ -184,3 +202,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for how to add new tools and submit PRs.
 ## License
 
 CC BY-NC-ND 4.0 - see [LICENSE](LICENSE) for details.
+
+---
+
+<p align="center">Built by <a href="https://github.com/TMHSDigital">TMHSDigital</a></p>
