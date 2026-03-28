@@ -27,8 +27,8 @@ const inputSchema = {
 
 export function register(server: McpServer): void {
   server.tool(
-    "steam_setAchievement",
-    "Set (unlock) an achievement for a player via the partner API. Intended for dev/test use. Requires a publisher API key with server IP allowlisted in Steamworks partner settings.",
+    "steam_clearAchievement",
+    "Clear (re-lock) an achievement for a player via the partner API. Intended for dev/test use. Requires a publisher API key with server IP allowlisted in Steamworks partner settings.",
     inputSchema,
     async ({ steamid, appid, achievement }) => {
       try {
@@ -42,7 +42,7 @@ export function register(server: McpServer): void {
             appid,
             count: 1,
             "name[0]": achievement,
-            "value[0]": 1,
+            "value[0]": 0,
           },
         );
 
@@ -50,7 +50,7 @@ export function register(server: McpServer): void {
         if (result && typeof result === "object" && (result as Record<string, unknown>).result !== 1) {
           return errorResponse(
             new Error(
-              `Failed to set achievement '${achievement}' for Steam ID ${steamid}. Verify the achievement API name exists in your Steamworks configuration and the API key has publisher access.`,
+              `Failed to clear achievement '${achievement}' for Steam ID ${steamid}. Verify the achievement API name exists in your Steamworks configuration and the API key has publisher access.`,
             ),
           );
         }
@@ -65,7 +65,7 @@ export function register(server: McpServer): void {
                   steamid,
                   appid,
                   achievement,
-                  message: `Achievement '${achievement}' set for player ${steamid}.`,
+                  message: `Achievement '${achievement}' cleared for player ${steamid}.`,
                 },
                 null,
                 2,

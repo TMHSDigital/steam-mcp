@@ -1,8 +1,7 @@
 import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import {
-  steamPartnerUrl,
-  steamFetch,
+  steamPartnerPost,
   requireApiKey,
   errorResponse,
 } from "../utils/steam-api.js";
@@ -46,11 +45,7 @@ export function register(server: McpServer): void {
       try {
         const key = requireApiKey();
 
-        const itemJson = JSON.stringify([
-          { itemdefid, quantity: quantity ?? 1 },
-        ]);
-
-        const url = steamPartnerUrl(
+        const data = (await steamPartnerPost(
           "/IInventoryService/AddItem/v1/",
           {
             key,
@@ -59,9 +54,7 @@ export function register(server: McpServer): void {
             itemdefid: JSON.stringify([{ itemdefid, quantity: quantity ?? 1 }]),
             notify: notify ?? true,
           },
-        );
-
-        const data = (await steamFetch(url, { method: "POST" })) as {
+        )) as {
           response?: {
             item_json?: string;
           };

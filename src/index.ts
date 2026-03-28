@@ -23,10 +23,15 @@ import { register as registerGetReviews } from "./tools/getReviews.js";
 import { register as registerGetPriceOverview } from "./tools/getPriceOverview.js";
 import { register as registerGetAppReviewSummary } from "./tools/getAppReviewSummary.js";
 import { register as registerGetRegionalPricing } from "./tools/getRegionalPricing.js";
+import { register as registerClearAchievement } from "./tools/clearAchievement.js";
+import { register as registerGetSchemaForGame } from "./tools/getSchemaForGame.js";
+import { register as registerGetNewsForApp } from "./tools/getNewsForApp.js";
+import { register as registerGetLeaderboardsForGame } from "./tools/getLeaderboardsForGame.js";
+import { register as registerGetPlayerAchievements } from "./tools/getPlayerAchievements.js";
 
 const server = new McpServer({
   name: "steam-mcp",
-  version: "0.5.0",
+  version: "0.6.0",
 });
 
 registerGetAppDetails(server);
@@ -49,6 +54,11 @@ registerGetReviews(server);
 registerGetPriceOverview(server);
 registerGetAppReviewSummary(server);
 registerGetRegionalPricing(server);
+registerClearAchievement(server);
+registerGetSchemaForGame(server);
+registerGetNewsForApp(server);
+registerGetLeaderboardsForGame(server);
+registerGetPlayerAchievements(server);
 
 async function main(): Promise<void> {
   const transport = new StdioServerTransport();

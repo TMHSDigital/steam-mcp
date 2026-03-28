@@ -1,8 +1,7 @@
 import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import {
-  steamPartnerUrl,
-  steamFetch,
+  steamPartnerPost,
   requireApiKey,
   errorResponse,
 } from "../utils/steam-api.js";
@@ -44,7 +43,7 @@ export function register(server: McpServer): void {
       try {
         const key = requireApiKey();
 
-        const url = steamPartnerUrl(
+        const data = (await steamPartnerPost(
           "/ISteamLeaderboards/SetLeaderboardScore/v1/",
           {
             key,
@@ -54,9 +53,7 @@ export function register(server: McpServer): void {
             score,
             scoremethod: scoremethod ?? "KeepBest",
           },
-        );
-
-        const data = (await steamFetch(url, { method: "POST" })) as {
+        )) as {
           result?: {
             result?: number;
             leaderboard_entry_count?: number;

@@ -59,6 +59,24 @@ export function steamPartnerUrl(
   return buildUrl(STEAM_PARTNER_BASE, path, params);
 }
 
+export async function steamPartnerPost(
+  path: string,
+  params: Record<string, string | number | boolean | undefined>,
+): Promise<unknown> {
+  const url = new URL(path, STEAM_PARTNER_BASE).toString();
+  const body = new URLSearchParams();
+  for (const [key, value] of Object.entries(params)) {
+    if (value !== undefined) {
+      body.set(key, String(value));
+    }
+  }
+  return steamFetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: body.toString(),
+  });
+}
+
 const MAX_RETRIES = 2;
 const BASE_RETRY_DELAY_MS = 1_000;
 
