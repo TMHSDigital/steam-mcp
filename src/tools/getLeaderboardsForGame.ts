@@ -1,12 +1,11 @@
 import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import {
-  steamPartnerUrl,
+  steamApiUrl,
   steamFetch,
-  requireApiKey,
+  getApiKey,
   errorResponse,
 } from "../utils/steam-api.js";
-import { SteamApiError } from "../utils/errors.js";
 
 const inputSchema = {
   appid: z
@@ -19,12 +18,12 @@ const inputSchema = {
 export function register(server: McpServer): void {
   server.tool(
     "steam_getLeaderboardsForGame",
-    "List all leaderboards for a Steam app, including their numeric IDs, names, sort methods, and display types. Use this to discover leaderboard IDs for steam_getLeaderboardEntries. This is a partner API endpoint - requires a publisher API key with server IP allowlisted in Steamworks.",
+    "List all leaderboards for a Steam app with their numeric IDs, names, and sort methods. Requires a free Steam Web API key (STEAM_API_KEY). No publisher access needed.",
     inputSchema,
     async ({ appid }) => {
       try {
-        const key = requireApiKey();
-        const url = steamPartnerUrl(
+        const key = getApiKey();
+        const url = steamApiUrl(
           "/ISteamLeaderboards/GetLeaderboardsForGame/v2/",
           { key, appid },
         );
@@ -42,7 +41,7 @@ export function register(server: McpServer): void {
             content: [
               {
                 type: "text",
-                text: `No leaderboards found for app ${appid}. The app may not have leaderboards configured, or the API key may lack publisher access.`,
+                text: `No leaderboards found for app ${appid}. The app may not have leaderboards configured.`,
               },
             ],
           };
@@ -61,13 +60,6 @@ export function register(server: McpServer): void {
           ],
         };
       } catch (error) {
-        if (error instanceof SteamApiError && (error.statusCode === 400 || error.statusCode === 403)) {
-          return errorResponse(
-            new Error(
-              `HTTP ${error.statusCode} - This tool requires a Steam Publisher API key with the server's IP allowlisted in your Steamworks partner settings. Set STEAM_API_KEY to a publisher key and add the server IP to your Web API key's allowed IP list at https://partner.steamgames.com/doc/webapi_overview/auth`,
-            ),
-          );
-        }
         return errorResponse(error);
       }
     },

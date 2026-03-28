@@ -6,6 +6,7 @@ import {
   requireApiKey,
   errorResponse,
 } from "../utils/steam-api.js";
+import { SteamApiError } from "../utils/errors.js";
 
 const inputSchema = {
   steamid: z
@@ -58,6 +59,13 @@ export function register(server: McpServer): void {
           ],
         };
       } catch (error) {
+        if (error instanceof SteamApiError && (error.statusCode === 403 || error.statusCode === 400)) {
+          return errorResponse(
+            new Error(
+              `Could not retrieve achievements for Steam ID ${steamid}. This tool requires a free Steam Web API key (set STEAM_API_KEY). The player's game details and profile must be public. Get a key at https://steamcommunity.com/dev/apikey`,
+            ),
+          );
+        }
         return errorResponse(error);
       }
     },
