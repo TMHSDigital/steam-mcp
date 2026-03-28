@@ -19,10 +19,14 @@ import { register as registerUpdateWorkshopItem } from "./tools/updateWorkshopIt
 import { register as registerSetAchievement } from "./tools/setAchievement.js";
 import { register as registerUploadLeaderboardScore } from "./tools/uploadLeaderboardScore.js";
 import { register as registerGrantInventoryItem } from "./tools/grantInventoryItem.js";
+import { register as registerGetReviews } from "./tools/getReviews.js";
+import { register as registerGetPriceOverview } from "./tools/getPriceOverview.js";
+import { register as registerGetAppReviewSummary } from "./tools/getAppReviewSummary.js";
+import { register as registerGetRegionalPricing } from "./tools/getRegionalPricing.js";
 
 const server = new McpServer({
   name: "steam-mcp",
-  version: "0.3.0",
+  version: "0.4.0",
 });
 
 registerGetAppDetails(server);
@@ -41,6 +45,10 @@ registerUpdateWorkshopItem(server);
 registerSetAchievement(server);
 registerUploadLeaderboardScore(server);
 registerGrantInventoryItem(server);
+registerGetReviews(server);
+registerGetPriceOverview(server);
+registerGetAppReviewSummary(server);
+registerGetRegionalPricing(server);
 
 async function main(): Promise<void> {
   const transport = new StdioServerTransport();

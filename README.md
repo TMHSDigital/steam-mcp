@@ -84,9 +84,9 @@ Add the Steam MCP server to your Cursor MCP settings (`.cursor/mcp.json` in your
 
 Once configured, the tools are available to Cursor's AI agent. Pair with the [Steam Developer Tools](https://github.com/TMHSDigital/Steam-Cursor-Plugin) plugin for the full skill set.
 
-## Available Tools (v0.3.0)
+## Available Tools (v0.4.0) — 20 Total
 
-### Read Tools (No Auth)
+### Read Tools (No Auth) — 9 tools
 
 These work without an API key:
 
@@ -97,8 +97,12 @@ These work without an API key:
 | `steam.getPlayerCount` | Current concurrent player count |
 | `steam.getAchievementStats` | Global achievement unlock percentages |
 | `steam.getWorkshopItem` | Workshop item details (title, description, tags, subscribers) |
+| `steam.getReviews` | Fetch user reviews with filters for language, sentiment, purchase type |
+| `steam.getPriceOverview` | Batch price check for multiple apps in a specific region |
+| `steam.getAppReviewSummary` | Review score, total counts, and positive percentage (no individual reviews) |
+| `steam.getRegionalPricing` | Pricing breakdown across multiple countries/regions |
 
-### Read Tools (API Key)
+### Read Tools (API Key) — 5 tools
 
 These require `STEAM_API_KEY` to be set:
 
@@ -110,7 +114,7 @@ These require `STEAM_API_KEY` to be set:
 | `steam.getLeaderboardEntries` | Leaderboard scores and rankings (publisher API key + IP allowlist required) |
 | `steam.resolveVanityURL` | Convert vanity URL to 64-bit Steam ID |
 
-### Write Tools (v0.3.0 — Publisher Key)
+### Write / Guidance Tools (Publisher Key) — 6 tools
 
 These require a publisher API key with server IP allowlisted in Steamworks partner settings. SDK-only tools return code examples instead of making HTTP calls.
 
@@ -122,17 +126,6 @@ These require a publisher API key with server IP allowlisted in Steamworks partn
 | `steam.setAchievement` | HTTP POST | Set/unlock achievements via ISteamUserStats partner API (dev/test) |
 | `steam.uploadLeaderboardScore` | HTTP POST | Upload scores via ISteamLeaderboards partner API |
 | `steam.grantInventoryItem` | HTTP POST | Grant inventory items via IInventoryService partner API |
-
-## Planned Tools
-
-### Additional Read Tools (future)
-
-| Tool | Description | Auth |
-|------|-------------|------|
-| `steam.getReviews` | Fetch user reviews with filters | None |
-| `steam.getPriceOverview` | Batch price check across regions | None |
-| `steam.getAppReviewSummary` | Review histogram and summary | None |
-| `steam.getRegionalPricing` | Pricing breakdown by country | None |
 
 ## Steam API Endpoints
 
@@ -152,6 +145,7 @@ These require a publisher API key with server IP allowlisted in Steamworks partn
 | `ISteamUserStats/SetUserStatsForGame/v1` (POST) | Publisher key + IP allowlist |
 | `ISteamLeaderboards/SetLeaderboardScore/v1` (POST) | Publisher key + IP allowlist |
 | `IInventoryService/AddItem/v1` (POST) | Publisher key + IP allowlist |
+| `store.steampowered.com/appreviews/{appid}` | None |
 
 ## Testing
 
@@ -172,7 +166,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for how to add new tools and submit PRs.
 
 ## Related
 
-- [Steam Developer Tools](https://github.com/TMHSDigital/Steam-Cursor-Plugin) - Cursor IDE plugin with 29 skills and 9 rules for Steam/Steamworks development
+- [Steam Developer Tools](https://github.com/TMHSDigital/Steam-Cursor-Plugin) - Cursor IDE plugin with 30 skills and 9 rules for Steam/Steamworks development
 
 ## License
 
