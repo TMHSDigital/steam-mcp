@@ -24,7 +24,7 @@
   "license": "CC-BY-NC-ND-4.0",
   "repository": {
     "type": "git",
-    "url": "https://github.com/TMHSDigital/Steam-MCP"
+    "url": "git+https://github.com/TMHSDigital/Steam-MCP.git"
   },
   "homepage": "https://github.com/TMHSDigital/Steam-MCP#readme",
   "bugs": {
