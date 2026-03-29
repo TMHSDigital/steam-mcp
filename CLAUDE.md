@@ -2,7 +2,7 @@
 
 ## What is this?
 
-An MCP (Model Context Protocol) server that exposes Steam Web API endpoints as structured tools for AI-powered IDEs. It is the companion server for the [Steam Developer Tools](https://github.com/TMHSDigital/Steam-Cursor-Plugin) Cursor plugin, which provides 30 skills and 9 rules for Steam/Steamworks development. The server provides 20 tools: 14 read-only and 6 write/guidance tools.
+An MCP (Model Context Protocol) server that exposes Steam Web API endpoints as structured tools for AI-powered IDEs. It is the companion server for the [Steam Developer Tools](https://github.com/TMHSDigital/Steam-Cursor-Plugin) Cursor plugin, which provides 30 skills and 9 rules for Steam/Steamworks development. The server provides 25 tools: 18 read-only and 7 write/guidance tools.
 
 The plugin's skills reference these MCP tools to fetch live data from Steam - player stats, store info, workshop items, leaderboards, and more.
 
@@ -27,7 +27,7 @@ src/
 - `steam-api.ts` provides `steamFetch()` which handles timeouts (15s via AbortController with `TimeoutError`), HTTP error detection (429 rate limits with up to 2 retries and exponential backoff, 5xx unavailable), and JSON parsing.
 - `errorResponse()` formats errors as MCP-compatible `{ isError: true }` responses.
 - Tools that need an API key call `requireApiKey()` which reads `STEAM_API_KEY` from env and throws `MissingApiKeyError` with setup instructions if missing.
-- No-auth tools (getAppDetails, searchApps, getPlayerCount, getAchievementStats, getWorkshopItem, getReviews, getPriceOverview, getAppReviewSummary, getRegionalPricing) work without any configuration.
+- No-auth tools (getAppDetails, searchApps, getPlayerCount, getAchievementStats, getWorkshopItem, getReviews, getPriceOverview, getAppReviewSummary, getRegionalPricing, getNewsForApp) work without any configuration.
 
 ## How to build and run
 

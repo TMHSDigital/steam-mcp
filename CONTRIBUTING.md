@@ -48,7 +48,7 @@ const inputSchema = {
 
 export function register(server: McpServer): void {
   server.tool(
-    "steam.getReviews",
+    "steam_getReviews",
     "Description of what this tool does. Mention if API key is required.",
     inputSchema,
     async ({ appid }) => {

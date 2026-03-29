@@ -18,7 +18,7 @@
 
 <p align="center">
   <a href="package.json"><img src="https://img.shields.io/node/v/@tmhs/steam-mcp" alt="node"></a>
-  <a href="https://github.com/TMHSDigital/Steam-MCP#available-tools-v060"><img src="https://img.shields.io/badge/MCP_tools-25-blue" alt="MCP tools"></a>
+  <a href="https://github.com/TMHSDigital/Steam-MCP#available-tools-v062"><img src="https://img.shields.io/badge/MCP_tools-25-blue" alt="MCP tools"></a>
   <img src="https://img.shields.io/badge/Steam_Web_API-powered-1b2838" alt="Steam Web API">
 </p>
 
@@ -106,7 +106,7 @@ Add the Steam MCP server to your Cursor MCP settings (`.cursor/mcp.json` in your
 
 Once configured, the tools are available to Cursor's AI agent. Pair with the [Steam Developer Tools](https://github.com/TMHSDigital/Steam-Cursor-Plugin) plugin for the full skill set.
 
-## Available Tools (v0.6.0) - 25 Total
+## Available Tools (v0.6.2) - 25 Total
 
 <details>
 <summary><strong>Read Tools (No Auth) - 10 tools</strong></summary>
