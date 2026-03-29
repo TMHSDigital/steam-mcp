@@ -14,6 +14,7 @@
   <a href="https://www.npmjs.com/package/@tmhs/steam-mcp"><img src="https://img.shields.io/npm/dw/@tmhs/steam-mcp" alt="npm downloads"></a>
   <a href="https://github.com/TMHSDigital/Steam-MCP/stargazers"><img src="https://img.shields.io/github/stars/TMHSDigital/Steam-MCP" alt="GitHub stars"></a>
   <a href="https://github.com/TMHSDigital/Steam-MCP/commits/main"><img src="https://img.shields.io/github/last-commit/TMHSDigital/Steam-MCP" alt="last commit"></a>
+  <a href="https://github.com/TMHSDigital/Steam-MCP/actions/workflows/ci.yml"><img src="https://github.com/TMHSDigital/Steam-MCP/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
 </p>
 
 <p align="center">
@@ -34,7 +35,7 @@ Query Steam store data, player statistics, achievements, reviews, pricing, works
 
 ### Prerequisites
 
-- Node.js 18 or later
+- Node.js 20 or later
 - npm
 
 ### Install
