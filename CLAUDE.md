@@ -1,3 +1,5 @@
+<!-- standards-version: 1.6.3 -->
+
 # CLAUDE.md - Steam MCP Server
 
 ## What is this?
