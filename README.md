@@ -19,13 +19,13 @@
 
 <p align="center">
   <a href="package.json"><img src="https://img.shields.io/node/v/@tmhs/steam-mcp" alt="node"></a>
-  <a href="https://github.com/TMHSDigital/Steam-MCP#available-tools-v070"><img src="https://img.shields.io/badge/MCP_tools-25-blue" alt="MCP tools"></a>
+  <a href="https://github.com/TMHSDigital/Steam-MCP#available-tools-v080"><img src="https://img.shields.io/badge/MCP_tools-26-blue" alt="MCP tools"></a>
   <img src="https://img.shields.io/badge/Steam_Web_API-powered-1b2838" alt="Steam Web API">
 </p>
 
 ---
 
-<p align="center"><strong>25 MCP tools</strong> - 10 no-auth - 8 API key - 7 publisher key</p>
+<p align="center"><strong>26 MCP tools</strong> - 11 no-auth - 8 API key - 7 publisher key</p>
 
 Query Steam store data, player statistics, achievements, reviews, pricing, workshop items, leaderboards, inventory, and player profiles - all as structured MCP tools callable from Cursor's AI agent.
 
@@ -107,10 +107,10 @@ Add the Steam MCP server to your Cursor MCP settings (`.cursor/mcp.json` in your
 
 Once configured, the tools are available to Cursor's AI agent. Pair with the [Steam Developer Tools](https://github.com/TMHSDigital/Steam-Cursor-Plugin) plugin for the full skill set.
 
-## Available Tools (v0.7.0) - 25 Total
+## Available Tools (v0.8.0) - 26 Total
 
 <details>
-<summary><strong>Read Tools (No Auth) - 10 tools</strong></summary>
+<summary><strong>Read Tools (No Auth) - 11 tools</strong></summary>
 
 These work without an API key:
 
@@ -126,6 +126,7 @@ These work without an API key:
 | `steam_getAppReviewSummary` | Review score, total counts, and positive percentage (no individual reviews) |
 | `steam_getRegionalPricing` | Pricing breakdown across multiple countries/regions |
 | `steam_getNewsForApp` | Recent news articles with title, URL, contents, date, and author |
+| `steam_validateStoreAsset` | Local PNG/JPEG vs Valve store and library sizes, plus library-hero heuristics |
 
 </details>
 
@@ -203,6 +204,8 @@ npm run test:watch  # Test watch mode
 ```
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for how to add new tools and submit PRs.
+
+Partner-admin tools (`steam_partnerLogin`, `steam_uploadStoreImage`, `steam_uploadTrailer`) are not registered by this package's default bin and are not in the npm tarball. They live in `src/partner/` for local use only (`STEAM_PARTNER_ADMIN=1` plus a cookie-jar path or Chromium profile dir outside the repo). There is no Publish tool.
 
 </details>
 

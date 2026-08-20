@@ -28,10 +28,11 @@ import { register as registerGetSchemaForGame } from "./tools/getSchemaForGame.j
 import { register as registerGetNewsForApp } from "./tools/getNewsForApp.js";
 import { register as registerGetLeaderboardsForGame } from "./tools/getLeaderboardsForGame.js";
 import { register as registerGetPlayerAchievements } from "./tools/getPlayerAchievements.js";
+import { register as registerValidateStoreAsset } from "./tools/validateStoreAsset.js";
 
 const server = new McpServer({
   name: "steam-mcp",
-  version: "0.7.0",
+  version: "0.8.0",
 });
 
 registerGetAppDetails(server);
@@ -59,6 +60,7 @@ registerGetSchemaForGame(server);
 registerGetNewsForApp(server);
 registerGetLeaderboardsForGame(server);
 registerGetPlayerAchievements(server);
+registerValidateStoreAsset(server);
 
 async function main(): Promise<void> {
   const transport = new StdioServerTransport();
