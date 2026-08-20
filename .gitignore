@@ -2,9 +2,41 @@ node_modules/
 dist/
 .env
 .env.*
+.env.local
+.env.partner
 !.env.example
 *.ssfn
+ssfn*
 config.vdf
+loginusers.vdf
+local.vdf
+
+# Cookie jars and Playwright auth
+cookies.txt
+cookies.json
+*.cookies
+*cookie-jar*
+storageState.json
+**/playwright/.auth/
+
+# Chromium / Playwright profiles (never store these in-repo)
+**/*user-data-dir*/
+**/chromium-profile/
+**/partner-profile/
+**/.pw-profile/
+playwright-report/
+blob-report/
+*.har
+
+# Generic secrets
+secrets.json
+*.pem
+*.key
+*.p12
+
+# Partner-admin dry-run dumps
+partner-dry-run*.json
+admin-save-payload*.json
 
 # OS
 .DS_Store

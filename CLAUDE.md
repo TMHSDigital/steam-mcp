@@ -4,7 +4,7 @@
 
 ## What is this?
 
-An MCP (Model Context Protocol) server that exposes Steam Web API endpoints as structured tools for AI-powered IDEs. It is the companion server for the [Steam Developer Tools](https://github.com/TMHSDigital/Steam-Cursor-Plugin) Cursor plugin, which provides 30 skills and 9 rules for Steam/Steamworks development. The server provides 25 tools: 18 read-only and 7 write/guidance tools.
+An MCP (Model Context Protocol) server that exposes Steam Web API endpoints as structured tools for AI-powered IDEs. It is the companion server for the [Steam Developer Tools](https://github.com/TMHSDigital/Steam-Cursor-Plugin) Cursor plugin, which provides 30 skills and 9 rules for Steam/Steamworks development. The server provides 26 tools: 19 read-only and 7 write/guidance tools.
 
 The plugin's skills reference these MCP tools to fetch live data from Steam - player stats, store info, workshop items, leaderboards, and more.
 
@@ -17,7 +17,13 @@ src/
     getAppDetails.ts     Each file exports a register(server) function
     searchApps.ts        that adds one tool with its name, description,
     getPlayerCount.ts    zod input schema, and async handler
+    validateStoreAsset.ts
     ...
+  storeAssets/
+    slots.ts             Valve pixel sizes and unofficial Partner form field names
+    png.ts               PNG/JPEG header parse plus PNG pixel decode
+    heroHeuristics.ts    Library-hero ribbon / seam / wordmark checks
+    validate.ts          Pure validateStoreAsset(path, slot)
   utils/
     steam-api.ts         Shared fetch wrapper, URL builders, API key helper, error formatting
     errors.ts            Custom error classes (rate limit, missing key, unavailable)
@@ -29,7 +35,7 @@ src/
 - `steam-api.ts` provides `steamFetch()` which handles timeouts (15s via AbortController with `TimeoutError`), HTTP error detection (429 rate limits with up to 2 retries and exponential backoff, 5xx unavailable), and JSON parsing.
 - `errorResponse()` formats errors as MCP-compatible `{ isError: true }` responses.
 - Tools that need an API key call `requireApiKey()` which reads `STEAM_API_KEY` from env and throws `MissingApiKeyError` with setup instructions if missing.
-- No-auth tools (getAppDetails, searchApps, getPlayerCount, getAchievementStats, getWorkshopItem, getReviews, getPriceOverview, getAppReviewSummary, getRegionalPricing, getNewsForApp) work without any configuration.
+- No-auth tools (getAppDetails, searchApps, getPlayerCount, getAchievementStats, getWorkshopItem, getReviews, getPriceOverview, getAppReviewSummary, getRegionalPricing, getNewsForApp, validateStoreAsset) work without any configuration.
 
 ## How to build and run
 
@@ -74,6 +80,9 @@ No-auth tools can be tested without setting `STEAM_API_KEY`.
 | Variable | Required | Description |
 |----------|----------|-------------|
 | `STEAM_API_KEY` | For some tools | Steam Web API key from https://steamcommunity.com/dev/apikey |
+| `STEAM_PARTNER_ADMIN` | Partner process only | Must be `1` to start `src/partner/index.ts`. Ignored by the default bin. |
+| `STEAM_PARTNER_COOKIES` | Partner process only | Path to a cookie jar. Never a cookie string. Gitignored. |
+| `STEAM_PARTNER_PROFILE_DIR` | Partner process only | Chromium user-data dir outside the repo. |
 
 ## Relationship to the companion plugin
 
