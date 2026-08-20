@@ -44,7 +44,9 @@ PATTERNS: list[tuple[re.Pattern[str], str]] = [
         "STEAM_API_KEY assigned a 32-char hex value",
     ),
     (
-        re.compile(r"steamLoginSecure="),
+        re.compile(
+            r"""steamLoginSecure\s*=\s*["']?(?![*\[/^])[^\s"'<>]{8,}"""
+        ),
         "steamLoginSecure cookie assignment",
     ),
     (

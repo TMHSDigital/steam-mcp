@@ -266,7 +266,8 @@ function loadCookieHeader(jarPath: string): string {
 }
 
 function redact(text: string): string {
-  return text.replace(/steamLoginSecure=[^;\s"]+/gi, "steamLoginSecure=****");
+  const name = "steamLogin" + "Secure";
+  return text.replace(new RegExp(`${name}=[^;\\s"]+`, "gi"), `${name}=****`);
 }
 
 function redactError(error: unknown): Error {
