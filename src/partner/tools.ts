@@ -3,8 +3,11 @@ import { basename } from "node:path";
 import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { errorResponse } from "../utils/steam-api.js";
+import { refuseIfUnconfirmed } from "../utils/confirm.js";
 import { STORE_ASSET_SLOTS, SLOT_FORM_FIELD } from "../storeAssets/slots.js";
 import { validateStoreAsset } from "../storeAssets/validate.js";
+
+export { refuseIfUnconfirmed };
 
 function cookiePath(): string | undefined {
   const raw = process.env.STEAM_PARTNER_COOKIES?.trim();
@@ -24,13 +27,6 @@ function authError(message: string): {
     content: [{ type: "text", text: `[AUTH_MISSING] ${message}` }],
     isError: true,
   };
-}
-
-export function refuseIfUnconfirmed(dryRun: boolean, confirm: boolean | undefined): string | null {
-  if (!dryRun && confirm !== true) {
-    return "confirm must be true when dry_run is false. No request was sent.";
-  }
-  return null;
 }
 
 export function registerPartnerLogin(server: McpServer): void {
