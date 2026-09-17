@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Security
 
 - All five default-bin Partner API write tools (`steam_grantInventoryItem`, `steam_setAchievement`, `steam_clearAchievement`, `steam_uploadLeaderboardScore`, `steam_updateWorkshopItem`) now default to `dry_run: true` and refuse to contact Steam unless `confirm: true`.
-- `steam_getReviews`, `steam_queryWorkshop`, and `steam_getWorkshopItem` label untrusted user-authored text so agents treat it as data to summarize, not as commands. The label is defense in depth. The confirm gate is the control.
+- `steam_getReviews`, `steam_queryWorkshop`, `steam_getWorkshopItem`, and `steam_getNewsForApp` label untrusted free text (user-authored or third-party) so agents treat it as data to summarize, not as commands. The label is defense in depth. The confirm gate is the control. `steam_getPlayerSummary` and `steam_getAppDetails` are deliberately unlabeled.
 - Reported by Syed Anas Mohiuddin, Independent Researcher, Maintainer of mcp-safeguard
 
 ### Changed
