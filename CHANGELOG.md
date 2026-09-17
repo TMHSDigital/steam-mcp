@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - All five default-bin Partner API write tools (`steam_grantInventoryItem`, `steam_setAchievement`, `steam_clearAchievement`, `steam_uploadLeaderboardScore`, `steam_updateWorkshopItem`) now default to `dry_run: true` and refuse to contact Steam unless `confirm: true`.
 - `steam_getReviews` and `steam_queryWorkshop` label untrusted user-authored text so agents treat it as data to summarize, not as commands.
-- Reported by Syed Anas Mohiuddin, Independent Researcher, Maintainer of mcp-safeguard (https://github.com/SyedAnas01/mcp-safeguard )
+- Reported by Syed Anas Mohiuddin, Independent Researcher, Maintainer of mcp-safeguard
 
 ### Changed
 

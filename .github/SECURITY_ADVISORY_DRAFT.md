@@ -61,6 +61,6 @@ Upgrade to `@tmhs/steam-mcp` 0.9.0. Write tools now default to `dry_run: true` a
 
 ## Credit
 
-Reported by Syed Anas Mohiuddin, Independent Researcher, Maintainer of mcp-safeguard (https://github.com/SyedAnas01/mcp-safeguard )
+Reported by Syed Anas Mohiuddin, Independent Researcher, Maintainer of mcp-safeguard
 
 Disclosed as part of an MCP-server security research effort.
