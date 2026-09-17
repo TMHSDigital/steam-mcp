@@ -6,6 +6,12 @@ import {
   errorResponse,
 } from "../utils/steam-api.js";
 import { SteamApiError } from "../utils/errors.js";
+import {
+  confirmSchema,
+  refuseIfUnconfirmed,
+  refusal,
+  dryRunResponse,
+} from "../utils/confirm.js";
 
 const inputSchema = {
   appid: z
@@ -32,26 +38,43 @@ const inputSchema = {
     .describe(
       "KeepBest only updates if better than existing; ForceUpdate always overwrites (default: KeepBest)",
     ),
+  ...confirmSchema,
 };
 
 export function register(server: McpServer): void {
   server.tool(
     "steam_uploadLeaderboardScore",
-    "Upload a score to a Steam leaderboard via the partner API. Requires a publisher API key with server IP allowlisted in Steamworks partner settings.",
+    "MUTATES LIVE LEADERBOARD ENTRY. Default dry_run=true; requires confirm=true to send. Upload a score to a Steam leaderboard via the partner API. Requires a publisher API key with server IP allowlisted in Steamworks partner settings.",
     inputSchema,
-    async ({ appid, leaderboardid, steamid, score, scoremethod }) => {
+    async ({ appid, leaderboardid, steamid, score, scoremethod, dry_run, confirm }) => {
       try {
+        const dryRun = dry_run !== false;
+        const blocked = refuseIfUnconfirmed(dryRun, confirm);
+        if (blocked) return refusal(blocked);
+
+        const params = {
+          appid,
+          leaderboardid,
+          steamid,
+          score,
+          scoremethod: scoremethod ?? "KeepBest",
+        };
+
+        if (dryRun) {
+          return dryRunResponse("steam_uploadLeaderboardScore", {
+            method: "POST",
+            endpoint: "/ISteamLeaderboards/SetLeaderboardScore/v1/",
+            params,
+          });
+        }
+
         const key = requireApiKey();
 
         const data = (await steamPartnerPost(
           "/ISteamLeaderboards/SetLeaderboardScore/v1/",
           {
             key,
-            appid,
-            leaderboardid,
-            steamid,
-            score,
-            scoremethod: scoremethod ?? "KeepBest",
+            ...params,
           },
         )) as {
           result?: {

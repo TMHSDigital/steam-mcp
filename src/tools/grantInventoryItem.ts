@@ -6,6 +6,12 @@ import {
   errorResponse,
 } from "../utils/steam-api.js";
 import { SteamApiError } from "../utils/errors.js";
+import {
+  confirmSchema,
+  refuseIfUnconfirmed,
+  refusal,
+  dryRunResponse,
+} from "../utils/confirm.js";
 
 const inputSchema = {
   appid: z
@@ -34,25 +40,42 @@ const inputSchema = {
     .boolean()
     .optional()
     .describe("Whether to notify the player of the grant (default: true)"),
+  ...confirmSchema,
 };
 
 export function register(server: McpServer): void {
   server.tool(
     "steam_grantInventoryItem",
-    "Grant an inventory item to a player via the partner API. Intended for dev/test or server-side rewards. Requires a publisher API key with server IP allowlisted in Steamworks partner settings.",
+    "MUTATES LIVE INVENTORY. Default dry_run=true; requires confirm=true to send. Grant an inventory item to a player via the partner API. Intended for dev/test or server-side rewards. Requires a publisher API key with server IP allowlisted in Steamworks partner settings.",
     inputSchema,
-    async ({ appid, steamid, itemdefid, quantity, notify }) => {
+    async ({ appid, steamid, itemdefid, quantity, notify, dry_run, confirm }) => {
       try {
+        const dryRun = dry_run !== false;
+        const blocked = refuseIfUnconfirmed(dryRun, confirm);
+        if (blocked) return refusal(blocked);
+
+        const params = {
+          appid,
+          steamid,
+          itemdefid: JSON.stringify([{ itemdefid, quantity: quantity ?? 1 }]),
+          notify: notify ?? true,
+        };
+
+        if (dryRun) {
+          return dryRunResponse("steam_grantInventoryItem", {
+            method: "POST",
+            endpoint: "/IInventoryService/AddItem/v1/",
+            params,
+          });
+        }
+
         const key = requireApiKey();
 
         const data = (await steamPartnerPost(
           "/IInventoryService/AddItem/v1/",
           {
             key,
-            appid,
-            steamid,
-            itemdefid: JSON.stringify([{ itemdefid, quantity: quantity ?? 1 }]),
-            notify: notify ?? true,
+            ...params,
           },
         )) as {
           response?: {

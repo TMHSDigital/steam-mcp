@@ -6,6 +6,12 @@ import {
   errorResponse,
 } from "../utils/steam-api.js";
 import { SteamApiError } from "../utils/errors.js";
+import {
+  confirmSchema,
+  refuseIfUnconfirmed,
+  refusal,
+  dryRunResponse,
+} from "../utils/confirm.js";
 
 const inputSchema = {
   steamid: z
@@ -23,26 +29,43 @@ const inputSchema = {
     .describe(
       "Achievement API name (e.g. ACH_BEAT_LEVEL_1). Must match a name configured in Steamworks.",
     ),
+  ...confirmSchema,
 };
 
 export function register(server: McpServer): void {
   server.tool(
     "steam_setAchievement",
-    "Set (unlock) an achievement for a player via the partner API. Intended for dev/test use. Requires a publisher API key with server IP allowlisted in Steamworks partner settings.",
+    "MUTATES LIVE ACHIEVEMENT STATE. Default dry_run=true; requires confirm=true to send. Set (unlock) an achievement for a player via the partner API. Intended for dev/test use. Requires a publisher API key with server IP allowlisted in Steamworks partner settings.",
     inputSchema,
-    async ({ steamid, appid, achievement }) => {
+    async ({ steamid, appid, achievement, dry_run, confirm }) => {
       try {
+        const dryRun = dry_run !== false;
+        const blocked = refuseIfUnconfirmed(dryRun, confirm);
+        if (blocked) return refusal(blocked);
+
+        const params = {
+          steamid,
+          appid,
+          count: 1,
+          "name[0]": achievement,
+          "value[0]": 1,
+        };
+
+        if (dryRun) {
+          return dryRunResponse("steam_setAchievement", {
+            method: "POST",
+            endpoint: "/ISteamUserStats/SetUserStatsForGame/v1/",
+            params,
+          });
+        }
+
         const key = requireApiKey();
 
         const data = await steamPartnerPost(
           "/ISteamUserStats/SetUserStatsForGame/v1/",
           {
             key,
-            steamid,
-            appid,
-            count: 1,
-            "name[0]": achievement,
-            "value[0]": 1,
+            ...params,
           },
         );
 
