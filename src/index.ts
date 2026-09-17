@@ -32,7 +32,7 @@ import { register as registerValidateStoreAsset } from "./tools/validateStoreAss
 
 const server = new McpServer({
   name: "steam-mcp",
-  version: "0.8.0",
+  version: "0.9.0",
 });
 
 registerGetAppDetails(server);
