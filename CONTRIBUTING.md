@@ -77,7 +77,9 @@ registerGetReviews(server);
 
 4. If the tool needs an API key, use `requireApiKey()` from `steam-api.ts` and mention it in the tool description.
 
-5. Build and test:
+5. If the tool performs a live mutation (inventory grant, achievement/stat write, leaderboard write, Workshop metadata update, Partner-admin upload, or similar), spread `confirmSchema` from `src/utils/confirm.ts`, call `refuseIfUnconfirmed` before any network I/O, run the dry-run branch before `requireApiKey()`, and prepend a capability warning to the tool description. Do not add a new write tool that can send unconfirmed. Read-only Steam POSTs (for example `GetPublishedFileDetails`) are not mutations and must not use this gate.
+
+6. Build and test:
 
 ```bash
 npm run build
@@ -90,6 +92,7 @@ npm run build
 - Never hardcode API keys. Always read from `STEAM_API_KEY` environment variable.
 - Every tool should have a clear description and well-typed zod input schema with `.describe()` on each field.
 - Wrap all tool handlers in try/catch and use `errorResponse()` for error formatting.
+- Live mutations must use the shared confirm gate (`confirmSchema`, `refuseIfUnconfirmed`, dry-run before `requireApiKey()`).
 
 ## Pull request guidelines
 
