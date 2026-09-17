@@ -34,7 +34,7 @@ CWE-862 Missing Authorization
 
 Five tools registered in the default `steam-mcp` bin POST to the live Steam Partner Web API as soon as they are invoked. They had no dry-run default, no confirmation flag, and no code path that could refuse an unconfirmed call. The same repository already gated Partner-admin image and trailer uploads behind `refuseIfUnconfirmed` plus a separate process requiring `STEAM_PARTNER_ADMIN=1`. The five default-bin write tools had neither layer.
 
-Two read tools return Steam user-authored text into the agent context without labeling it as untrusted. That is the injection path that can reach the ungated sinks.
+Two read tools in the original report (`steam_getReviews`, `steam_queryWorkshop`) returned Steam user-authored text into the agent context without labeling it as untrusted. `steam_getWorkshopItem` is the same class (Workshop title and description). That is the injection path that can reach the ungated sinks.
 
 ## Impact
 
@@ -52,8 +52,9 @@ An agent with this server enabled and a Steam publisher Web API key in `STEAM_AP
 
 - `steam_getReviews` returns full review bodies.
 - `steam_queryWorkshop` returns Workshop `title` and `short_description`.
+- `steam_getWorkshopItem` returns Workshop `title` and `description`.
 
-Those fields are authored by arbitrary Steam users. In 0.8.0 they were returned verbatim with no delimiting. 0.9.0 still returns the full text (it is not stripped) but labels it as untrusted data.
+Those fields are authored by arbitrary Steam users. In 0.8.0 they were returned verbatim with no delimiting. 0.9.0 still returns the full text (it is not stripped) but labels it as untrusted data. The label is defense in depth. The confirm gate on write tools is the control.
 
 ## Remediation
 
