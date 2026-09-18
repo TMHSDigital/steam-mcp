@@ -4,7 +4,7 @@
 
 ## What is this?
 
-An MCP (Model Context Protocol) server that exposes Steam Web API endpoints as structured tools for AI-powered IDEs. It is the companion server for the [Steam Developer Tools](https://github.com/TMHSDigital/Steam-Cursor-Plugin) Cursor plugin, which provides 30 skills and 9 rules for Steam/Steamworks development. The server provides 26 tools: 19 read-only and 7 write/guidance tools.
+An MCP (Model Context Protocol) server that exposes Steam Web API endpoints as structured tools for AI-powered IDEs. It is the companion server for the [Steam Developer Tools](https://github.com/TMHSDigital/Steam-Cursor-Plugin) Cursor plugin, which provides 30 skills and 9 rules for Steam/Steamworks development. The server provides 26 tools: 19 read-only, 5 write (Partner API mutations gated by confirm/dry-run), and 2 SDK code-example generators.
 
 The plugin's skills reference these MCP tools to fetch live data from Steam - player stats, store info, workshop items, leaderboards, and more.
 
@@ -26,6 +26,7 @@ src/
     validate.ts          Pure validateStoreAsset(path, slot)
   utils/
     steam-api.ts         Shared fetch wrapper, URL builders, API key helper, error formatting
+    confirm.ts           Shared dry_run/confirm gate for any live mutation
     errors.ts            Custom error classes (rate limit, missing key, unavailable)
 ```
 
@@ -35,6 +36,7 @@ src/
 - `steam-api.ts` provides `steamFetch()` which handles timeouts (15s via AbortController with `TimeoutError`), HTTP error detection (429 rate limits with up to 2 retries and exponential backoff, 5xx unavailable), and JSON parsing.
 - `errorResponse()` formats errors as MCP-compatible `{ isError: true }` responses.
 - Tools that need an API key call `requireApiKey()` which reads `STEAM_API_KEY` from env and throws `MissingApiKeyError` with setup instructions if missing.
+- Any tool that performs a live mutation must use the shared confirm gate in `src/utils/confirm.ts`: spread `confirmSchema`, call `refuseIfUnconfirmed` before any network I/O, run the dry-run branch before `requireApiKey()`, and never send unless `dry_run: false` and `confirm: true`.
 - No-auth tools (getAppDetails, searchApps, getPlayerCount, getAchievementStats, getWorkshopItem, getReviews, getPriceOverview, getAppReviewSummary, getRegionalPricing, getNewsForApp, validateStoreAsset) work without any configuration.
 
 ## How to build and run
@@ -55,7 +57,7 @@ npm test            # single run
 npm run test:watch  # watch mode
 ```
 
-Tests cover error classes, `steamFetch` behavior (mocked fetch), retry logic, and Zod input validation for tools.
+Tests cover error classes, `steamFetch` behavior (mocked fetch), retry logic, Zod input validation for tools, and the confirm/dry-run gate on write tools.
 
 **Manual testing** via MCP inspector or by configuring as an MCP server in Cursor:
 

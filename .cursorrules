@@ -1,2 +1,3 @@
 - Never use em dashes (-). Use a regular dash (-) or rewrite the sentence instead.
 - Never hardcode Steam API keys. Always read from STEAM_API_KEY environment variable.
+- Any tool that performs a live mutation must use the shared confirm gate from src/utils/confirm.ts (dry_run default true, confirm required to send).

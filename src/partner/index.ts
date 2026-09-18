@@ -30,7 +30,7 @@ if (!cookies && !profile) {
 
 const server = new McpServer({
   name: "steam-mcp-partner",
-  version: "0.8.0",
+  version: "0.9.0",
 });
 
 registerPartnerLogin(server);

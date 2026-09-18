@@ -6,6 +6,12 @@ import {
   requireApiKey,
   errorResponse,
 } from "../utils/steam-api.js";
+import {
+  confirmSchema,
+  refuseIfUnconfirmed,
+  refusal,
+  dryRunResponse,
+} from "../utils/confirm.js";
 
 const inputSchema = {
   publishedfileid: z
@@ -33,19 +39,21 @@ const inputSchema = {
     .array(z.string())
     .optional()
     .describe("Replace the item's tags with this list"),
+  ...confirmSchema,
 };
 
 export function register(server: McpServer): void {
   server.tool(
     "steam_updateWorkshopItem",
-    "Update metadata for an existing Steam Workshop item (title, description, visibility, tags) via the partner API. Requires a publisher API key with server IP allowlisted. File content updates require the SDK.",
+    "MUTATES LIVE WORKSHOP ITEM METADATA. Default dry_run=true; requires confirm=true to send. Update metadata for an existing Steam Workshop item (title, description, visibility, tags) via the partner API. Does not change the store page listing. Requires a publisher API key with server IP allowlisted. File content updates require the SDK.",
     inputSchema,
-    async ({ publishedfileid, appid, title, file_description, visibility, tags }) => {
+    async ({ publishedfileid, appid, title, file_description, visibility, tags, dry_run, confirm }) => {
       try {
-        const key = requireApiKey();
+        const dryRun = dry_run !== false;
+        const blocked = refuseIfUnconfirmed(dryRun, confirm);
+        if (blocked) return refusal(blocked);
 
         const params: Record<string, string | number | boolean | undefined> = {
-          key,
           publishedfileid,
           appid,
           title,
@@ -59,9 +67,22 @@ export function register(server: McpServer): void {
           });
         }
 
+        if (dryRun) {
+          return dryRunResponse("steam_updateWorkshopItem", {
+            method: "POST",
+            endpoint: "/IPublishedFileService/UpdateDetails/v1/",
+            params,
+          });
+        }
+
+        const key = requireApiKey();
+
         const url = steamPartnerUrl(
           "/IPublishedFileService/UpdateDetails/v1/",
-          params,
+          {
+            key,
+            ...params,
+          },
         );
 
         const data = await steamFetch(url, { method: "POST" });
