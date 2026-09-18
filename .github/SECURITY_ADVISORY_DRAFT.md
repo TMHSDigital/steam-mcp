@@ -18,9 +18,9 @@ Rationale: an unauthenticated Steam user can author review or Workshop text that
 
 ## CWE
 
-CWE-862 Missing Authorization
+CWE-693: Protection Mechanism Failure
 
-(The publisher API key is still required. What was missing is a confirmation step before a live mutation.)
+The publisher API key check was present and enforced. What was absent was a confirmation step between an authorized caller and a state-mutating call, so an authorized agent acting on injected instructions could trigger a live mutation with no interposed check.
 
 ## Affected versions
 
