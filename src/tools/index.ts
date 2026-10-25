@@ -27,38 +27,87 @@ import { register as registerGetLeaderboardsForGame } from "./getLeaderboardsFor
 import { register as registerGetPlayerAchievements } from "./getPlayerAchievements.js";
 import { register as registerValidateStoreAsset } from "./validateStoreAsset.js";
 
-/** Every default-bin tool. Partner-admin tools live in src/partner. */
-const REGISTRARS: Array<(server: McpServer) => void> = [
-  registerGetAppDetails,
-  registerSearchApps,
-  registerGetPlayerCount,
-  registerGetAchievementStats,
-  registerGetPlayerSummary,
-  registerGetOwnedGames,
-  registerGetWorkshopItem,
-  registerQueryWorkshop,
-  registerGetLeaderboardEntries,
-  registerResolveVanityURL,
-  registerCreateLobby,
-  registerUploadWorkshopItem,
-  registerUpdateWorkshopItem,
-  registerSetAchievement,
-  registerUploadLeaderboardScore,
-  registerGrantInventoryItem,
-  registerGetReviews,
-  registerGetPriceOverview,
-  registerGetAppReviewSummary,
-  registerGetRegionalPricing,
-  registerClearAchievement,
-  registerGetSchemaForGame,
-  registerGetNewsForApp,
-  registerGetLeaderboardsForGame,
-  registerGetPlayerAchievements,
-  registerValidateStoreAsset,
-];
+type Registrar = (server: McpServer) => void;
 
-/** Registers every default-bin tool and returns how many were registered. */
+/**
+ * Every default-bin tool, grouped so users can load only what they need
+ * (STEAM_MCP_TOOLSETS). Partner-admin tools live in src/partner.
+ */
+export const TOOLSETS = {
+  store: [
+    registerGetAppDetails,
+    registerSearchApps,
+    registerGetPlayerCount,
+    registerGetAchievementStats,
+    registerGetPriceOverview,
+    registerGetRegionalPricing,
+    registerGetReviews,
+    registerGetAppReviewSummary,
+    registerGetNewsForApp,
+  ],
+  community: [
+    registerGetPlayerSummary,
+    registerGetOwnedGames,
+    registerGetPlayerAchievements,
+    registerResolveVanityURL,
+    registerGetWorkshopItem,
+    registerQueryWorkshop,
+  ],
+  publisher: [registerGetLeaderboardsForGame, registerGetLeaderboardEntries, registerGetSchemaForGame],
+  mutations: [
+    registerUpdateWorkshopItem,
+    registerSetAchievement,
+    registerClearAchievement,
+    registerUploadLeaderboardScore,
+    registerGrantInventoryItem,
+  ],
+  sdk: [registerCreateLobby, registerUploadWorkshopItem],
+  assets: [registerValidateStoreAsset],
+} satisfies Record<string, Registrar[]>;
+
+export type ToolsetName = keyof typeof TOOLSETS;
+
+export const TOOLSET_NAMES = Object.keys(TOOLSETS) as ToolsetName[];
+
+/** Live-mutation tools are opt-in: STEAM_MCP_TOOLSETS=all or a list that names mutations. */
+export const DEFAULT_TOOLSETS: ToolsetName[] = TOOLSET_NAMES.filter((n) => n !== "mutations");
+
+export interface ToolsetSelection {
+  enabled: ToolsetName[];
+  /** Names in the env var that are not toolsets. */
+  unknown: string[];
+}
+
+/** Parse STEAM_MCP_TOOLSETS and STEAM_MCP_READ_ONLY. */
+export function selectToolsets(env: NodeJS.ProcessEnv = process.env): ToolsetSelection {
+  const raw = env.STEAM_MCP_TOOLSETS?.trim();
+  const requested = raw
+    ? raw.split(",").map((s) => s.trim().toLowerCase()).filter(Boolean)
+    : DEFAULT_TOOLSETS;
+  const unknown = requested.filter((n) => n !== "all" && !(n in TOOLSETS));
+  let enabled = requested.includes("all")
+    ? [...TOOLSET_NAMES]
+    : TOOLSET_NAMES.filter((n) => requested.includes(n));
+  const readOnly = ["1", "true", "yes"].includes(env.STEAM_MCP_READ_ONLY?.trim().toLowerCase() ?? "");
+  if (readOnly) {
+    enabled = enabled.filter((n) => n !== "mutations");
+  }
+  return { enabled, unknown };
+}
+
+/** Registers the tools in `toolsets` and returns how many were registered. */
+export function registerToolsets(server: McpServer, toolsets: readonly ToolsetName[]): number {
+  let count = 0;
+  for (const name of toolsets) {
+    for (const register of TOOLSETS[name]) {
+      register(server);
+      count++;
+    }
+  }
+  return count;
+}
+
+/** Registers every default-bin tool (all toolsets) and returns how many were registered. */
 export function registerAllTools(server: McpServer): number {
-  for (const register of REGISTRARS) register(server);
-  return REGISTRARS.length;
+  return registerToolsets(server, TOOLSET_NAMES);
 }

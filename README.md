@@ -161,6 +161,25 @@ See [SECURITY.md](SECURITY.md) for supported versions and how to report a vulner
 
 ## Available Tools - 26 Total
 
+### Toolsets
+
+Tools are grouped into toolsets so an agent only loads the ones you need. Set `STEAM_MCP_TOOLSETS` in the server's `env` to a comma-separated list, or `all`. By default every toolset except `mutations` is enabled, so **live-mutation tools are opt-in**. `STEAM_MCP_READ_ONLY=1` removes `mutations` even when it is listed.
+
+| Toolset | Tools | Default |
+|---------|-------|---------|
+| `store` | getAppDetails, searchApps, getPlayerCount, getAchievementStats, getPriceOverview, getRegionalPricing, getReviews, getAppReviewSummary, getNewsForApp | on |
+| `community` | getPlayerSummary, getOwnedGames, getPlayerAchievements, resolveVanityURL, getWorkshopItem, queryWorkshop | on |
+| `publisher` | getLeaderboardsForGame, getLeaderboardEntries, getSchemaForGame | on |
+| `sdk` | createLobby, uploadWorkshopItem (code guides, no network) | on |
+| `assets` | validateStoreAsset | on |
+| `mutations` | updateWorkshopItem, setAchievement, clearAchievement, uploadLeaderboardScore, grantInventoryItem | **off** |
+
+```json
+"env": { "STEAM_API_KEY": "your_key_here", "STEAM_MCP_TOOLSETS": "store,publisher,mutations" }
+```
+
+The server also exposes an MCP resource, `steam://server-info`, listing the enabled and disabled toolsets, so an agent can explain why a tool is missing.
+
 <details>
 <summary><strong>Read Tools (No Auth) - 11 tools</strong></summary>
 
@@ -203,7 +222,7 @@ These require `STEAM_API_KEY` to be set:
 <details>
 <summary><strong>Write Tools (Publisher Key) - 5 tools, plus 2 SDK guides</strong></summary>
 
-The five HTTP write tools require a publisher API key with server IP allowlisted in Steamworks partner settings. They default to `dry_run: true` and require `confirm: true` to POST. SDK guides return code examples and make no HTTP calls.
+The five HTTP write tools are in the `mutations` toolset, which is off unless `STEAM_MCP_TOOLSETS` names it (or is `all`). They require a publisher API key with server IP allowlisted in Steamworks partner settings. They default to `dry_run: true` and require `confirm: true` to POST. SDK guides return code examples and make no HTTP calls.
 
 | Tool | Type | Description |
 |------|------|-------------|

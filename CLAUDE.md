@@ -14,7 +14,7 @@ The plugin's skills reference these MCP tools to fetch live data from Steam - pl
 src/
   index.ts              Entry point - creates McpServer, calls registerAllTools, starts stdio transport
   tools/
-    index.ts             registerAllTools(server) - the one list of default-bin tools
+    index.ts             TOOLSETS - the one list of default-bin tools, grouped; selectToolsets() reads the env
     getAppDetails.ts     Each file exports a register(server) function
     searchApps.ts        that calls server.registerTool with name, title,
     getPlayerCount.ts    description, zod input schema, annotations, and handler
@@ -35,7 +35,7 @@ src/
 
 **Key patterns:**
 
-- Each tool is a self-contained module that exports `register(server: McpServer)` and calls `server.registerTool()` (never the deprecated `server.tool()`). Add new tools to `src/tools/index.ts`.
+- Each tool is a self-contained module that exports `register(server: McpServer)` and calls `server.registerTool()` (never the deprecated `server.tool()`). Add new tools to a toolset in `src/tools/index.ts` (live mutations go in `mutations`, which is off by default).
 - Every tool declares `annotations` from `src/utils/annotations.ts`. Confirm-gated writes use `LIVE_WRITE` or `LIVE_WRITE_IDEMPOTENT`; `annotations.test.ts` enforces this.
 - `steam-api.ts` provides `steamFetch()` which handles timeouts (15s via AbortController with `TimeoutError`), HTTP error detection (429 rate limits with up to 2 retries and exponential backoff, 5xx unavailable), and JSON parsing.
 - `errorResponse()` formats errors as MCP-compatible `{ isError: true }` responses.
@@ -88,6 +88,8 @@ No-auth tools can be tested without setting `STEAM_API_KEY`.
 | Variable | Required | Description |
 |----------|----------|-------------|
 | `STEAM_API_KEY` | For some tools | Steam Web API key from https://steamcommunity.com/dev/apikey |
+| `STEAM_MCP_TOOLSETS` | No | Comma-separated toolsets to load (`store`, `community`, `publisher`, `mutations`, `sdk`, `assets`) or `all`. Default: all except `mutations`. |
+| `STEAM_MCP_READ_ONLY` | No | `1` removes the `mutations` toolset even if listed. |
 | `STEAM_MCP_CACHE_TTL` | No | Unset: per-endpoint TTLs for public GETs (30s player count to 1h schema). `0` disables caching. Any other number of seconds replaces every TTL. |
 | `STEAM_MCP_DEBUG` | No | `1` logs each Steam request (host, path, query keys, status, attempt, latency) to stderr and MCP logging. Never logs values. |
 | `STEAM_PARTNER_ADMIN` | Partner process only | Must be `1` to start `src/partner/index.ts`. Ignored by the default bin. |

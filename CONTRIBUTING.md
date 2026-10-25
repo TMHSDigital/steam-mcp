@@ -75,13 +75,16 @@ export function register(server: McpServer): void {
 
    Pick `annotations` from `src/utils/annotations.ts`: `READ_ONLY` for Steam reads, `LOCAL_ONLY` for tools that never touch the network, `LIVE_WRITE` or `LIVE_WRITE_IDEMPOTENT` for confirm-gated mutations.
 
-3. Register it in `src/tools/index.ts`:
+3. Add it to a toolset in `src/tools/index.ts` (`store`, `community`, `publisher`, `mutations`, `sdk`, or `assets`). Live-mutation tools go in `mutations`, which is off by default:
 
 ```typescript
 import { register as registerGetPlayerCount } from "./getPlayerCount.js";
-// ...inside registerAllTools():
-registerGetPlayerCount(server);
+// ...
+export const TOOLSETS = {
+  store: [registerGetAppDetails, registerGetPlayerCount, /* ... */],
 ```
+
+   Add the tool to the README toolset table too.
 4. If the tool needs an API key, use `requireApiKey()` from `steam-api.ts` and mention it in the tool description.
 
 5. If the tool performs a live mutation (inventory grant, achievement/stat write, leaderboard write, Workshop metadata update, Partner-admin upload, or similar), spread `confirmSchema` from `src/utils/confirm.ts`, call `refuseIfUnconfirmed` before any network I/O, run the dry-run branch before `requireApiKey()`, and prepend a capability warning to the tool description. Do not add a new write tool that can send unconfirmed. Read-only Steam POSTs (for example `GetPublishedFileDetails`) are not mutations and must not use this gate.
