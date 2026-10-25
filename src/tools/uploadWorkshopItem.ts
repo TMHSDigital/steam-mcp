@@ -1,5 +1,6 @@
 import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { escapeStringLiteral } from "../utils/string-literal.js";
 
 const inputSchema = {
   appid: z
@@ -74,17 +75,17 @@ export function register(server: McpServer): void {
           "  PublishedFileId_t fileId = pResult->m_nPublishedFileId;",
           "",
           `  UGCUpdateHandle_t handle = SteamUGC()->StartItemUpdate(${appid}, fileId);`,
-          `  SteamUGC()->SetItemTitle(handle, "${title}");`,
+          `  SteamUGC()->SetItemTitle(handle, ${escapeStringLiteral(title, "cpp")});`,
           description
-            ? `  SteamUGC()->SetItemDescription(handle, "${description}");`
+            ? `  SteamUGC()->SetItemDescription(handle, ${escapeStringLiteral(description, "cpp")});`
             : "  // SteamUGC()->SetItemDescription(handle, \"...\");",
-          `  SteamUGC()->SetItemContent(handle, "${content_path ?? "/path/to/content"}");`,
-          `  SteamUGC()->SetItemPreview(handle, "${preview_path ?? "/path/to/preview.jpg"}");`,
+          `  SteamUGC()->SetItemContent(handle, ${escapeStringLiteral(content_path ?? "/path/to/content", "cpp")});`,
+          `  SteamUGC()->SetItemPreview(handle, ${escapeStringLiteral(preview_path ?? "/path/to/preview.jpg", "cpp")});`,
           `  SteamUGC()->SetItemVisibility(handle, ${visEnum});`,
           ...(tags && tags.length > 0
             ? [
                 "  SteamParamStringArray_t tagArray;",
-                `  const char* tagStrings[] = { ${tags.map((t) => `"${t}"`).join(", ")} };`,
+                `  const char* tagStrings[] = { ${tags.map((t) => escapeStringLiteral(t, "cpp")).join(", ")} };`,
                 `  tagArray.m_ppStrings = tagStrings;`,
                 `  tagArray.m_nNumStrings = ${tags.length};`,
                 "  SteamUGC()->SetItemTags(handle, &tagArray);",
@@ -108,9 +109,9 @@ export function register(server: McpServer): void {
           '    print("Failed to create item")',
           "    return",
           "  var handle = Steam.startItemUpdate(app_id, file_id)",
-          `  Steam.setItemTitle(handle, "${title}")`,
-          `  Steam.setItemContent(handle, "${content_path ?? "res://workshop_content"}")`,
-          `  Steam.setItemPreview(handle, "${preview_path ?? "res://preview.png"}")`,
+          `  Steam.setItemTitle(handle, ${escapeStringLiteral(title, "gdscript")})`,
+          `  Steam.setItemContent(handle, ${escapeStringLiteral(content_path ?? "res://workshop_content", "gdscript")})`,
+          `  Steam.setItemPreview(handle, ${escapeStringLiteral(preview_path ?? "res://preview.png", "gdscript")})`,
           `  Steam.setItemVisibility(handle, Steam.REMOTE_STORAGE_PUBLISHED_FILE_VISIBILITY_${vis.toUpperCase()})`,
           '  Steam.submitItemUpdate(handle, "Initial upload")',
         ].join("\n"),

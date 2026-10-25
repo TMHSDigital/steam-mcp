@@ -1,5 +1,6 @@
 import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { escapeStringLiteral } from "../utils/string-literal.js";
 
 const inputSchema = {
   type: z
@@ -37,19 +38,19 @@ export function register(server: McpServer): void {
       const metaCpp = metaEntries
         .map(
           ([k, v]) =>
-            `  SteamMatchmaking()->SetLobbyData(lobbyId, "${k}", "${v}");`,
+            `  SteamMatchmaking()->SetLobbyData(lobbyId, ${escapeStringLiteral(k, "cpp")}, ${escapeStringLiteral(v, "cpp")});`,
         )
         .join("\n");
       const metaCs = metaEntries
         .map(
           ([k, v]) =>
-            `  SteamMatchmaking.SetLobbyData(lobbyId, "${k}", "${v}");`,
+            `  SteamMatchmaking.SetLobbyData(lobbyId, ${escapeStringLiteral(k, "csharp")}, ${escapeStringLiteral(v, "csharp")});`,
         )
         .join("\n");
       const metaGd = metaEntries
         .map(
           ([k, v]) =>
-            `  Steam.setLobbyData(lobby_id, "${k}", "${v}")`,
+            `  Steam.setLobbyData(lobby_id, ${escapeStringLiteral(k, "gdscript")}, ${escapeStringLiteral(v, "gdscript")})`,
         )
         .join("\n");
 
