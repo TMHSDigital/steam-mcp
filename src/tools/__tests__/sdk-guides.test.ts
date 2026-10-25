@@ -82,3 +82,50 @@ describe("SDK guides", () => {
     expect(lobby.csharp).toContain('SetLobbyData(lobbyId, "empty", "")');
   });
 });
+
+describe("SDK guide correctness (#54)", () => {
+  it("lobby guide uses Steamworks.NET enum names, registers call results, and avoids shadowing connect", async () => {
+    const lobby = await callGuide("steam_createLobby", { type: "friends_only", max_members: 8 });
+    expect(lobby.csharp).toContain("ELobbyType.k_ELobbyTypeFriendsOnly");
+    expect(lobby.csharp).not.toMatch(/ELobbyType\.FriendsOnly\b/);
+    expect(lobby.csharp).toContain("CallResult<LobbyCreated_t>.Create(OnLobbyCreated)");
+    expect(lobby.csharp).toContain("m_LobbyCreated.Set(call);");
+    expect(lobby.cpp).toContain("m_LobbyCreated.Set(call, this, &LobbyCreator::OnLobbyCreated);");
+    expect(lobby.cpp).toContain("CCallResult<LobbyCreator, LobbyCreated_t> m_LobbyCreated;");
+    expect(lobby.gdscript).toContain("Steam.lobby_created.connect(_on_lobby_created)");
+    expect(lobby.gdscript).toContain("this_connect: int");
+    expect(lobby.gdscript).not.toMatch(/\(connect: int/);
+  });
+
+  it("Workshop guide returns every promised language and uses every input", async () => {
+    const guide = await callGuide("steam_uploadWorkshopItem", {
+      appid: 480,
+      title: "Map pack",
+      description: "Three maps",
+      tags: ["Maps", "Co-op"],
+      visibility: "unlisted",
+    });
+    for (const language of ["cpp", "csharp", "gdscript"]) {
+      const code = guide[language] as string;
+      expect(code, language).toContain("Map pack");
+      expect(code, language).toContain("Three maps");
+      expect(code, language).toContain("Co-op");
+    }
+    expect(guide.csharp).toContain("EWorkshopFileType.k_EWorkshopFileTypeCommunity");
+    expect(guide.csharp).toContain(
+      "ERemoteStoragePublishedFileVisibility.k_ERemoteStoragePublishedFileVisibilityUnlisted",
+    );
+    expect(guide.csharp).toContain('new List<string> { "Maps", "Co-op" }');
+    expect(guide.cpp).toContain("m_ItemCreated.Set(call, this, &WorkshopUploader::OnItemCreated);");
+    expect(guide.cpp).toContain("m_ItemSubmitted.Set(submit, this, &WorkshopUploader::OnItemSubmitted);");
+    expect(guide.gdscript).toContain('Steam.setItemTags(handle, ["Maps", "Co-op"])');
+    expect(guide.gdscript).toContain('Steam.setItemDescription(handle, "Three maps")');
+  });
+
+  it("omits optional calls when inputs are absent", async () => {
+    const guide = await callGuide("steam_uploadWorkshopItem", { appid: 480, title: "Solo" });
+    expect(guide.csharp).not.toContain("SetItemTags");
+    expect(guide.gdscript).not.toContain("setItemTags");
+    expect(guide.gdscript).toContain('# Steam.setItemDescription(handle, "...")');
+  });
+});
