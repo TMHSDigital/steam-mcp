@@ -1,8 +1,9 @@
-import { mkdtempSync, writeFileSync, rmSync } from "node:fs";
+import { mkdtempSync, writeFileSync, rmSync, readFileSync } from "node:fs";
+import { crc32, deflateSync } from "node:zlib";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, it, expect, afterEach } from "vitest";
-import { encodePng } from "../../storeAssets/png.js";
+import { encodePng, parseImage } from "../../storeAssets/png.js";
 import { validateStoreAsset } from "../../storeAssets/validate.js";
 import type { StoreAssetSlot } from "../../storeAssets/slots.js";
 
@@ -225,5 +226,56 @@ describe("slot coverage", () => {
   it.each(exact)("%s accepts %dx%d", (slot, w, h) => {
     const path = tmpPng(`${slot}.png`, w, h, solid(12, 12, 16));
     expect(validateStoreAsset(path, slot).ok).toBe(true);
+  });
+});
+
+describe("validateStoreAsset resource bounds", () => {
+  function chunk(type: string, data: Buffer): Buffer {
+    const len = Buffer.alloc(4);
+    len.writeUInt32BE(data.length);
+    const body = Buffer.concat([Buffer.from(type, "ascii"), data]);
+    const crc = Buffer.alloc(4);
+    crc.writeUInt32BE(crc32(body));
+    return Buffer.concat([len, body, crc]);
+  }
+
+  function craftedPng(width: number, height: number, idat: Buffer): string {
+    const ihdr = Buffer.alloc(13);
+    ihdr.writeUInt32BE(width, 0);
+    ihdr.writeUInt32BE(height, 4);
+    ihdr[8] = 8;
+    ihdr[9] = 2;
+    const buf = Buffer.concat([
+      Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
+      chunk("IHDR", ihdr),
+      chunk("IDAT", idat),
+      chunk("IEND", Buffer.alloc(0)),
+    ]);
+    const dir = mkdtempSync(join(tmpdir(), "steam-asset-"));
+    dirs.push(dir);
+    const path = join(dir, "crafted.png");
+    writeFileSync(path, buf);
+    return path;
+  }
+
+  it("reports SIZE for a huge declared IHDR without decoding it", () => {
+    const path = craftedPng(60000, 60000, deflateSync(Buffer.alloc(16)));
+    const result = validateStoreAsset(path, "libraryHero");
+    expect(result.ok).toBe(false);
+    expect(result.errors.map((e) => e.code)).toContain("SIZE");
+  });
+
+  it("reports PARSE for a deflate bomb instead of inflating it", () => {
+    const expected = (3840 * 3 + 1) * 1240;
+    const path = craftedPng(3840, 1240, deflateSync(Buffer.alloc(expected * 20)));
+    const result = validateStoreAsset(path, "libraryHero");
+    expect(result.ok).toBe(false);
+    expect(result.errors[0].code).toBe("PARSE");
+    expect(result.errors[0].message).toMatch(/inflates past/);
+  });
+
+  it("refuses to decode beyond the pixel cap even when asked directly", () => {
+    const path = craftedPng(60000, 60000, deflateSync(Buffer.alloc(16)));
+    expect(() => parseImage(readFileSync(path), true)).toThrow(/refusing to decode/);
   });
 });

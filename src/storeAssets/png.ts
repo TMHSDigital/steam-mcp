@@ -9,7 +9,10 @@ export type DecodedImage = {
   rgba?: Uint8Array;
 };
 
-const PNG_SIG = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+/** Upper bound on decoded pixels (64 MB of RGBA). The largest slot, libraryHero, is 3840x1240. */
+export const MAX_DECODE_PIXELS = 16_000_000;
+
+const PNG_SIG =Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
 
 export function parseImage(buf: Buffer, decodePixels: boolean): DecodedImage {
   if (buf.length >= 8 && buf.subarray(0, 8).equals(PNG_SIG)) {
@@ -114,8 +117,26 @@ function parsePng(buf: Buffer, decodePixels: boolean): DecodedImage {
     throw new Error(`PNG color type ${colorType} is not supported (need RGB or RGBA).`);
   }
 
+  if (width * height > MAX_DECODE_PIXELS) {
+    throw new Error(
+      `PNG is ${width}x${height}; refusing to decode more than ${MAX_DECODE_PIXELS} pixels.`,
+    );
+  }
+
   const channels = colorType === 6 ? 4 : 3;
-  const inflated = inflateSync(Buffer.concat(idat));
+  // Cap inflate at exactly what the declared size needs, so a small
+  // compressed IDAT cannot expand into gigabytes (a deflate bomb).
+  const expected = (width * channels + 1) * height;
+  let inflated: Buffer;
+  try {
+    inflated = inflateSync(Buffer.concat(idat), { maxOutputLength: expected });
+  } catch (error) {
+    const code = (error as { code?: string }).code;
+    if (code === "ERR_BUFFER_TOO_LARGE") {
+      throw new Error("PNG IDAT inflates past the size its header declares.");
+    }
+    throw new Error(`PNG IDAT is corrupt: ${error instanceof Error ? error.message : String(error)}`);
+  }
   result.rgba = unfilterPng(inflated, width, height, channels);
   return result;
 }

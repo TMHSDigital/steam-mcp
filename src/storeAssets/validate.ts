@@ -1,7 +1,10 @@
-import { readFileSync } from "node:fs";
+import { readFileSync, statSync } from "node:fs";
 import { SLOT_SPECS, type StoreAssetSlot } from "./slots.js";
 import { parseImage } from "./png.js";
 import { analyzeHero } from "./heroHeuristics.js";
+
+/** Files above this are refused before reading. Steam store images are far smaller. */
+export const MAX_FILE_BYTES = 50 * 1024 * 1024;
 
 export type ValidationIssue = {
   code: string;
@@ -34,6 +37,14 @@ export function validateStoreAsset(path: string, slot: StoreAssetSlot): StoreAss
 
   let buf: Buffer;
   try {
+    const bytes = statSync(path).size;
+    if (bytes > MAX_FILE_BYTES) {
+      errors.push({
+        code: "FILE_SIZE",
+        message: `File is ${bytes} bytes; store images over ${MAX_FILE_BYTES} bytes are rejected without reading.`,
+      });
+      return result;
+    }
     buf = readFileSync(path);
   } catch (error) {
     errors.push({
@@ -43,10 +54,19 @@ export function validateStoreAsset(path: string, slot: StoreAssetSlot): StoreAss
     return result;
   }
 
-  const decodePixels = slot === "libraryHero";
+  // Read the header first. Pixels are decoded only for a libraryHero whose
+  // declared size is already correct, so a bogus IHDR never drives allocation.
   let image;
   try {
-    image = parseImage(buf, decodePixels);
+    image = parseImage(buf, false);
+    const decodePixels =
+      slot === "libraryHero" &&
+      image.format === "png" &&
+      image.width === spec.width &&
+      image.height === spec.height;
+    if (decodePixels) {
+      image = parseImage(buf, true);
+    }
   } catch (error) {
     errors.push({
       code: "PARSE",

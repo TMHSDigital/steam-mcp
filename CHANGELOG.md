@@ -30,6 +30,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security
 
+- `steam_validateStoreAsset` can no longer be made to allocate unbounded memory. It refuses files over 50 MB before reading, decodes library-hero pixels only after the IHDR size matches 3840x1240, caps decoding at 16M pixels, and limits inflate to the size the header declares. A deflate bomb or a forged IHDR now returns a `PARSE` or `SIZE` error instead of crashing the server. (#57)
 - Partner `steam_uploadStoreImage` cookie jar: `#HttpOnly_` rows (including `steamLoginSecure`) are now read, only unexpired cookies for Steam domains matching the request host are sent, and every jar value is redacted from output. Live uploads no longer follow redirects, so an expired session returns `[AUTH_MISSING]` instead of a 200 from the login page. Success requires Partner's `success` flag. Uploads time out after 60s. (#30)
 - Upgraded `zod` to 4.x (GHSA-mrhx-c7xc-m3w5) and `@modelcontextprotocol/sdk` to 1.32.2. `npm audit` is clean. CI now fails on high-severity runtime advisories, and Dependabot covers npm. (#31)
 
