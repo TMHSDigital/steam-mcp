@@ -213,7 +213,7 @@ The five HTTP write tools require a publisher API key with server IP allowlisted
 | `ISteamUserStats/GetGlobalAchievementPercentagesForApp/v2` | None |
 | `ISteamNews/GetNewsForApp/v2` | None |
 | `ISteamRemoteStorage/GetPublishedFileDetails/v1` | None |
-| `store.steampowered.com/appreviews/{appid}` | None |
+| `IUserReviewsService/GetAppReviews/v1` | None |
 | `ISteamUser/GetPlayerSummaries/v2` | API key |
 | `IPlayerService/GetOwnedGames/v1` | API key |
 | `ISteamUser/ResolveVanityURL/v1` | API key |
