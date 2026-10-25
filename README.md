@@ -181,7 +181,7 @@ These require `STEAM_API_KEY` to be set:
 | `steam_resolveVanityURL` | Convert vanity URL to 64-bit Steam ID |
 | `steam_getSchemaForGame` | Achievement/stat schema with display names, descriptions, and icon URLs |
 | `steam_getPlayerAchievements` | Per-player achievement unlock status and timestamps |
-| `steam_getLeaderboardsForGame` | List all leaderboards with numeric IDs, names, and sort methods |
+| `steam_getLeaderboardsForGame` | List all leaderboards with numeric IDs, names, and sort methods. Needs a publisher key. |
 
 </details>
 
@@ -221,7 +221,7 @@ The five HTTP write tools require a publisher API key with server IP allowlisted
 | `ISteamUserStats/GetSchemaForGame/v2` | API key |
 | `ISteamUserStats/GetPlayerAchievements/v1` | API key |
 | `ISteamLeaderboards/GetLeaderboardEntries/v1` | Publisher key |
-| `ISteamLeaderboards/GetLeaderboardsForGame/v2` | API key |
+| `ISteamLeaderboards/GetLeaderboardsForGame/v2` | Publisher key |
 | `IPublishedFileService/UpdateDetails/v1` (POST) | Publisher key |
 | `ISteamUserStats/SetUserStatsForGame/v1` (POST) | Publisher key |
 | `ISteamLeaderboards/SetLeaderboardScore/v1` (POST) | Publisher key |

@@ -1,10 +1,10 @@
 import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import {
-  steamApiUrl,
+  steamPartnerUrl,
   steamFetch,
   requireApiKey,
-  errorResponse,
+  publisherErrorResponse,
 } from "../utils/steam-api.js";
 import { READ_ONLY } from "../utils/annotations.js";
 
@@ -22,14 +22,14 @@ export function register(server: McpServer): void {
     {
       title: "Get Leaderboards For Game",
       description:
-        "List all leaderboards for a Steam app with their numeric IDs, names, and sort methods. Requires a free Steam Web API key (STEAM_API_KEY). No publisher access needed.",
+        "List all leaderboards for a Steam app with their numeric IDs, names, and sort methods. Use it to find the leaderboardid for steam_getLeaderboardEntries and steam_uploadLeaderboardScore. Requires a Steam Publisher API key (STEAM_API_KEY) for an app you own, with the server IP allowlisted. A regular user key gets HTTP 403.",
       inputSchema,
       annotations: READ_ONLY,
     },
     async ({ appid }) => {
       try {
         const key = requireApiKey();
-        const url = steamApiUrl(
+        const url = steamPartnerUrl(
           "/ISteamLeaderboards/GetLeaderboardsForGame/v2/",
           { key, appid },
         );
@@ -66,7 +66,7 @@ export function register(server: McpServer): void {
           ],
         };
       } catch (error) {
-        return errorResponse(error);
+        return publisherErrorResponse(error);
       }
     },
   );

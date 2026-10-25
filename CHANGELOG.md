@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - `steam_queryWorkshop` replaces the integer `query_type` with a `sort` enum (`vote`, `date`, `trend`, `text_search`, `subscriptions`, `playtime`, `updated`) mapped to the correct `EPublishedFileQueryType` values. The old description had "trending" pointing at AcceptedForGame. `requiredtags` is now an array sent as `requiredtags[n]`, with new `match_all_tags`, `excludedtags`, `days`, `return_tags`, and `return_previews` inputs. A search defaults to relevance ordering. **Breaking:** callers passing `query_type` or a comma-separated `requiredtags` string must switch to `sort` and an array. (#53)
 
+- `steam_getLeaderboardsForGame` calls `partner.steam-api.com` and says it needs a publisher key. Valve documents `ISteamLeaderboards` as a publisher interface; the tool claimed a free key was enough. A 401/403 now explains the key and IP-allowlist requirement. (#64)
 - Partner `steam_uploadTrailer` no longer advertises a live upload it cannot perform. It is now plan-only: no `confirm` input, annotated read-only, and `dry_run: false` returns `isError` with `[NOT_IMPLEMENTED]` instead of a success-shaped `ok: false`. (#65)
 - Partner `steam_uploadStoreImage` refuses an unconfirmed live call through the shared `refusal()` (`isError` plus `[CONFIRM_REQUIRED]`), matching the default-bin write tools. A failed pre-upload validation is also `isError`. (#22)
 
