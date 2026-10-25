@@ -39,7 +39,7 @@ export function register(server: McpServer): void {
           if (!entry || !entry.success) {
             results[String(id)] = { error: "App not found or region-locked" };
           } else if (!entry.data?.price_overview) {
-            results[String(id)] = { free: true, price_overview: null };
+            results[String(id)] = { price_overview: null, reason: "no_price_listed" };
           } else {
             results[String(id)] = entry.data.price_overview;
           }

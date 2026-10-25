@@ -2,7 +2,8 @@ import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { steamStoreUrl, steamFetch, errorResponse } from "../utils/steam-api.js";
 
-const DEFAULT_REGIONS = ["US", "GB", "EU", "BR", "RU", "CN", "JP", "AU", "IN", "TR"];
+const DEFAULT_REGIONS = ["US", "GB", "DE", "BR", "RU", "CN", "JP", "AU", "IN", "TR"];
+const MAX_CONCURRENT_REGIONS = 4;
 
 const inputSchema = {
   appid: z
@@ -16,7 +17,7 @@ const inputSchema = {
     .max(20)
     .optional()
     .describe(
-      "Two-letter country codes to check (default: US, GB, EU, BR, RU, CN, JP, AU, IN, TR). Max 20.",
+      "Two-letter country codes to check (default: US, GB, DE, BR, RU, CN, JP, AU, IN, TR). Max 20.",
     ),
 };
 
@@ -30,7 +31,7 @@ export function register(server: McpServer): void {
         const regions = countries ?? DEFAULT_REGIONS;
         const results: Record<string, unknown> = {};
 
-        const fetches = regions.map(async (cc) => {
+        const fetchRegion = async (cc: string) => {
           try {
             const url = steamStoreUrl("/api/appdetails", {
               appids: appid,
@@ -47,16 +48,28 @@ export function register(server: McpServer): void {
             if (!entry || !entry.success) {
               results[cc] = { error: "Not available in this region" };
             } else if (!entry.data?.price_overview) {
-              results[cc] = { free: true };
+              results[cc] = { price_overview: null, reason: "no_price_listed" };
             } else {
               results[cc] = entry.data.price_overview;
             }
-          } catch {
-            results[cc] = { error: "Failed to fetch" };
+          } catch (error) {
+            results[cc] = {
+              error: errorResponse(error).content[0].text,
+              error_type: error instanceof Error ? error.name : "UnknownError",
+            };
           }
-        });
+        };
 
-        await Promise.all(fetches);
+        let nextRegion = 0;
+        await Promise.all(Array.from(
+          { length: Math.min(MAX_CONCURRENT_REGIONS, regions.length) },
+          async () => {
+            while (nextRegion < regions.length) {
+              const cc = regions[nextRegion++];
+              await fetchRegion(cc);
+            }
+          },
+        ));
 
         return {
           content: [
