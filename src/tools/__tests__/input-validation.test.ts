@@ -14,8 +14,8 @@ function field(tool: string, key: string): z.ZodTypeAny {
 
 const ok = (schema: z.ZodTypeAny, value: unknown) => schema.safeParse(value).success;
 
-describe("Steam ID validation (steam_getPlayerSummary.steamid)", () => {
-  const steamid = field("steam_getPlayerSummary", "steamid");
+describe("Steam64 ID validation on write tools (steam_setAchievement.steamid)", () => {
+  const steamid = field("steam_setAchievement", "steamid");
 
   it("accepts a valid 17-digit ID", () => {
     expect(ok(steamid, "76561197960435530")).toBe(true);
@@ -28,14 +28,28 @@ describe("Steam ID validation (steam_getPlayerSummary.steamid)", () => {
     },
   );
 
-  it("is the same rule on every tool that takes a steamid", () => {
+  it("write tools require a literal Steam64 ID, so resolution cannot redirect a mutation", () => {
     for (const tool of tools.values()) {
       const schema = tool.inputSchema.steamid as z.ZodTypeAny | undefined;
-      if (!schema) continue;
-      expect(ok(schema, "12345"), tool.name).toBe(false);
+      if (!schema || !("confirm" in tool.inputSchema)) continue;
+      expect(ok(schema, "gabelogannewell"), tool.name).toBe(false);
+      expect(ok(schema, "https://steamcommunity.com/profiles/76561197960435530"), tool.name).toBe(false);
       expect(ok(schema, "76561197960435530"), tool.name).toBe(true);
     }
   });
+});
+
+describe("Flexible player input on read tools", () => {
+  it.each(["steam_getPlayerSummary", "steam_getOwnedGames", "steam_getPlayerAchievements"])(
+    "%s accepts vanity names and profile URLs",
+    (name) => {
+      const schema = field(name, "steamid");
+      for (const v of ["76561197960435530", "gabelogannewell", "https://steamcommunity.com/id/gabelogannewell/", "STEAM_0:1:2"]) {
+        expect(ok(schema, v)).toBe(true);
+      }
+      expect(ok(schema, "")).toBe(false);
+    },
+  );
 });
 
 describe("Published file ID validation (steam_getWorkshopItem.publishedfileid)", () => {

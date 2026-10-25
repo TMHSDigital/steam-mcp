@@ -7,12 +7,10 @@ import {
   errorResponse,
 } from "../utils/steam-api.js";
 import { READ_ONLY } from "../utils/annotations.js";
+import { steamIdInput, resolveSteamId } from "../utils/steamid.js";
 
 const inputSchema = {
-  steamid: z
-    .string()
-    .regex(/^\d{17}$/, "Must be a 17-digit Steam64 ID")
-    .describe("64-bit Steam ID of the player (e.g. 76561197960435530)"),
+  steamid: steamIdInput,
   include_played_free_games: z
     .boolean()
     .optional()
@@ -62,9 +60,12 @@ export function register(server: McpServer): void {
       inputSchema,
       annotations: READ_ONLY,
     },
-    async ({ steamid, include_played_free_games, include_appinfo, sort, limit, appids }) => {
+    async ({ steamid: player, include_played_free_games, include_appinfo, sort, limit, appids }) => {
+      let steamid = player;
+      let resolvedFrom: string | undefined;
       try {
         const key = requireApiKey();
+        ({ steamid, resolved_from: resolvedFrom } = await resolveSteamId(player));
         const url = steamApiUrl("/IPlayerService/GetOwnedGames/v1/", {
           key,
           steamid,
@@ -102,6 +103,7 @@ export function register(server: McpServer): void {
               type: "text",
               text: JSON.stringify({
                 steamid,
+                ...(resolvedFrom ? { resolved_from: resolvedFrom } : {}),
                 game_count: data.response.game_count ?? all.length,
                 total_playtime_minutes: totalPlaytime,
                 returned: games.length,

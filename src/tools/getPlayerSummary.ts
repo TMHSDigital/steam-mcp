@@ -7,12 +7,10 @@ import {
   errorResponse,
 } from "../utils/steam-api.js";
 import { READ_ONLY } from "../utils/annotations.js";
+import { steamIdInput, resolveSteamId } from "../utils/steamid.js";
 
 const inputSchema = {
-  steamid: z
-    .string()
-    .regex(/^\d{17}$/, "Must be a 17-digit Steam64 ID")
-    .describe("64-bit Steam ID of the player (e.g. 76561197960435530)"),
+  steamid: steamIdInput,
 };
 
 export function register(server: McpServer): void {
@@ -25,9 +23,12 @@ export function register(server: McpServer): void {
       inputSchema,
       annotations: READ_ONLY,
     },
-    async ({ steamid }) => {
+    async ({ steamid: player }) => {
+      let steamid = player;
+      let resolvedFrom: string | undefined;
       try {
         const key = requireApiKey();
+        ({ steamid, resolved_from: resolvedFrom } = await resolveSteamId(player));
         const url = steamApiUrl("/ISteamUser/GetPlayerSummaries/v2/", {
           key,
           steamids: steamid,
@@ -48,7 +49,7 @@ export function register(server: McpServer): void {
 
         return {
           content: [
-            { type: "text", text: JSON.stringify(players[0], null, 2) },
+            { type: "text", text: JSON.stringify({ ...players[0], ...(resolvedFrom ? { resolved_from: resolvedFrom } : {}) }, null, 2) },
           ],
         };
       } catch (error) {

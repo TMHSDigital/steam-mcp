@@ -9,6 +9,7 @@ const TTL_RULES: Array<[RegExp, number]> = [
   [/\/ISteamUserStats\/(GetSchemaForGame|GetGlobalAchievementPercentagesForApp)\//, 3600],
   [/\/ISteamNews\/GetNewsForApp\//, 600],
   [/\/IUserReviewsService\/GetAppReviews\//, 600],
+  [/\/ISteamUser\/ResolveVanityURL\//, 3600],
 ];
 
 const MAX_ENTRIES = 500;
