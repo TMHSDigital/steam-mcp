@@ -31,14 +31,57 @@ Query Steam store data, player statistics, achievements, reviews, pricing, works
 
 > **No API key required** for most features. Store lookups, player counts, global achievement stats, news, reviews, and app searches all work out of the box.
 
-## Getting Started
+## Quick start
 
-### Prerequisites
+Requires Node.js 22 or later. No clone or build needed: add this to your MCP client's config and restart it.
 
-- Node.js 22 or later
-- npm
+```json
+{
+  "mcpServers": {
+    "steam": {
+      "command": "npx",
+      "args": ["-y", "@tmhs/steam-mcp"],
+      "env": { "STEAM_API_KEY": "your_key_here" }
+    }
+  }
+}
+```
 
-### Install
+Then ask: *"How many people are playing Team Fortress 2 right now?"* The agent calls `steam_getPlayerCount`, which works even without a key.
+
+## Client setup
+
+**Cursor:** put the Quick start JSON in `.cursor/mcp.json` (project) or `~/.cursor/mcp.json` (global). Pair it with the [Steam Developer Tools](https://github.com/TMHSDigital/Steam-Cursor-Plugin) plugin for 30 skills that use these tools.
+
+**Claude Desktop:** put the Quick start JSON in `claude_desktop_config.json` (Settings > Developer > Edit Config).
+
+**Claude Code:**
+
+```bash
+claude mcp add steam -e STEAM_API_KEY=your_key_here -- npx -y @tmhs/steam-mcp
+```
+
+**VS Code (Copilot agent mode):** `.vscode/mcp.json` uses a `servers` key:
+
+```json
+{
+  "servers": {
+    "steam": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@tmhs/steam-mcp"],
+      "env": { "STEAM_API_KEY": "your_key_here" }
+    }
+  }
+}
+```
+
+**Windsurf:** put the Quick start JSON in `~/.codeium/windsurf/mcp_config.json`.
+
+**Any other MCP client:** run `npx -y @tmhs/steam-mcp` as a stdio server.
+
+<details>
+<summary><strong>Run from a local clone instead</strong></summary>
 
 ```bash
 git clone https://github.com/TMHSDigital/Steam-MCP.git
@@ -47,66 +90,28 @@ npm install
 npm run build
 ```
 
-### Steam API Key
+Then use `"command": "node"` and `"args": ["/absolute/path/to/Steam-MCP/dist/index.js"]` in place of the npx command.
 
-Some tools require a Steam Web API key. Get one free at [steamcommunity.com/dev/apikey](https://steamcommunity.com/dev/apikey).
+</details>
 
-Set it as an environment variable:
+## Steam API key
 
-```bash
-# Bash / macOS / Linux
-export STEAM_API_KEY="your_key_here"
+About half the tools work with no key at all. The rest need a free Steam Web API key from [steamcommunity.com/dev/apikey](https://steamcommunity.com/dev/apikey). Leaderboard and write tools need a **publisher** key from Steamworks, with the server's IP allowlisted.
 
-# PowerShell
-$env:STEAM_API_KEY = "your_key_here"
-```
+Set the key in the `env` block of your client config, as in the Quick start. The server reads `STEAM_API_KEY` from its environment only. It does not load a `.env` file.
 
-Or in a `.env` file:
+## Troubleshooting
 
-```
-STEAM_API_KEY=your_key_here
-```
-
-Tools that don't need a key work out of the box with zero configuration.
-
-## Usage with Cursor
-
-Add the Steam MCP server to your Cursor MCP settings (`.cursor/mcp.json` in your project or global settings):
-
-**Via npx (recommended):**
-
-```json
-{
-  "mcpServers": {
-    "steam": {
-      "command": "npx",
-      "args": ["-y", "@tmhs/steam-mcp"],
-      "env": {
-        "STEAM_API_KEY": "your_key_here"
-      }
-    }
-  }
-}
-```
-
-**Via local clone:**
-
-```json
-{
-  "mcpServers": {
-    "steam": {
-      "command": "node",
-      "args": ["/absolute/path/to/Steam-MCP/dist/index.js"],
-      "env": {
-        "STEAM_API_KEY": "your_key_here"
-      }
-    }
-  }
-}
-```
-
-Once configured, the tools are available to Cursor's AI agent. Pair with the [Steam Developer Tools](https://github.com/TMHSDigital/Steam-Cursor-Plugin) plugin for the full skill set.
-
+| Symptom | Cause and fix |
+|---------|---------------|
+| `STEAM_API_KEY environment variable is not set` | The key is not in the server's `env` block. Shell exports do not reach servers that your client launches. Add it to the client config and restart the client. |
+| `Steam rejected STEAM_API_KEY` | The key is wrong or revoked. Check it at steamcommunity.com/dev/apikey. |
+| HTTP 401/403 on leaderboard or write tools | These need a Steamworks publisher key for an app you own, and your IP on the key's allowlist. A regular user key gets 403. |
+| "profile or game details are private" | The player's Steam privacy settings hide this data. Nothing on your side can change that. |
+| A write tool such as `steam_setAchievement` is missing | Live-mutation tools are off by default. Set `"STEAM_MCP_TOOLSETS": "all"` in `env`. |
+| Old behavior after an update | `npx` is serving a cached copy. Use `@tmhs/steam-mcp@latest` in `args`, or run `npm cache clean --force`. |
+| Server fails to start on Windows | Some clients cannot spawn `npx` directly. Use `"command": "cmd"` and `"args": ["/c", "npx", "-y", "@tmhs/steam-mcp"]`. In JSON, write Windows paths with `\\` or `/`. |
+| Anything else | Set `"STEAM_MCP_DEBUG": "1"` and check the server's stderr log (see Debugging below). |
 ## Debugging
 
 Set `STEAM_MCP_DEBUG=1` in the server's `env` block. The server then writes one line per Steam request to stderr (stdout is the MCP channel), and also sends it to clients that show MCP server logs:

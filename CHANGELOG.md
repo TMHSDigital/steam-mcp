@@ -33,6 +33,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- README onboarding starts with a one-snippet npx quick start and adds setup for Claude Desktop, Claude Code, VS Code, and Windsurf, plus a troubleshooting table. Removed the `.env` instructions: the server never loaded `.env`. (#39)
 - Large outputs are capped by default to save agent context (#35):
   - `steam_getAppDetails` returns a compact summary (about 2 KB instead of about 30 KB). `detail: "full"` returns every field, `fields` picks specific ones. Store HTML is stripped and long text truncated unless `include_html: true`.
   - `steam_getOwnedGames` returns `game_count`, `total_playtime_minutes`, and the top 50 games by playtime. New `sort` (`playtime`, `recent`, `name`), `limit`, and `appids` inputs.
