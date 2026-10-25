@@ -33,27 +33,33 @@ npm run dev
 
 ## Adding a new tool
 
-1. Create a new file in `src/tools/` (e.g. `src/tools/getReviews.ts`).
+1. Create a new file in `src/tools/` (e.g. `src/tools/getPlayerCount.ts`).
 
-2. Follow the existing pattern - export a `register` function:
+2. Follow the existing pattern - export a `register` function that calls `server.registerTool()` (never the deprecated `server.tool()`):
 
 ```typescript
 import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { steamStoreUrl, steamFetch, errorResponse } from "../utils/steam-api.js";
+import { steamApiUrl, steamFetch, errorResponse } from "../utils/steam-api.js";
+import { READ_ONLY } from "../utils/annotations.js";
 
 const inputSchema = {
   appid: z.number().int().positive().describe("Steam application ID"),
 };
 
 export function register(server: McpServer): void {
-  server.tool(
-    "steam_getReviews",
-    "Description of what this tool does. Mention if API key is required.",
-    inputSchema,
+  server.registerTool(
+    "steam_getPlayerCount",
+    {
+      title: "Get Player Count",
+      description:
+        "Get the current number of concurrent players for a Steam app. No API key required.",
+      inputSchema,
+      annotations: READ_ONLY,
+    },
     async ({ appid }) => {
       try {
-        const url = steamStoreUrl("/appreviews/" + appid, { json: 1 });
+        const url = steamApiUrl("/ISteamUserStats/GetNumberOfCurrentPlayers/v1/", { appid });
         const data = await steamFetch(url);
 
         return {
@@ -67,22 +73,29 @@ export function register(server: McpServer): void {
 }
 ```
 
-3. Import and register it in `src/index.ts`:
+   Pick `annotations` from `src/utils/annotations.ts`: `READ_ONLY` for Steam reads, `LOCAL_ONLY` for tools that never touch the network, `LIVE_WRITE` or `LIVE_WRITE_IDEMPOTENT` for confirm-gated mutations.
+
+3. Add it to a toolset in `src/tools/index.ts` (`store`, `community`, `publisher`, `mutations`, `sdk`, or `assets`). Live-mutation tools go in `mutations`, which is off by default:
 
 ```typescript
-import { register as registerGetReviews } from "./tools/getReviews.js";
+import { register as registerGetPlayerCount } from "./getPlayerCount.js";
 // ...
-registerGetReviews(server);
+export const TOOLSETS = {
+  store: [registerGetAppDetails, registerGetPlayerCount, /* ... */],
 ```
 
+   Add the tool to the README toolset table too.
 4. If the tool needs an API key, use `requireApiKey()` from `steam-api.ts` and mention it in the tool description.
 
 5. If the tool performs a live mutation (inventory grant, achievement/stat write, leaderboard write, Workshop metadata update, Partner-admin upload, or similar), spread `confirmSchema` from `src/utils/confirm.ts`, call `refuseIfUnconfirmed` before any network I/O, run the dry-run branch before `requireApiKey()`, and prepend a capability warning to the tool description. Do not add a new write tool that can send unconfirmed. Read-only Steam POSTs (for example `GetPublishedFileDetails`) are not mutations and must not use this gate.
 
-6. Build and test:
+6. Add a row for the tool to the README tool table and bump the tool counts (README, `CLAUDE.md`, `package.json` description). `npm test` fails until they match.
+
+7. Add a handler test under `src/tools/__tests__/` that stubs `fetch` with a fixture, and build and test:
 
 ```bash
 npm run build
+npm test
 ```
 
 ## Code style
@@ -101,7 +114,18 @@ npm run build
 - Note whether the endpoint requires authentication
 - Test with real Steam API calls before submitting
 - Keep changes focused - avoid unrelated refactors in the same PR
-- Make sure `npm run build` passes with no errors
+- Make sure `npm run build` and `npm test` pass
+
+## Release checklist
+
+The version lives only in `package.json`. Both servers read it at runtime from `src/version.ts`.
+
+1. Move the `[Unreleased]` entries in `CHANGELOG.md` under a new version heading with today's date.
+2. `npm version <patch|minor|major> --no-git-tag-version` (updates `package.json` and `package-lock.json`).
+3. If the tool list changed, update the counts in `package.json` `description`, the README badge, summary line, and tool tables, and `CLAUDE.md`. `npm test` fails until they match the registered tools.
+4. If a supported-version boundary moved, update the table in `SECURITY.md`.
+5. `npm run build && npx tsc -p tsconfig.partner.json && npm test`
+6. Commit, push, and publish a GitHub release tagged `vX.Y.Z`. The publish workflow ships it to npm.
 
 ## Developer Certificate of Origin and Inbound License Grant
 

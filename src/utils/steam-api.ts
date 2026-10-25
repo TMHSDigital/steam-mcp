@@ -6,6 +6,8 @@ import {
   SteamUnavailableError,
   TimeoutError,
 } from "./errors.js";
+import { debug, describeUrl } from "./log.js";
+import { acquireToken, cacheGet, cacheKey, cacheSet, cacheTtlSeconds } from "./cache.js";
 
 const DEFAULT_TIMEOUT_MS = 15_000;
 
@@ -33,6 +35,15 @@ function buildUrl(
     }
   }
   return url.toString();
+}
+
+/** Web API array parameters are sent as name[0], name[1], ... */
+export function indexedParams(name: string, values: readonly (string | number)[] | undefined): Record<string, string | number> {
+  const out: Record<string, string | number> = {};
+  values?.forEach((v, i) => {
+    out[`${name}[${i}]`] = v;
+  });
+  return out;
 }
 
 export function steamApiUrl(
@@ -156,13 +167,60 @@ function endpointOf(url: string): string {
   }
 }
 
+const inFlight = new Map<string, Promise<unknown>>();
+
+/**
+ * Fetch and parse a Steam JSON response. Public GETs listed in cache.ts are
+ * cached briefly and identical concurrent GETs share one request. Every
+ * request waits for a per-host rate-limit token, so bursts queue instead of
+ * tripping Steam's 429.
+ */
 export async function steamFetch(
   url: string,
   options: RequestInit = {},
 ): Promise<unknown> {
+  const method = (options.method ?? "GET").toUpperCase();
+  const ttl = method === "GET" ? cacheTtlSeconds(url) : 0;
+  if (ttl === 0) {
+    return fetchWithRetry(url, options);
+  }
+
+  const key = cacheKey(url);
+  const cached = cacheGet(key);
+  if (cached.hit) {
+    debug(`${method} ${describeUrl(url)} -> cache hit`);
+    return cached.value;
+  }
+  const pending = inFlight.get(key);
+  if (pending) {
+    return structuredClone(await pending);
+  }
+
+  const request = fetchWithRetry(url, options).then((value) => {
+    cacheSet(key, value, ttl);
+    return value;
+  });
+  inFlight.set(key, request);
+  try {
+    return structuredClone(await request);
+  } finally {
+    inFlight.delete(key);
+  }
+}
+
+async function fetchWithRetry(url: string, options: RequestInit): Promise<unknown> {
+  const method = options.method ?? "GET";
+  const target = describeUrl(url);
+  const host = new URL(url).host;
+
   for (let attempt = 0; ; attempt++) {
+    const queued = await acquireToken(host);
+    if (queued > 0) {
+      debug(`${method} ${target} queued ${queued}ms by the ${host} rate limiter`);
+    }
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), DEFAULT_TIMEOUT_MS);
+    const started = Date.now();
     let response: Response;
     let text: string;
 
@@ -174,27 +232,38 @@ export async function steamFetch(
       text = await readBody(response);
     } catch (error) {
       if (error instanceof DOMException && error.name === "AbortError") {
+        debug(`${method} ${target} -> timeout after ${DEFAULT_TIMEOUT_MS}ms (attempt ${attempt + 1})`);
         throw new TimeoutError(DEFAULT_TIMEOUT_MS);
       }
-      throw new SteamApiError(
-        `Failed to reach Steam API: ${error instanceof Error ? error.message : String(error)}`,
-      );
+      const reason = error instanceof Error ? error.message : String(error);
+      debug(`${method} ${target} -> network error: ${reason} (attempt ${attempt + 1})`);
+      throw new SteamApiError(`Failed to reach Steam API: ${reason}`);
     } finally {
       clearTimeout(timeout);
     }
+
+    debug(
+      `${method} ${target} -> ${response.status} in ${Date.now() - started}ms (attempt ${attempt + 1}${
+        response.headers.get("x-eresult") ? `, eresult ${response.headers.get("x-eresult")}` : ""
+      })`,
+    );
 
     const canRetry = attempt < MAX_RETRIES;
 
     if (response.status === 429) {
       if (canRetry) {
-        await sleep(retryDelayMs(response.headers.get("Retry-After"), attempt));
+        const wait = retryDelayMs(response.headers.get("Retry-After"), attempt);
+        debug(`${method} ${target} rate limited, retrying in ${Math.round(wait)}ms`);
+        await sleep(wait);
         continue;
       }
       throw new RateLimitError();
     }
 
     if (TRANSIENT_STATUSES.has(response.status) && canRetry) {
-      await sleep(backoffMs(attempt));
+      const wait = backoffMs(attempt);
+      debug(`${method} ${target} transient ${response.status}, retrying in ${Math.round(wait)}ms`);
+      await sleep(wait);
       continue;
     }
 

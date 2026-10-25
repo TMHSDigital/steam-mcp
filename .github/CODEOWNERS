@@ -1,0 +1,7 @@
+# Default owner for everything in the repo.
+* @TMHSDigital
+
+# Changes to the confirm gate, write tools, and the Partner-admin process need owner review.
+/src/utils/confirm.ts @TMHSDigital
+/src/partner/ @TMHSDigital
+/.github/workflows/ @TMHSDigital

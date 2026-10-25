@@ -19,26 +19,78 @@
 
 <p align="center">
   <a href="package.json"><img src="https://img.shields.io/node/v/@tmhs/steam-mcp" alt="node"></a>
-  <a href="https://github.com/TMHSDigital/Steam-MCP#available-tools-v090"><img src="https://img.shields.io/badge/MCP_tools-26-blue" alt="MCP tools"></a>
+  <a href="https://github.com/TMHSDigital/Steam-MCP#available-tools---39-total"><img src="https://img.shields.io/badge/MCP_tools-39-blue" alt="MCP tools"></a>
   <img src="https://img.shields.io/badge/Steam_Web_API-powered-1b2838" alt="Steam Web API">
 </p>
 
 ---
 
-<p align="center"><strong>26 MCP tools</strong> - 19 read - 5 write - 2 SDK guides</p>
+<p align="center"><strong>39 MCP tools</strong> - 32 read - 5 write - 2 SDK guides</p>
 
 Query Steam store data, player statistics, achievements, reviews, pricing, workshop items, leaderboards, inventory, and player profiles - all as structured MCP tools callable from Cursor's AI agent.
 
 > **No API key required** for most features. Store lookups, player counts, global achievement stats, news, reviews, and app searches all work out of the box.
 
-## Getting Started
+## Quick start
 
-### Prerequisites
+Requires Node.js 22 or later. No clone or build needed: add this to your MCP client's config and restart it.
 
-- Node.js 22 or later
-- npm
+```json
+{
+  "mcpServers": {
+    "steam": {
+      "command": "npx",
+      "args": ["-y", "@tmhs/steam-mcp"],
+      "env": { "STEAM_API_KEY": "your_key_here" }
+    }
+  }
+}
+```
 
-### Install
+Then ask: *"How many people are playing Team Fortress 2 right now?"* The agent calls `steam_getPlayerCount`, which works even without a key.
+
+## Client setup
+
+**Cursor:** put the Quick start JSON in `.cursor/mcp.json` (project) or `~/.cursor/mcp.json` (global). Pair it with the [Steam Developer Tools](https://github.com/TMHSDigital/Steam-Cursor-Plugin) plugin for 30 skills that use these tools.
+
+**Claude Desktop:** put the Quick start JSON in `claude_desktop_config.json` (Settings > Developer > Edit Config).
+
+**Claude Code:**
+
+```bash
+claude mcp add steam -e STEAM_API_KEY=your_key_here -- npx -y @tmhs/steam-mcp
+```
+
+**VS Code (Copilot agent mode):** `.vscode/mcp.json` uses a `servers` key:
+
+```json
+{
+  "servers": {
+    "steam": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@tmhs/steam-mcp"],
+      "env": { "STEAM_API_KEY": "your_key_here" }
+    }
+  }
+}
+```
+
+**Windsurf:** put the Quick start JSON in `~/.codeium/windsurf/mcp_config.json`.
+
+**Any other MCP client:** run `npx -y @tmhs/steam-mcp` as a stdio server.
+
+**Remote / HTTP:** for web-based agents, hosted platforms, or a team server behind an allowlisted IP, run the Streamable HTTP transport:
+
+```bash
+npx -y @tmhs/steam-mcp --transport http --port 3000      # http://127.0.0.1:3000/mcp
+docker build -t steam-mcp . && docker run -p 3000:3000 -e STEAM_API_KEY=... -e STEAM_MCP_ALLOWED_HOSTS=localhost steam-mcp
+```
+
+HTTP mode is stateless and binds to `127.0.0.1` unless you pass `--host`. Requests whose `Host` header is not in `STEAM_MCP_ALLOWED_HOSTS` (default `localhost,127.0.0.1,[::1]`) are refused. The API key only ever comes from the server's environment, never from a client. Live-mutation tools stay off in HTTP mode unless you also set `STEAM_MCP_HTTP_ALLOW_WRITES=1`. `GET /healthz` returns `{"ok":true}`.
+
+<details>
+<summary><strong>Run from a local clone instead</strong></summary>
 
 ```bash
 git clone https://github.com/TMHSDigital/Steam-MCP.git
@@ -47,65 +99,42 @@ npm install
 npm run build
 ```
 
-### Steam API Key
+Then use `"command": "node"` and `"args": ["/absolute/path/to/Steam-MCP/dist/index.js"]` in place of the npx command.
 
-Some tools require a Steam Web API key. Get one free at [steamcommunity.com/dev/apikey](https://steamcommunity.com/dev/apikey).
+</details>
 
-Set it as an environment variable:
+## Steam API key
 
-```bash
-# Bash / macOS / Linux
-export STEAM_API_KEY="your_key_here"
+About half the tools work with no key at all. The rest need a free Steam Web API key from [steamcommunity.com/dev/apikey](https://steamcommunity.com/dev/apikey). Leaderboard and write tools need a **publisher** key from Steamworks, with the server's IP allowlisted.
 
-# PowerShell
-$env:STEAM_API_KEY = "your_key_here"
+Set the key in the `env` block of your client config, as in the Quick start. The server reads `STEAM_API_KEY` from its environment only. It does not load a `.env` file.
+
+## Troubleshooting
+
+| Symptom | Cause and fix |
+|---------|---------------|
+| `STEAM_API_KEY environment variable is not set` | The key is not in the server's `env` block. Shell exports do not reach servers that your client launches. Add it to the client config and restart the client. |
+| `Steam rejected STEAM_API_KEY` | The key is wrong or revoked. Check it at steamcommunity.com/dev/apikey. |
+| HTTP 401/403 on leaderboard or write tools | These need a Steamworks publisher key for an app you own, and your IP on the key's allowlist. A regular user key gets 403. |
+| "profile or game details are private" | The player's Steam privacy settings hide this data. Nothing on your side can change that. |
+| A write tool such as `steam_setAchievement` is missing | Live-mutation tools are off by default. Set `"STEAM_MCP_TOOLSETS": "all"` in `env`. |
+| Old behavior after an update | `npx` is serving a cached copy. Use `@tmhs/steam-mcp@latest` in `args`, or run `npm cache clean --force`. |
+| Server fails to start on Windows | Some clients cannot spawn `npx` directly. Use `"command": "cmd"` and `"args": ["/c", "npx", "-y", "@tmhs/steam-mcp"]`. In JSON, write Windows paths with `\\` or `/`. |
+| Anything else | Set `"STEAM_MCP_DEBUG": "1"` and check the server's stderr log (see Debugging below). |
+## Debugging
+
+Set `STEAM_MCP_DEBUG=1` in the server's `env` block. The server then writes one line per Steam request to stderr (stdout is the MCP channel), and also sends it to clients that show MCP server logs:
+
+```
+[steam-mcp] v0.9.1 started: 26 tools, STEAM_API_KEY set
+[steam-mcp] GET api.steampowered.com/ISteamUserStats/GetNumberOfCurrentPlayers/v1/ ?appid -> 200 in 381ms (attempt 1)
+[steam-mcp] GET store.steampowered.com/api/appdetails ?appids -> 429 in 95ms (attempt 1)
+[steam-mcp] GET store.steampowered.com/api/appdetails rate limited, retrying in 1000ms
 ```
 
-Or in a `.env` file:
+Only query parameter names are logged, never values, so the API key cannot appear in a log. Logs are safe to paste into an issue.
 
-```
-STEAM_API_KEY=your_key_here
-```
-
-Tools that don't need a key work out of the box with zero configuration.
-
-## Usage with Cursor
-
-Add the Steam MCP server to your Cursor MCP settings (`.cursor/mcp.json` in your project or global settings):
-
-**Via npx (recommended):**
-
-```json
-{
-  "mcpServers": {
-    "steam": {
-      "command": "npx",
-      "args": ["-y", "@tmhs/steam-mcp"],
-      "env": {
-        "STEAM_API_KEY": "your_key_here"
-      }
-    }
-  }
-}
-```
-
-**Via local clone:**
-
-```json
-{
-  "mcpServers": {
-    "steam": {
-      "command": "node",
-      "args": ["/absolute/path/to/Steam-MCP/dist/index.js"],
-      "env": {
-        "STEAM_API_KEY": "your_key_here"
-      }
-    }
-  }
-}
-```
-
-Once configured, the tools are available to Cursor's AI agent. Pair with the [Steam Developer Tools](https://github.com/TMHSDigital/Steam-Cursor-Plugin) plugin for the full skill set.
+Public GET responses are cached briefly (30 seconds for player counts, up to an hour for achievement schemas), and requests to each Steam host are rate-limited so bursts queue instead of hitting a 429. Set `STEAM_MCP_CACHE_TTL=0` to turn the cache off.
 
 ## Security model
 
@@ -144,16 +173,61 @@ That combination is the only way a write tool sends a Partner API request.
 
 See [SECURITY.md](SECURITY.md) for supported versions and how to report a vulnerability.
 
-## Available Tools (v0.9.0) - 26 Total
+## Available Tools - 39 Total
+
+### Toolsets
+
+Tools are grouped into toolsets so an agent only loads the ones you need. Set `STEAM_MCP_TOOLSETS` in the server's `env` to a comma-separated list, or `all`. By default every toolset except `mutations` is enabled, so **live-mutation tools are opt-in**. `STEAM_MCP_READ_ONLY=1` removes `mutations` even when it is listed.
+
+| Toolset | Tools | Default |
+|---------|-------|---------|
+| `store` | getAppDetails, searchApps, getPlayerCount, getAchievementStats, getPriceOverview, getRegionalPricing, getReviews, getAppReviewSummary, getNewsForApp, getDeckCompatibility, getFeatured, compareApps | on |
+| `community` | getPlayerSummary, getOwnedGames, getPlayerAchievements, resolveVanityURL, getWorkshopItem, queryWorkshop, getUserStatsForGame, getPlayerBans | on |
+| `publisher` | getLeaderboardsForGame, getLeaderboardEntries, getSchemaForGame, getGlobalStatsForGame, getAppBetas, getAppBuilds, checkAppOwnership, getInventory, getSalesSummary, getChangedSalesDates | on |
+| `sdk` | createLobby, uploadWorkshopItem (code guides, no network) | on |
+| `assets` | validateStoreAsset, validateStoreAssetDir | on |
+| `mutations` | updateWorkshopItem, setAchievement, clearAchievement, uploadLeaderboardScore, grantInventoryItem | **off** |
+
+```json
+"env": { "STEAM_API_KEY": "your_key_here", "STEAM_MCP_TOOLSETS": "store,publisher,mutations" }
+```
+
+The server also exposes an MCP resource, `steam://server-info`, listing the enabled and disabled toolsets, so an agent can explain why a tool is missing.
+
+### Prompts
+
+Ready-made workflows that most clients show as slash commands. Each one tells the agent which tools to chain and what to report.
+
+| Prompt | Arguments | What you get |
+|--------|-----------|--------------|
+| `competitor-snapshot` | `appids` (comma-separated) | Side-by-side price, reviews, live players, genres, and recent news |
+| `achievement-health` | `appid` | Achievements that look unobtainable (<0.1%), trivial (>90%), or badly described |
+| `review-digest` | `appid`, optional `language` | Positive and negative review themes with counts and quotes |
+| `regional-price-audit` | `appid` | Regional prices in USD, with outliers flagged |
+| `workshop-health` | `appid` | Trending vs top-rated Workshop items, stale top items, common tags |
+| `launch-readiness` | `dir`, optional `appid` | PASS/FAIL checklist from your local art folder plus the live store page, prices, and Deck status |
+
+### Resources
+
+Reference data a client can attach so the agent does not guess:
+
+| URI | Contents |
+|-----|----------|
+| `steam://specs/store-assets` | Pixel sizes, formats, and alpha rules for every asset slot |
+| `steam://enums/eresult` | What common EResult codes mean |
+| `steam://enums/ugc-query-type` | Workshop sort names and their Steam enum values |
+| `steam://enums/review-filters` | Review filter, type, and purchase-type values |
+| `steam://app/{appid}/summary` | Compact store summary for any app |
+| `steam://server-info` | Version and enabled toolsets |
 
 <details>
-<summary><strong>Read Tools (No Auth) - 11 tools</strong></summary>
+<summary><strong>Read Tools (No Auth) - 16 tools</strong></summary>
 
 These work without an API key:
 
 | Tool | Description |
 |------|-------------|
-| `steam_getAppDetails` | Store data: price, description, reviews, tags, platforms, system requirements |
+| `steam_getAppDetails` | Store data. Compact summary by default (price, release date, genres, platforms, metacritic); `detail: "full"` or `fields` for descriptions, requirements, screenshots, DLC |
 | `steam_searchApps` | Search for games/apps by name or keyword |
 | `steam_getPlayerCount` | Current concurrent player count |
 | `steam_getAchievementStats` | Global achievement unlock percentages |
@@ -163,32 +237,45 @@ These work without an API key:
 | `steam_getAppReviewSummary` | Review score, total counts, and positive percentage (no individual reviews) |
 | `steam_getRegionalPricing` | Pricing breakdown across multiple countries/regions |
 | `steam_getNewsForApp` | Recent news articles with title, URL, contents, date, and author. Article text is third-party and labeled untrusted. |
-| `steam_validateStoreAsset` | Local PNG/JPEG vs Valve store and library sizes, plus library-hero heuristics |
+| `steam_validateStoreAsset` | Local PNG/JPEG vs Valve store, library, achievement, community, and event sizes, plus library-hero heuristics. Checks a whole achievement icon folder for missing achieved/unachieved pairs. |
+| `steam_validateStoreAssetDir` | Launch-readiness audit of a local art folder: infers each slot, validates it, and lists missing required slots and screenshots |
+| `steam_getDeckCompatibility` | Steam Deck category (verified, playable, unsupported) and each test result in plain language, for up to 20 apps. Unofficial store endpoint. |
+| `steam_getFeatured` | Current top sellers, new releases, specials, and coming soon for a region |
+| `steam_compareApps` | One compact table for 2-10 apps: price, release date, genres, metacritic, reviews, current players, languages |
+| `steam_getGlobalStatsForGame` | All-player totals for aggregated stats, with optional daily history. Keyless when stat names are given. |
 
 </details>
 
 <details>
-<summary><strong>Read Tools (API Key) - 8 tools</strong></summary>
+<summary><strong>Read Tools (API Key) - 16 tools</strong></summary>
 
 These require `STEAM_API_KEY` to be set:
 
 | Tool | Description |
 |------|-------------|
 | `steam_getPlayerSummary` | Player profile: name, avatar, online status |
-| `steam_getOwnedGames` | Game library with playtime data |
+| `steam_getOwnedGames` | Game library size and total playtime, plus the top 50 games by playtime (`sort`, `limit`, `appids`) |
 | `steam_queryWorkshop` | Search/browse Workshop items with filters. Titles and short descriptions are untrusted user-authored text. |
 | `steam_getLeaderboardEntries` | Leaderboard scores and rankings (pass numeric ID from Steamworks dashboard) |
 | `steam_resolveVanityURL` | Convert vanity URL to 64-bit Steam ID |
-| `steam_getSchemaForGame` | Achievement/stat schema with display names, descriptions, and icon URLs |
+| `steam_getSchemaForGame` | Achievement/stat schema with display names and descriptions; up to 100 achievements, icons on request (`limit`, `include_icons`, `include_stats`) |
 | `steam_getPlayerAchievements` | Per-player achievement unlock status and timestamps |
-| `steam_getLeaderboardsForGame` | List all leaderboards with numeric IDs, names, and sort methods |
+| `steam_getLeaderboardsForGame` | List all leaderboards with numeric IDs, names, and sort methods. Needs a publisher key. |
+| `steam_getUserStatsForGame` | A player's stat values and unlocked achievements for an app |
+| `steam_getPlayerBans` | VAC, game, community, and economy bans for up to 100 players |
+| `steam_getAppBetas` | Beta branches, their builds, and password protection. Needs a publisher key. |
+| `steam_getAppBuilds` | Recent build history with descriptions and upload times. Needs a publisher key. |
+| `steam_checkAppOwnership` | Whether a player owns your app, permanently or via Family Sharing, and since when. Needs a publisher key. |
+| `steam_getInventory` | A player's Steam Inventory items for your app. Needs a publisher key with Economy permissions. |
+| `steam_getSalesSummary` | Units and USD revenue for up to 31 days, grouped by country, day, app, package, or platform; JSON or CSV. Needs a Financial API Group key (`STEAM_FINANCIAL_API_KEY`). |
+| `steam_getChangedSalesDates` | Dates whose sales data changed since a highwatermark, for incremental sync. Needs a Financial API Group key. |
 
 </details>
 
 <details>
 <summary><strong>Write Tools (Publisher Key) - 5 tools, plus 2 SDK guides</strong></summary>
 
-The five HTTP write tools require a publisher API key with server IP allowlisted in Steamworks partner settings. They default to `dry_run: true` and require `confirm: true` to POST. SDK guides return code examples and make no HTTP calls.
+The five HTTP write tools are in the `mutations` toolset, which is off unless `STEAM_MCP_TOOLSETS` names it (or is `all`). They require a publisher API key with server IP allowlisted in Steamworks partner settings. They default to `dry_run: true` and require `confirm: true` to POST. SDK guides return code examples and make no HTTP calls.
 
 | Tool | Type | Description |
 |------|------|-------------|
@@ -203,7 +290,7 @@ The five HTTP write tools require a publisher API key with server IP allowlisted
 </details>
 
 <details>
-<summary><strong>Steam API Endpoints (19 endpoints)</strong></summary>
+<summary><strong>Steam API Endpoints (30 endpoints)</strong></summary>
 
 | Endpoint | Auth |
 |----------|------|
@@ -214,6 +301,9 @@ The five HTTP write tools require a publisher API key with server IP allowlisted
 | `ISteamNews/GetNewsForApp/v2` | None |
 | `ISteamRemoteStorage/GetPublishedFileDetails/v1` | None |
 | `IUserReviewsService/GetAppReviews/v1` | None |
+| `ISteamUserStats/GetGlobalStatsForGame/v1` | None |
+| `store.steampowered.com/api/featuredcategories` | None |
+| `store.steampowered.com/saleaction/ajaxgetdeckappcompatibilityreport` (unofficial) | None |
 | `ISteamUser/GetPlayerSummaries/v2` | API key |
 | `IPlayerService/GetOwnedGames/v1` | API key |
 | `ISteamUser/ResolveVanityURL/v1` | API key |
@@ -221,7 +311,15 @@ The five HTTP write tools require a publisher API key with server IP allowlisted
 | `ISteamUserStats/GetSchemaForGame/v2` | API key |
 | `ISteamUserStats/GetPlayerAchievements/v1` | API key |
 | `ISteamLeaderboards/GetLeaderboardEntries/v1` | Publisher key |
-| `ISteamLeaderboards/GetLeaderboardsForGame/v2` | API key |
+| `ISteamLeaderboards/GetLeaderboardsForGame/v2` | Publisher key |
+| `ISteamApps/GetAppBetas/v1` | Publisher key |
+| `ISteamApps/GetAppBuilds/v1` | Publisher key |
+| `ISteamUser/CheckAppOwnership/v4` | Publisher key |
+| `IInventoryService/GetInventory/v1` | Publisher key (Economy) |
+| `ISteamUserStats/GetUserStatsForGame/v2` | API key |
+| `ISteamUser/GetPlayerBans/v1` | API key |
+| `IPartnerFinancialsService/GetDetailedSales/v001` | Financial API Group key |
+| `IPartnerFinancialsService/GetChangedDatesForPartner/v001` | Financial API Group key |
 | `IPublishedFileService/UpdateDetails/v1` (POST) | Publisher key |
 | `ISteamUserStats/SetUserStatsForGame/v1` (POST) | Publisher key |
 | `ISteamLeaderboards/SetLeaderboardScore/v1` (POST) | Publisher key |
@@ -242,7 +340,7 @@ npm run test:watch  # Test watch mode
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for how to add new tools and submit PRs.
 
-Partner-admin tools (`steam_partnerLogin`, `steam_uploadStoreImage`, `steam_uploadTrailer`) are not registered by this package's default bin and are not in the npm tarball. They live in `src/partner/` for local use only (`STEAM_PARTNER_ADMIN=1` plus a cookie-jar path or Chromium profile dir outside the repo). There is no Publish tool.
+Partner-admin tools (`steam_partnerLogin`, `steam_uploadStoreImage`, `steam_uploadTrailer`) are not registered by this package's default bin and are not in the npm tarball. They live in `src/partner/` for local use only (`STEAM_PARTNER_ADMIN=1` plus a cookie-jar path or Chromium profile dir outside the repo). `steam_uploadTrailer` is plan-only: live trailer upload is not implemented and returns `[NOT_IMPLEMENTED]`. There is no Publish tool.
 
 </details>
 

@@ -4,7 +4,7 @@
 
 ## What is this?
 
-An MCP (Model Context Protocol) server that exposes Steam Web API endpoints as structured tools for AI-powered IDEs. It is the companion server for the [Steam Developer Tools](https://github.com/TMHSDigital/Steam-Cursor-Plugin) Cursor plugin, which provides 30 skills and 9 rules for Steam/Steamworks development. The server provides 26 tools: 19 read-only, 5 write (Partner API mutations gated by confirm/dry-run), and 2 SDK code-example generators.
+An MCP (Model Context Protocol) server that exposes Steam Web API endpoints as structured tools for AI-powered IDEs. It is the companion server for the [Steam Developer Tools](https://github.com/TMHSDigital/Steam-Cursor-Plugin) Cursor plugin, which provides 30 skills and 9 rules for Steam/Steamworks development. The server provides 39 tools: 32 read-only, 5 write (Partner API mutations gated by confirm/dry-run), and 2 SDK code-example generators.
 
 The plugin's skills reference these MCP tools to fetch live data from Steam - player stats, store info, workshop items, leaderboards, and more.
 
@@ -12,9 +12,14 @@ The plugin's skills reference these MCP tools to fetch live data from Steam - pl
 
 ```
 src/
-  index.ts              Entry point - creates McpServer, calls registerAllTools, starts stdio transport
+  index.ts              Entry point - parses --transport/--port/--host, selects toolsets, starts stdio or HTTP
+  server.ts             createServer(): McpServer with toolsets, prompts, resources, server-info
+  http.ts               Stateless Streamable HTTP server (POST /mcp, GET /healthz, Host allowlist)
+  prompts.ts            MCP prompts (workflow slash commands)
+  resources.ts          MCP resources (asset specs, enums, app summary template)
+  version.ts            Reads the version from package.json
   tools/
-    index.ts             registerAllTools(server) - the one list of default-bin tools
+    index.ts             TOOLSETS - the one list of default-bin tools, grouped; selectToolsets() reads the env
     getAppDetails.ts     Each file exports a register(server) function
     searchApps.ts        that calls server.registerTool with name, title,
     getPlayerCount.ts    description, zod input schema, annotations, and handler
@@ -35,7 +40,7 @@ src/
 
 **Key patterns:**
 
-- Each tool is a self-contained module that exports `register(server: McpServer)` and calls `server.registerTool()` (never the deprecated `server.tool()`). Add new tools to `src/tools/index.ts`.
+- Each tool is a self-contained module that exports `register(server: McpServer)` and calls `server.registerTool()` (never the deprecated `server.tool()`). Add new tools to a toolset in `src/tools/index.ts` (live mutations go in `mutations`, which is off by default).
 - Every tool declares `annotations` from `src/utils/annotations.ts`. Confirm-gated writes use `LIVE_WRITE` or `LIVE_WRITE_IDEMPOTENT`; `annotations.test.ts` enforces this.
 - `steam-api.ts` provides `steamFetch()` which handles timeouts (15s via AbortController with `TimeoutError`), HTTP error detection (429 rate limits with up to 2 retries and exponential backoff, 5xx unavailable), and JSON parsing.
 - `errorResponse()` formats errors as MCP-compatible `{ isError: true }` responses.
@@ -57,11 +62,13 @@ npm run dev       # tsx watch for development
 **Automated tests (vitest):**
 
 ```bash
-npm test            # single run
-npm run test:watch  # watch mode
+npm test                # single run
+npm run test:watch      # watch mode
+npm run test:coverage   # with the coverage floor CI enforces
+npm run contract        # live calls to every no-auth tool (after npm run build)
 ```
 
-Tests cover error classes, `steamFetch` behavior (mocked fetch), retry logic, Zod input validation for tools, and the confirm/dry-run gate on write tools.
+`src/tools/__tests__/harness.ts` captures the real registrations, so tests use the tools' own schemas and handlers. `handlers.test.ts` needs a success and error case for every tool and fails when a new tool has none. Tests also cover `steamFetch` retries and error detail, the confirm/dry-run gate and exact request bodies of write tools, and doc count drift. A nightly workflow (`contract.yml`) runs `npm run contract` and opens an issue when a live endpoint breaks.
 
 **Manual testing** via MCP inspector or by configuring as an MCP server in Cursor:
 
@@ -86,6 +93,14 @@ No-auth tools can be tested without setting `STEAM_API_KEY`.
 | Variable | Required | Description |
 |----------|----------|-------------|
 | `STEAM_API_KEY` | For some tools | Steam Web API key from https://steamcommunity.com/dev/apikey |
+| `STEAM_FINANCIAL_API_KEY` | For sales tools | Financial API Group key for IPartnerFinancialsService. Falls back to `STEAM_API_KEY`. |
+| `STEAM_MCP_TRANSPORT` | No | `stdio` (default) or `http`. Same as `--transport`. HTTP also reads `--port`/`PORT` (3000) and `--host`/`HOST` (127.0.0.1). |
+| `STEAM_MCP_ALLOWED_HOSTS` | HTTP only | Comma-separated Host header values to accept (default `localhost,127.0.0.1,[::1]`; `*` disables the check). |
+| `STEAM_MCP_HTTP_ALLOW_WRITES` | HTTP only | `1` lets the `mutations` toolset load in HTTP mode. |
+| `STEAM_MCP_TOOLSETS` | No | Comma-separated toolsets to load (`store`, `community`, `publisher`, `mutations`, `sdk`, `assets`) or `all`. Default: all except `mutations`. |
+| `STEAM_MCP_READ_ONLY` | No | `1` removes the `mutations` toolset even if listed. |
+| `STEAM_MCP_CACHE_TTL` | No | Unset: per-endpoint TTLs for public GETs (30s player count to 1h schema). `0` disables caching. Any other number of seconds replaces every TTL. |
+| `STEAM_MCP_DEBUG` | No | `1` logs each Steam request (host, path, query keys, status, attempt, latency) to stderr and MCP logging. Never logs values. |
 | `STEAM_PARTNER_ADMIN` | Partner process only | Must be `1` to start `src/partner/index.ts`. Ignored by the default bin. |
 | `STEAM_PARTNER_COOKIES` | Partner process only | Path to a cookie jar. Never a cookie string. Gitignored. |
 | `STEAM_PARTNER_PROFILE_DIR` | Partner process only | Chromium user-data dir outside the repo. |

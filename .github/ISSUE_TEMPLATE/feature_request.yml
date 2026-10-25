@@ -1,0 +1,39 @@
+name: Feature request
+description: A new tool, input, or behavior.
+labels: ["feature"]
+body:
+  - type: textarea
+    id: story
+    attributes:
+      label: User story
+      placeholder: "As a Steam developer, I want to ... so that ..."
+    validations:
+      required: true
+  - type: input
+    id: endpoint
+    attributes:
+      label: Steam endpoint
+      description: The Steam Web API or Store endpoint this would use, if known.
+      placeholder: "https://partner.steamgames.com/doc/webapi/..."
+  - type: dropdown
+    id: auth
+    attributes:
+      label: Auth required
+      options:
+        - None
+        - Steam Web API key
+        - Publisher key
+        - Not sure
+  - type: dropdown
+    id: mutates
+    attributes:
+      label: Does it change live Steam state?
+      description: Mutating tools must use the confirm/dry-run gate.
+      options:
+        - "No, read only"
+        - "Yes, it mutates live state"
+        - Not sure
+  - type: textarea
+    id: notes
+    attributes:
+      label: Anything else

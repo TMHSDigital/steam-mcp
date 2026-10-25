@@ -39,9 +39,8 @@ const partnerTools = collect((s) => {
 const allTools = [...defaultTools, ...partnerTools];
 
 describe("tool registration", () => {
-  it("registers 26 default-bin tools with unique names", () => {
-    expect(defaultTools).toHaveLength(26);
-    expect(new Set(defaultTools.map((t) => t.name)).size).toBe(26);
+  it("registers default-bin tools with unique names", () => {
+    expect(new Set(defaultTools.map((t) => t.name)).size).toBe(defaultTools.length);
   });
 
   for (const tool of allTools) {

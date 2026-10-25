@@ -9,12 +9,10 @@ import {
 } from "../utils/steam-api.js";
 import { SteamApiError, InvalidApiKeyError } from "../utils/errors.js";
 import { READ_ONLY } from "../utils/annotations.js";
+import { steamIdInput, resolveSteamId } from "../utils/steamid.js";
 
 const inputSchema = {
-  steamid: z
-    .string()
-    .regex(/^\d{17}$/, "Must be a 17-digit Steam64 ID")
-    .describe("64-bit Steam ID of the player"),
+  steamid: steamIdInput,
   appid: z
     .number()
     .int()
@@ -32,9 +30,12 @@ export function register(server: McpServer): void {
       inputSchema,
       annotations: READ_ONLY,
     },
-    async ({ steamid, appid }) => {
+    async ({ steamid: player, appid }) => {
+      let steamid = player;
+      let resolvedFrom: string | undefined;
       try {
         const key = requireApiKey();
+        ({ steamid, resolved_from: resolvedFrom } = await resolveSteamId(player));
         const url = steamApiUrl(
           "/ISteamUserStats/GetPlayerAchievements/v1/",
           { key, steamid, appid },
@@ -61,7 +62,7 @@ export function register(server: McpServer): void {
           content: [
             {
               type: "text",
-              text: JSON.stringify(data.playerstats, null, 2),
+              text: JSON.stringify({ ...data.playerstats, ...(resolvedFrom ? { resolved_from: resolvedFrom } : {}) }, null, 2),
             },
           ],
         };
