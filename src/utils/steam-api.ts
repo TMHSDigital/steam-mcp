@@ -153,6 +153,27 @@ export async function steamFetch(
   );
 }
 
+/**
+ * EResult from a Partner write response shaped `{ result: { result: n } }`,
+ * or undefined when Steam did not return one.
+ */
+export function eresultOf(data: unknown): number | undefined {
+  const result = (data as { result?: { result?: unknown } } | null)?.result;
+  return typeof result?.result === "number" ? result.result : undefined;
+}
+
+/** errorResponse() plus a publisher-key hint for the 400/403 Partner API returns on a bad key or IP. */
+export function publisherErrorResponse(error: unknown): ReturnType<typeof errorResponse> {
+  if (error instanceof SteamApiError && (error.statusCode === 400 || error.statusCode === 403)) {
+    return errorResponse(
+      new Error(
+        `HTTP ${error.statusCode} - This tool requires a Steam Publisher API key with the server's IP allowlisted in your Steamworks partner settings. Set STEAM_API_KEY to a publisher key and add the server IP to your Web API key's allowed IP list at https://partner.steamgames.com/doc/webapi_overview/auth`,
+      ),
+    );
+  }
+  return errorResponse(error);
+}
+
 export function errorResponse(error: unknown): {
   content: Array<{ type: "text"; text: string }>;
   isError: true;
