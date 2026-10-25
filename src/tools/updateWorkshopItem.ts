@@ -1,10 +1,10 @@
 import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import {
-  steamPartnerUrl,
-  steamFetch,
+  steamPartnerPost,
   requireApiKey,
   errorResponse,
+  publisherErrorResponse,
 } from "../utils/steam-api.js";
 import {
   confirmSchema,
@@ -77,23 +77,46 @@ export function register(server: McpServer): void {
 
         const key = requireApiKey();
 
-        const url = steamPartnerUrl(
+        const data = (await steamPartnerPost(
           "/IPublishedFileService/UpdateDetails/v1/",
           {
             key,
             ...params,
           },
-        );
+        )) as { response?: unknown } | null;
 
-        const data = await steamFetch(url, { method: "POST" });
+        // Service methods report failure through the HTTP status (handled by
+        // steamFetch); a success always carries a `response` object.
+        if (!data || typeof data.response !== "object" || data.response === null) {
+          return errorResponse(
+            new Error(
+              `Failed to update Workshop item ${publishedfileid} for app ${appid}. Steam returned no response object. Verify the item belongs to this app and the API key has publisher access.`,
+            ),
+          );
+        }
 
         return {
           content: [
-            { type: "text" as const, text: JSON.stringify(data, null, 2) },
+            {
+              type: "text" as const,
+              text: JSON.stringify(
+                {
+                  success: true,
+                  publishedfileid,
+                  appid,
+                  updated: Object.keys(params).filter(
+                    (k) => k !== "publishedfileid" && k !== "appid" && params[k] !== undefined,
+                  ),
+                  response: data.response,
+                },
+                null,
+                2,
+              ),
+            },
           ],
         };
       } catch (error) {
-        return errorResponse(error);
+        return publisherErrorResponse(error);
       }
     },
   );

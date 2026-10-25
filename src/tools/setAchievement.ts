@@ -4,8 +4,9 @@ import {
   steamPartnerPost,
   requireApiKey,
   errorResponse,
+  eresultOf,
+  publisherErrorResponse,
 } from "../utils/steam-api.js";
-import { SteamApiError } from "../utils/errors.js";
 import {
   confirmSchema,
   refuseIfUnconfirmed,
@@ -69,11 +70,11 @@ export function register(server: McpServer): void {
           },
         );
 
-        const result = (data as Record<string, unknown>)?.result;
-        if (result && typeof result === "object" && (result as Record<string, unknown>).result !== 1) {
+        const eresult = eresultOf(data);
+        if (eresult !== 1) {
           return errorResponse(
             new Error(
-              `Failed to set achievement '${achievement}' for Steam ID ${steamid}. Verify the achievement API name exists in your Steamworks configuration and the API key has publisher access.`,
+              `Failed to set achievement '${achievement}' for Steam ID ${steamid} (EResult ${eresult ?? "missing"}). Verify the achievement API name exists in your Steamworks configuration and the API key has publisher access.`,
             ),
           );
         }
@@ -97,14 +98,7 @@ export function register(server: McpServer): void {
           ],
         };
       } catch (error) {
-        if (error instanceof SteamApiError && (error.statusCode === 400 || error.statusCode === 403)) {
-          return errorResponse(
-            new Error(
-              `HTTP ${error.statusCode} - This tool requires a Steam Publisher API key with the server's IP allowlisted in your Steamworks partner settings. Set STEAM_API_KEY to a publisher key and add the server IP to your Web API key's allowed IP list at https://partner.steamgames.com/doc/webapi_overview/auth`,
-            ),
-          );
-        }
-        return errorResponse(error);
+        return publisherErrorResponse(error);
       }
     },
   );
