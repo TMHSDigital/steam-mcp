@@ -12,7 +12,10 @@ The plugin's skills reference these MCP tools to fetch live data from Steam - pl
 
 ```
 src/
-  index.ts              Entry point - creates McpServer, calls registerAllTools, starts stdio transport
+  index.ts              Entry point - creates McpServer, registers selected toolsets, prompts, resources; starts stdio
+  prompts.ts            MCP prompts (workflow slash commands)
+  resources.ts          MCP resources (asset specs, enums, app summary template)
+  version.ts            Reads the version from package.json
   tools/
     index.ts             TOOLSETS - the one list of default-bin tools, grouped; selectToolsets() reads the env
     getAppDetails.ts     Each file exports a register(server) function

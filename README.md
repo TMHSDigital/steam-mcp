@@ -185,6 +185,31 @@ Tools are grouped into toolsets so an agent only loads the ones you need. Set `S
 
 The server also exposes an MCP resource, `steam://server-info`, listing the enabled and disabled toolsets, so an agent can explain why a tool is missing.
 
+### Prompts
+
+Ready-made workflows that most clients show as slash commands. Each one tells the agent which tools to chain and what to report.
+
+| Prompt | Arguments | What you get |
+|--------|-----------|--------------|
+| `competitor-snapshot` | `appids` (comma-separated) | Side-by-side price, reviews, live players, genres, and recent news |
+| `achievement-health` | `appid` | Achievements that look unobtainable (<0.1%), trivial (>90%), or badly described |
+| `review-digest` | `appid`, optional `language` | Positive and negative review themes with counts and quotes |
+| `regional-price-audit` | `appid` | Regional prices in USD, with outliers flagged |
+| `workshop-health` | `appid` | Trending vs top-rated Workshop items, stale top items, common tags |
+
+### Resources
+
+Reference data a client can attach so the agent does not guess:
+
+| URI | Contents |
+|-----|----------|
+| `steam://specs/store-assets` | Pixel sizes, formats, and alpha rules for every asset slot |
+| `steam://enums/eresult` | What common EResult codes mean |
+| `steam://enums/ugc-query-type` | Workshop sort names and their Steam enum values |
+| `steam://enums/review-filters` | Review filter, type, and purchase-type values |
+| `steam://app/{appid}/summary` | Compact store summary for any app |
+| `steam://server-info` | Version and enabled toolsets |
+
 <details>
 <summary><strong>Read Tools (No Auth) - 11 tools</strong></summary>
 

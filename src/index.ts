@@ -6,6 +6,8 @@ import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 import { registerToolsets, selectToolsets, TOOLSET_NAMES } from "./tools/index.js";
 import { VERSION } from "./version.js";
 import { debug, debugEnabled, setMcpLogSink } from "./utils/log.js";
+import { registerPrompts } from "./prompts.js";
+import { registerResources } from "./resources.js";
 
 const server = new McpServer(
   {
@@ -17,6 +19,8 @@ const server = new McpServer(
 
 const { enabled, unknown } = selectToolsets();
 const toolCount = registerToolsets(server, enabled);
+registerPrompts(server);
+registerResources(server);
 
 if (unknown.length) {
   console.error(

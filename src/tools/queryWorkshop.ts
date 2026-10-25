@@ -9,7 +9,7 @@ import {
 import { READ_ONLY } from "../utils/annotations.js";
 
 // EPublishedFileQueryType values from the Steamworks SDK (isteamremotestorage.h).
-const QUERY_TYPES = {
+export const QUERY_TYPES = {
   vote: 0, // k_PublishedFileQueryType_RankedByVote
   date: 1, // k_PublishedFileQueryType_RankedByPublicationDate
   trend: 3, // k_PublishedFileQueryType_RankedByTrend

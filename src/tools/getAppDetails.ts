@@ -39,7 +39,7 @@ const inputSchema = {
     ),
 };
 
-type AppData = Record<string, unknown>;
+export type AppData = Record<string, unknown>;
 
 const MAX_TEXT = 2000;
 
@@ -49,7 +49,7 @@ function descriptions(list: unknown): string[] | undefined {
     : undefined;
 }
 
-function summarize(d: AppData): AppData {
+export function summarize(d: AppData): AppData {
   const releaseDate = d.release_date as { coming_soon?: boolean; date?: string } | undefined;
   return {
     steam_appid: d.steam_appid,
