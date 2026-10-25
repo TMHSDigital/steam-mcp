@@ -221,10 +221,57 @@ const CASES: Record<string, Case> = {
     expect: ['"missing_slots"'],
     noFetch: true,
   },
+  steam_getAppBetas: {
+    args: { appid: 480 },
+    fixture: { response: { result: 1, betas: { public: { BuildID: 100 }, beta: { BuildID: 101, ReqPassword: true } } } },
+    expect: ['"BuildID":101'],
+    host: "partner.steam-api.com",
+    needsKey: true,
+    errorFixture: {},
+  },
+  steam_getAppBuilds: {
+    args: { appid: 480, count: 2 },
+    fixture: { response: { result: 1, builds: { "101": { BuildID: 101, Description: "Friday hotfix" } } } },
+    expect: ["Friday hotfix"],
+    host: "partner.steam-api.com",
+    needsKey: true,
+    errorFixture: {},
+  },
+  steam_checkAppOwnership: {
+    args: { steamid: STEAMID, appid: 480 },
+    fixture: { appownership: { ownsapp: true, permanent: false, ownersteamid: "76561197960287930" } },
+    expect: ['"ownsapp":true', '"permanent":false'],
+    host: "partner.steam-api.com",
+    needsKey: true,
+    errorFixture: {},
+  },
+  steam_getInventory: {
+    args: { steamid: STEAMID, appid: 480 },
+    fixture: { response: { item_json: '[{"itemid":"1","itemdefid":"100","quantity":1}]' } },
+    expect: ['"item_count":1', '"itemdefid":"100"'],
+    host: "partner.steam-api.com",
+    needsKey: true,
+    errorFixture: { response: { success: false, error: "Asset server down" } },
+  },
+  steam_getUserStatsForGame: {
+    args: { steamid: STEAMID, appid: 480 },
+    fixture: { playerstats: { gameName: "Spacewar", stats: [{ name: "NumGames", value: 3 }], achievements: [] } },
+    expect: ['"name":"NumGames"'],
+    host: "api.steampowered.com",
+    needsKey: true,
+    errorFixture: {},
+  },
+  steam_getPlayerBans: {
+    args: { steamids: [STEAMID] },
+    fixture: { players: [{ SteamId: STEAMID, VACBanned: false, NumberOfGameBans: 0 }] },
+    expect: ['"VACBanned":false'],
+    host: "api.steampowered.com",
+    needsKey: true,
+    errorFixture: {},
+  },
 };
 
-const tools = registeredTools();
-beforeEach(() => {
+const tools = registeredTools();beforeEach(() => {
   delete process.env.STEAM_API_KEY;
 });
 

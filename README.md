@@ -19,13 +19,13 @@
 
 <p align="center">
   <a href="package.json"><img src="https://img.shields.io/node/v/@tmhs/steam-mcp" alt="node"></a>
-  <a href="https://github.com/TMHSDigital/Steam-MCP#available-tools---31-total"><img src="https://img.shields.io/badge/MCP_tools-31-blue" alt="MCP tools"></a>
+  <a href="https://github.com/TMHSDigital/Steam-MCP#available-tools---37-total"><img src="https://img.shields.io/badge/MCP_tools-37-blue" alt="MCP tools"></a>
   <img src="https://img.shields.io/badge/Steam_Web_API-powered-1b2838" alt="Steam Web API">
 </p>
 
 ---
 
-<p align="center"><strong>31 MCP tools</strong> - 24 read - 5 write - 2 SDK guides</p>
+<p align="center"><strong>37 MCP tools</strong> - 30 read - 5 write - 2 SDK guides</p>
 
 Query Steam store data, player statistics, achievements, reviews, pricing, workshop items, leaderboards, inventory, and player profiles - all as structured MCP tools callable from Cursor's AI agent.
 
@@ -164,7 +164,7 @@ That combination is the only way a write tool sends a Partner API request.
 
 See [SECURITY.md](SECURITY.md) for supported versions and how to report a vulnerability.
 
-## Available Tools - 31 Total
+## Available Tools - 37 Total
 
 ### Toolsets
 
@@ -173,8 +173,8 @@ Tools are grouped into toolsets so an agent only loads the ones you need. Set `S
 | Toolset | Tools | Default |
 |---------|-------|---------|
 | `store` | getAppDetails, searchApps, getPlayerCount, getAchievementStats, getPriceOverview, getRegionalPricing, getReviews, getAppReviewSummary, getNewsForApp, getDeckCompatibility, getFeatured, compareApps | on |
-| `community` | getPlayerSummary, getOwnedGames, getPlayerAchievements, resolveVanityURL, getWorkshopItem, queryWorkshop | on |
-| `publisher` | getLeaderboardsForGame, getLeaderboardEntries, getSchemaForGame, getGlobalStatsForGame | on |
+| `community` | getPlayerSummary, getOwnedGames, getPlayerAchievements, resolveVanityURL, getWorkshopItem, queryWorkshop, getUserStatsForGame, getPlayerBans | on |
+| `publisher` | getLeaderboardsForGame, getLeaderboardEntries, getSchemaForGame, getGlobalStatsForGame, getAppBetas, getAppBuilds, checkAppOwnership, getInventory | on |
 | `sdk` | createLobby, uploadWorkshopItem (code guides, no network) | on |
 | `assets` | validateStoreAsset, validateStoreAssetDir | on |
 | `mutations` | updateWorkshopItem, setAchievement, clearAchievement, uploadLeaderboardScore, grantInventoryItem | **off** |
@@ -238,7 +238,7 @@ These work without an API key:
 </details>
 
 <details>
-<summary><strong>Read Tools (API Key) - 8 tools</strong></summary>
+<summary><strong>Read Tools (API Key) - 14 tools</strong></summary>
 
 These require `STEAM_API_KEY` to be set:
 
@@ -252,6 +252,12 @@ These require `STEAM_API_KEY` to be set:
 | `steam_getSchemaForGame` | Achievement/stat schema with display names and descriptions; up to 100 achievements, icons on request (`limit`, `include_icons`, `include_stats`) |
 | `steam_getPlayerAchievements` | Per-player achievement unlock status and timestamps |
 | `steam_getLeaderboardsForGame` | List all leaderboards with numeric IDs, names, and sort methods. Needs a publisher key. |
+| `steam_getUserStatsForGame` | A player's stat values and unlocked achievements for an app |
+| `steam_getPlayerBans` | VAC, game, community, and economy bans for up to 100 players |
+| `steam_getAppBetas` | Beta branches, their builds, and password protection. Needs a publisher key. |
+| `steam_getAppBuilds` | Recent build history with descriptions and upload times. Needs a publisher key. |
+| `steam_checkAppOwnership` | Whether a player owns your app, permanently or via Family Sharing, and since when. Needs a publisher key. |
+| `steam_getInventory` | A player's Steam Inventory items for your app. Needs a publisher key with Economy permissions. |
 
 </details>
 
@@ -273,7 +279,7 @@ The five HTTP write tools are in the `mutations` toolset, which is off unless `S
 </details>
 
 <details>
-<summary><strong>Steam API Endpoints (22 endpoints)</strong></summary>
+<summary><strong>Steam API Endpoints (28 endpoints)</strong></summary>
 
 | Endpoint | Auth |
 |----------|------|
@@ -295,6 +301,12 @@ The five HTTP write tools are in the `mutations` toolset, which is off unless `S
 | `ISteamUserStats/GetPlayerAchievements/v1` | API key |
 | `ISteamLeaderboards/GetLeaderboardEntries/v1` | Publisher key |
 | `ISteamLeaderboards/GetLeaderboardsForGame/v2` | Publisher key |
+| `ISteamApps/GetAppBetas/v1` | Publisher key |
+| `ISteamApps/GetAppBuilds/v1` | Publisher key |
+| `ISteamUser/CheckAppOwnership/v4` | Publisher key |
+| `IInventoryService/GetInventory/v1` | Publisher key (Economy) |
+| `ISteamUserStats/GetUserStatsForGame/v2` | API key |
+| `ISteamUser/GetPlayerBans/v1` | API key |
 | `IPublishedFileService/UpdateDetails/v1` (POST) | Publisher key |
 | `ISteamUserStats/SetUserStatsForGame/v1` (POST) | Publisher key |
 | `ISteamLeaderboards/SetLeaderboardScore/v1` (POST) | Publisher key |

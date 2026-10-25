@@ -31,6 +31,12 @@ import { register as registerGetGlobalStatsForGame } from "./getGlobalStatsForGa
 import { register as registerGetDeckCompatibility } from "./getDeckCompatibility.js";
 import { register as registerGetFeatured } from "./getFeatured.js";
 import { register as registerCompareApps } from "./compareApps.js";
+import { register as registerGetAppBetas } from "./getAppBetas.js";
+import { register as registerGetAppBuilds } from "./getAppBuilds.js";
+import { register as registerCheckAppOwnership } from "./checkAppOwnership.js";
+import { register as registerGetInventory } from "./getInventory.js";
+import { register as registerGetUserStatsForGame } from "./getUserStatsForGame.js";
+import { register as registerGetPlayerBans } from "./getPlayerBans.js";
 
 type Registrar = (server: McpServer) => void;
 
@@ -60,12 +66,18 @@ export const TOOLSETS = {
     registerResolveVanityURL,
     registerGetWorkshopItem,
     registerQueryWorkshop,
+    registerGetUserStatsForGame,
+    registerGetPlayerBans,
   ],
   publisher: [
     registerGetLeaderboardsForGame,
     registerGetLeaderboardEntries,
     registerGetSchemaForGame,
     registerGetGlobalStatsForGame,
+    registerGetAppBetas,
+    registerGetAppBuilds,
+    registerCheckAppOwnership,
+    registerGetInventory,
   ],
   mutations: [
     registerUpdateWorkshopItem,
