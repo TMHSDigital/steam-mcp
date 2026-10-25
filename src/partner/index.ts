@@ -5,6 +5,7 @@
  */
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+import { VERSION } from "../version.js";
 import {
   registerPartnerLogin,
   registerUploadStoreImage,
@@ -30,7 +31,7 @@ if (!cookies && !profile) {
 
 const server = new McpServer({
   name: "steam-mcp-partner",
-  version: "0.9.0",
+  version: VERSION,
 });
 
 registerPartnerLogin(server);

@@ -19,7 +19,7 @@
 
 <p align="center">
   <a href="package.json"><img src="https://img.shields.io/node/v/@tmhs/steam-mcp" alt="node"></a>
-  <a href="https://github.com/TMHSDigital/Steam-MCP#available-tools-v090"><img src="https://img.shields.io/badge/MCP_tools-26-blue" alt="MCP tools"></a>
+  <a href="https://github.com/TMHSDigital/Steam-MCP#available-tools---26-total"><img src="https://img.shields.io/badge/MCP_tools-26-blue" alt="MCP tools"></a>
   <img src="https://img.shields.io/badge/Steam_Web_API-powered-1b2838" alt="Steam Web API">
 </p>
 
@@ -144,7 +144,7 @@ That combination is the only way a write tool sends a Partner API request.
 
 See [SECURITY.md](SECURITY.md) for supported versions and how to report a vulnerability.
 
-## Available Tools (v0.9.0) - 26 Total
+## Available Tools - 26 Total
 
 <details>
 <summary><strong>Read Tools (No Auth) - 11 tools</strong></summary>

@@ -4,10 +4,11 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 
 import { registerAllTools } from "./tools/index.js";
+import { VERSION } from "./version.js";
 
 const server = new McpServer({
   name: "steam-mcp",
-  version: "0.9.0",
+  version: VERSION,
 });
 
 registerAllTools(server);
