@@ -1,6 +1,7 @@
 import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { steamApiUrl, steamFetch, errorResponse } from "../utils/steam-api.js";
+import { READ_ONLY } from "../utils/annotations.js";
 
 const inputSchema = {
   appid: z
@@ -24,10 +25,15 @@ const inputSchema = {
 };
 
 export function register(server: McpServer): void {
-  server.tool(
+  server.registerTool(
     "steam_getNewsForApp",
-    "Get recent news articles for a Steam app. Returns titles, URLs, contents, dates, and authors. No API key required.",
-    inputSchema,
+    {
+      title: "Get News For App",
+      description:
+        "Get recent news articles for a Steam app. Returns titles, URLs, contents, dates, and authors. No API key required.",
+      inputSchema,
+      annotations: READ_ONLY,
+    },
     async ({ appid, count, maxlength }) => {
       try {
         const url = steamApiUrl(

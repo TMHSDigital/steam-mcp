@@ -16,17 +16,17 @@ type ToolHandler = (args: Record<string, unknown>) => Promise<ToolResult>;
 function captureHandler(register: (server: McpServer) => void): ToolHandler {
   let handler: ToolHandler | undefined;
   const server = {
-    tool(...args: unknown[]) {
+    registerTool(...args: unknown[]) {
       const cb = args[args.length - 1];
       if (typeof cb !== "function") {
-        throw new Error("server.tool did not receive a handler");
+        throw new Error("server.registerTool did not receive a handler");
       }
       handler = cb as ToolHandler;
     },
   };
   register(server as unknown as McpServer);
   if (!handler) {
-    throw new Error("register() did not call server.tool");
+    throw new Error("register() did not call server.registerTool");
   }
   return handler;
 }

@@ -12,6 +12,7 @@ import {
   refusal,
   dryRunResponse,
 } from "../utils/confirm.js";
+import { LIVE_WRITE } from "../utils/annotations.js";
 
 const inputSchema = {
   appid: z
@@ -42,10 +43,15 @@ const inputSchema = {
 };
 
 export function register(server: McpServer): void {
-  server.tool(
+  server.registerTool(
     "steam_uploadLeaderboardScore",
-    "MUTATES LIVE LEADERBOARD ENTRY. Default dry_run=true; requires confirm=true to send. Upload a score to a Steam leaderboard via the partner API. Requires a publisher API key with server IP allowlisted in Steamworks partner settings.",
-    inputSchema,
+    {
+      title: "Upload Leaderboard Score",
+      description:
+        "MUTATES LIVE LEADERBOARD ENTRY. Default dry_run=true; requires confirm=true to send. Upload a score to a Steam leaderboard via the partner API. Requires a publisher API key with server IP allowlisted in Steamworks partner settings.",
+      inputSchema,
+      annotations: LIVE_WRITE,
+    },
     async ({ appid, leaderboardid, steamid, score, scoremethod, dry_run, confirm }) => {
       try {
         const dryRun = dry_run !== false;

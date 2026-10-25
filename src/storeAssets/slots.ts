@@ -9,6 +9,10 @@ export const STORE_ASSET_SLOTS = [
   "libraryHeader",
   "screenshot",
   "pageBackground",
+  "achievementIcon",
+  "communityIcon",
+  "eventCover",
+  "eventHeader",
 ] as const;
 
 export type StoreAssetSlot = (typeof STORE_ASSET_SLOTS)[number];
@@ -33,10 +37,19 @@ export const SLOT_SPECS: Record<StoreAssetSlot, SlotSpec> = {
   libraryHeader: { kind: "exact", width: 920, height: 430, formats: ["png", "jpeg"] },
   screenshot: { kind: "screenshot", formats: ["png", "jpeg"] },
   pageBackground: { kind: "exact", width: 1438, height: 810, formats: ["png", "jpeg"] },
+  // Each achievement needs an achieved and an unachieved icon.
+  achievementIcon: { kind: "exact", width: 256, height: 256, formats: ["jpeg"] },
+  communityIcon: { kind: "exact", width: 184, height: 184, formats: ["jpeg"] },
+  eventCover: { kind: "exact", width: 800, height: 450, formats: ["png", "jpeg"] },
+  eventHeader: { kind: "exact", width: 1920, height: 622, formats: ["png", "jpeg"] },
 };
 
-/** Unofficial Partner admin FormData field names. Subject to Valve HTML changes. */
-export const SLOT_FORM_FIELD: Record<StoreAssetSlot, string> = {
+/**
+ * Unofficial Partner admin FormData field names. Subject to Valve HTML changes.
+ * Slots without an entry (achievement, community, and event art) are uploaded
+ * elsewhere in Steamworks, so steam_uploadStoreImage cannot send them.
+ */
+export const SLOT_FORM_FIELD = {
   headerCapsule: "header_image",
   smallCapsule: "small_capsule",
   mainCapsule: "main_capsule",
@@ -47,4 +60,8 @@ export const SLOT_FORM_FIELD: Record<StoreAssetSlot, string> = {
   libraryHeader: "library_header",
   screenshot: "screenshot",
   pageBackground: "page_background",
-};
+} as const satisfies Partial<Record<StoreAssetSlot, string>>;
+
+export type UploadableSlot = keyof typeof SLOT_FORM_FIELD;
+
+export const UPLOADABLE_SLOTS = Object.keys(SLOT_FORM_FIELD) as [UploadableSlot, ...UploadableSlot[]];

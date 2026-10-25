@@ -5,14 +5,14 @@ import {
   steamFetch,
   requireApiKey,
   errorResponse,
+  steamDetailSuffix,
 } from "../utils/steam-api.js";
-import { SteamApiError } from "../utils/errors.js";
+import { SteamApiError, InvalidApiKeyError } from "../utils/errors.js";
+import { READ_ONLY } from "../utils/annotations.js";
+import { steamIdInput, resolveSteamId } from "../utils/steamid.js";
 
 const inputSchema = {
-  steamid: z
-    .string()
-    .regex(/^\d{17}$/, "Must be a 17-digit Steam64 ID")
-    .describe("64-bit Steam ID of the player"),
+  steamid: steamIdInput,
   appid: z
     .number()
     .int()
@@ -21,13 +21,21 @@ const inputSchema = {
 };
 
 export function register(server: McpServer): void {
-  server.tool(
+  server.registerTool(
     "steam_getPlayerAchievements",
-    "Get a specific player's achievement unlock status and timestamps for a Steam app. The player's profile must be public. Requires STEAM_API_KEY.",
-    inputSchema,
-    async ({ steamid, appid }) => {
+    {
+      title: "Get Player Achievements",
+      description:
+        "Get a specific player's achievement unlock status and timestamps for a Steam app. The player's profile must be public. Requires STEAM_API_KEY.",
+      inputSchema,
+      annotations: READ_ONLY,
+    },
+    async ({ steamid: player, appid }) => {
+      let steamid = player;
+      let resolvedFrom: string | undefined;
       try {
         const key = requireApiKey();
+        ({ steamid, resolved_from: resolvedFrom } = await resolveSteamId(player));
         const url = steamApiUrl(
           "/ISteamUserStats/GetPlayerAchievements/v1/",
           { key, steamid, appid },
@@ -54,15 +62,24 @@ export function register(server: McpServer): void {
           content: [
             {
               type: "text",
-              text: JSON.stringify(data.playerstats, null, 2),
+              text: JSON.stringify({ ...data.playerstats, ...(resolvedFrom ? { resolved_from: resolvedFrom } : {}) }, null, 2),
             },
           ],
         };
       } catch (error) {
-        if (error instanceof SteamApiError && (error.statusCode === 403 || error.statusCode === 400)) {
+        // requireApiKey() already ran, so a 400/403 here is about the player
+        // or app, not a missing key. An invalid key is reported by steamFetch.
+        if (error instanceof SteamApiError && error.statusCode === 403 && !(error instanceof InvalidApiKeyError)) {
           return errorResponse(
             new Error(
-              `Could not retrieve achievements for Steam ID ${steamid}. This tool requires a free Steam Web API key (set STEAM_API_KEY). The player's game details and profile must be public. Get a key at https://steamcommunity.com/dev/apikey`,
+              `Could not retrieve achievements for Steam ID ${steamid} on app ${appid}: the player's profile or game details are private.${steamDetailSuffix(error)}`,
+            ),
+          );
+        }
+        if (error instanceof SteamApiError && error.statusCode === 400) {
+          return errorResponse(
+            new Error(
+              `Could not retrieve achievements for Steam ID ${steamid} on app ${appid}: the app has no stats, or the parameters are invalid.${steamDetailSuffix(error)}`,
             ),
           );
         }

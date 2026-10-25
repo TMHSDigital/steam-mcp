@@ -1,9 +1,10 @@
-import { mkdtempSync, writeFileSync, rmSync } from "node:fs";
+import { mkdtempSync, writeFileSync, rmSync, readFileSync } from "node:fs";
+import { crc32, deflateSync } from "node:zlib";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, it, expect, afterEach } from "vitest";
-import { encodePng } from "../../storeAssets/png.js";
-import { validateStoreAsset } from "../../storeAssets/validate.js";
+import { encodePng, parseImage } from "../../storeAssets/png.js";
+import { validateStoreAsset, validateAchievementIconDir } from "../../storeAssets/validate.js";
 import type { StoreAssetSlot } from "../../storeAssets/slots.js";
 
 const dirs: string[] = [];
@@ -225,5 +226,125 @@ describe("slot coverage", () => {
   it.each(exact)("%s accepts %dx%d", (slot, w, h) => {
     const path = tmpPng(`${slot}.png`, w, h, solid(12, 12, 16));
     expect(validateStoreAsset(path, slot).ok).toBe(true);
+  });
+});
+
+describe("validateStoreAsset resource bounds", () => {
+  function chunk(type: string, data: Buffer): Buffer {
+    const len = Buffer.alloc(4);
+    len.writeUInt32BE(data.length);
+    const body = Buffer.concat([Buffer.from(type, "ascii"), data]);
+    const crc = Buffer.alloc(4);
+    crc.writeUInt32BE(crc32(body));
+    return Buffer.concat([len, body, crc]);
+  }
+
+  function craftedPng(width: number, height: number, idat: Buffer): string {
+    const ihdr = Buffer.alloc(13);
+    ihdr.writeUInt32BE(width, 0);
+    ihdr.writeUInt32BE(height, 4);
+    ihdr[8] = 8;
+    ihdr[9] = 2;
+    const buf = Buffer.concat([
+      Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
+      chunk("IHDR", ihdr),
+      chunk("IDAT", idat),
+      chunk("IEND", Buffer.alloc(0)),
+    ]);
+    const dir = mkdtempSync(join(tmpdir(), "steam-asset-"));
+    dirs.push(dir);
+    const path = join(dir, "crafted.png");
+    writeFileSync(path, buf);
+    return path;
+  }
+
+  it("reports SIZE for a huge declared IHDR without decoding it", () => {
+    const path = craftedPng(60000, 60000, deflateSync(Buffer.alloc(16)));
+    const result = validateStoreAsset(path, "libraryHero");
+    expect(result.ok).toBe(false);
+    expect(result.errors.map((e) => e.code)).toContain("SIZE");
+  });
+
+  it("reports PARSE for a deflate bomb instead of inflating it", () => {
+    const expected = (3840 * 3 + 1) * 1240;
+    const path = craftedPng(3840, 1240, deflateSync(Buffer.alloc(expected * 20)));
+    const result = validateStoreAsset(path, "libraryHero");
+    expect(result.ok).toBe(false);
+    expect(result.errors[0].code).toBe("PARSE");
+    expect(result.errors[0].message).toMatch(/inflates past/);
+  });
+
+  it("refuses to decode beyond the pixel cap even when asked directly", () => {
+    const path = craftedPng(60000, 60000, deflateSync(Buffer.alloc(16)));
+    expect(() => parseImage(readFileSync(path), true)).toThrow(/refusing to decode/);
+  });
+});
+
+/** Minimal JPEG: SOI + SOF0 header with the given size. Enough for the header parser. */
+function jpegBytes(width: number, height: number): Buffer {
+  const sof = Buffer.from([0xff, 0xc0, 0x00, 0x11, 0x08, 0, 0, 0, 0, 0x03, 1, 0x22, 0, 2, 0x11, 1, 3, 0x11, 1]);
+  sof.writeUInt16BE(height, 5);
+  sof.writeUInt16BE(width, 7);
+  return Buffer.concat([Buffer.from([0xff, 0xd8]), sof, Buffer.alloc(16)]);
+}
+
+function tmpDir(): string {
+  const dir = mkdtempSync(join(tmpdir(), "steam-asset-"));
+  dirs.push(dir);
+  return dir;
+}
+
+describe("validateStoreAsset new slots", () => {
+  it.each([
+    ["achievementIcon", 256, 256],
+    ["communityIcon", 184, 184],
+    ["eventCover", 800, 450],
+    ["eventHeader", 1920, 622],
+  ] as const)("accepts %s at %ix%i JPEG", (slot, w, h) => {
+    const path = join(tmpDir(), "a.jpg");
+    writeFileSync(path, jpegBytes(w, h));
+    expect(validateStoreAsset(path, slot).ok).toBe(true);
+  });
+
+  it("rejects a non-square achievement icon", () => {
+    const path = join(tmpDir(), "a.jpg");
+    writeFileSync(path, jpegBytes(256, 128));
+    expect(validateStoreAsset(path, "achievementIcon").errors.map((e) => e.code)).toContain("SIZE");
+  });
+
+  it("rejects a PNG achievement icon (Valve requires JPG)", () => {
+    const path = tmpPng("a.png", 256, 256, solid(1, 2, 3));
+    expect(validateStoreAsset(path, "achievementIcon").errors.map((e) => e.code)).toContain("FORMAT");
+  });
+
+  it("accepts a PNG event header", () => {
+    const path = tmpPng("e.png", 1920, 622, solid(1, 2, 3));
+    expect(validateStoreAsset(path, "eventHeader").ok).toBe(true);
+  });
+});
+
+describe("validateAchievementIconDir", () => {
+  it("passes a complete set and flags missing pairs, bad sizes, and stray names", () => {
+    const dir = tmpDir();
+    writeFileSync(join(dir, "WIN_achieved.jpg"), jpegBytes(256, 256));
+    writeFileSync(join(dir, "WIN_unachieved.jpg"), jpegBytes(256, 256));
+    expect(validateAchievementIconDir(dir).ok).toBe(true);
+
+    writeFileSync(join(dir, "LOSE_achieved.jpg"), jpegBytes(256, 256));
+    writeFileSync(join(dir, "BIG_achieved.jpg"), jpegBytes(512, 512));
+    writeFileSync(join(dir, "BIG_unachieved.jpg"), jpegBytes(256, 256));
+    writeFileSync(join(dir, "icon.jpg"), jpegBytes(256, 256));
+    writeFileSync(join(dir, "notes.txt"), "ignored");
+
+    const result = validateAchievementIconDir(dir);
+    expect(result.ok).toBe(false);
+    expect(result.checked).toBe(6);
+    expect(result.missing_pairs).toEqual([{ name: "LOSE", missing: "unachieved" }]);
+    expect(result.unpaired_names).toEqual(["icon.jpg"]);
+    expect(result.files.filter((f) => !f.ok).map((f) => f.path)).toEqual([join(dir, "BIG_achieved.jpg")]);
+  });
+
+  it("an empty directory is not ok", () => {
+    expect(validateAchievementIconDir(tmpDir()).ok).toBe(false);
   });
 });

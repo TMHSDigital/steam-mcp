@@ -2,7 +2,12 @@ export class SteamApiError extends Error {
   constructor(
     message: string,
     public readonly statusCode?: number,
+    /** Request URL without its query string. */
     public readonly endpoint?: string,
+    /** Steam's X-eresult header, when present. */
+    public readonly eresult?: number,
+    /** Steam's X-error_message header, when present. */
+    public readonly steamMessage?: string,
   ) {
     super(message);
     this.name = "SteamApiError";
@@ -16,6 +21,17 @@ export class MissingApiKeyError extends SteamApiError {
         "Get a free key at https://steamcommunity.com/dev/apikey",
     );
     this.name = "MissingApiKeyError";
+  }
+}
+
+export class InvalidApiKeyError extends SteamApiError {
+  constructor(endpoint?: string) {
+    super(
+      "Steam rejected STEAM_API_KEY (HTTP 403: verify your key). Check the key is correct and active at https://steamcommunity.com/dev/apikey",
+      403,
+      endpoint,
+    );
+    this.name = "InvalidApiKeyError";
   }
 }
 

@@ -14,10 +14,6 @@ Use GitHub private vulnerability reporting for this repository:
 1. Open the Security tab on [TMHSDigital/steam-mcp](https://github.com/TMHSDigital/steam-mcp).
 2. Choose Report a vulnerability and file a private advisory.
 
-If private reporting is not yet enabled, open a draft advisory from the Security Advisories page:
-
-https://github.com/TMHSDigital/steam-mcp/security/advisories/new
-
 Do not file a public issue, discussion, or pull request that includes exploit details for an undisclosed vulnerability.
 
 ## Response window
@@ -27,6 +23,12 @@ We aim to acknowledge reports within 5 business days. We will keep the reporter 
 ## Coordinated disclosure
 
 This project follows coordinated disclosure. We typically request about 90 days to ship a patch and release notes before a public writeup. We will not share reporter contact details or unpublished technical detail outside of people who need them to fix the issue.
+
+## Past advisories
+
+| Advisory | Summary | Affected | Fixed in |
+|----------|---------|----------|----------|
+| [GHSA-cwcq-65mg-v26r](https://github.com/TMHSDigital/steam-mcp/security/advisories/GHSA-cwcq-65mg-v26r) | Ungated Steam Partner API write tools in the default MCP server bin | <= 0.8.0 | 0.9.0 |
 
 ## Acknowledgments
 

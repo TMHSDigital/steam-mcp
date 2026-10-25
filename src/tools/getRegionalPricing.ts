@@ -1,6 +1,7 @@
 import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { steamStoreUrl, steamFetch, errorResponse } from "../utils/steam-api.js";
+import { READ_ONLY } from "../utils/annotations.js";
 
 const DEFAULT_REGIONS = ["US", "GB", "DE", "BR", "RU", "CN", "JP", "AU", "IN", "TR"];
 const MAX_CONCURRENT_REGIONS = 4;
@@ -22,10 +23,15 @@ const inputSchema = {
 };
 
 export function register(server: McpServer): void {
-  server.tool(
+  server.registerTool(
     "steam_getRegionalPricing",
-    "Get pricing for a Steam app across multiple regions/countries. Returns price, currency, and discount info for each region. No API key required.",
-    inputSchema,
+    {
+      title: "Get Regional Pricing",
+      description:
+        "Get pricing for a Steam app across multiple regions/countries. Returns price, currency, and discount info for each region. No API key required.",
+      inputSchema,
+      annotations: READ_ONLY,
+    },
     async ({ appid, countries }) => {
       try {
         const regions = countries ?? DEFAULT_REGIONS;

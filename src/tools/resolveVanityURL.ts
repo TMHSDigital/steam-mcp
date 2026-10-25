@@ -6,6 +6,7 @@ import {
   requireApiKey,
   errorResponse,
 } from "../utils/steam-api.js";
+import { READ_ONLY } from "../utils/annotations.js";
 
 const inputSchema = {
   vanityurl: z
@@ -26,10 +27,15 @@ const inputSchema = {
 };
 
 export function register(server: McpServer): void {
-  server.tool(
+  server.registerTool(
     "steam_resolveVanityURL",
-    "Convert a Steam vanity URL (custom profile name) to a 64-bit Steam ID. Requires STEAM_API_KEY.",
-    inputSchema,
+    {
+      title: "Resolve Vanity URL",
+      description:
+        "Convert a Steam vanity URL (custom profile name) to a 64-bit Steam ID. Requires STEAM_API_KEY.",
+      inputSchema,
+      annotations: READ_ONLY,
+    },
     async ({ vanityurl, url_type }) => {
       try {
         const key = requireApiKey();

@@ -2,6 +2,7 @@ import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { errorResponse } from "../utils/steam-api.js";
 import { fetchAppReviews } from "../utils/reviews.js";
+import { READ_ONLY } from "../utils/annotations.js";
 
 const inputSchema = {
   appid: z
@@ -43,10 +44,15 @@ const inputSchema = {
 };
 
 export function register(server: McpServer): void {
-  server.tool(
+  server.registerTool(
     "steam_getReviews",
-    "Fetch user reviews for a Steam app with filters for language, sentiment, purchase type, and pagination. Uses IUserReviewsService/GetAppReviews. No API key required.",
-    inputSchema,
+    {
+      title: "Get Reviews",
+      description:
+        "Fetch user reviews for a Steam app with filters for language, sentiment, purchase type, and pagination. Uses IUserReviewsService/GetAppReviews. No API key required.",
+      inputSchema,
+      annotations: READ_ONLY,
+    },
     async ({ appid, filter, language, review_type, purchase_type, num_per_page, cursor }) => {
       try {
         const languages = language

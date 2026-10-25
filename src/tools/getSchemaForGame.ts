@@ -6,6 +6,7 @@ import {
   requireApiKey,
   errorResponse,
 } from "../utils/steam-api.js";
+import { READ_ONLY } from "../utils/annotations.js";
 
 const inputSchema = {
   appid: z
@@ -13,14 +14,34 @@ const inputSchema = {
     .int()
     .positive()
     .describe("Steam application ID to get the achievement/stat schema for"),
+  limit: z
+    .number()
+    .int()
+    .min(1)
+    .max(10000)
+    .optional()
+    .describe("Maximum achievements to return (default: 100). achievement_count always reports the total."),
+  include_stats: z
+    .boolean()
+    .optional()
+    .describe("Include stat definitions (default: true)"),
+  include_icons: z
+    .boolean()
+    .optional()
+    .describe("Include achievement icon URLs (default: false)"),
 };
 
 export function register(server: McpServer): void {
-  server.tool(
+  server.registerTool(
     "steam_getSchemaForGame",
-    "Get the achievement and stat schema for a Steam app. Returns achievement internal names, display names, descriptions, and icon URLs, plus stat definitions. Useful for mapping internal ACH_ names to human-readable names. Requires STEAM_API_KEY.",
-    inputSchema,
-    async ({ appid }) => {
+    {
+      title: "Get Schema For Game",
+      description:
+        "Get the achievement and stat schema for a Steam app: achievement internal names, display names, descriptions, and hidden flags, plus stat definitions. Useful for mapping internal ACH_ names to human-readable names. Returns up to 100 achievements without icon URLs by default (see limit, include_icons, include_stats). Requires STEAM_API_KEY.",
+      inputSchema,
+      annotations: READ_ONLY,
+    },
+    async ({ appid, limit, include_stats, include_icons }) => {
       try {
         const key = requireApiKey();
         const url = steamApiUrl(
@@ -46,9 +67,27 @@ export function register(server: McpServer): void {
           );
         }
 
+        const achievements = data.game.availableGameStats?.achievements ?? [];
+        const stats = data.game.availableGameStats?.stats ?? [];
+        const shown = achievements.slice(0, limit ?? 100).map((a) => {
+          if (include_icons) return a;
+          const { icon: _icon, icongray: _icongray, ...rest } = a;
+          return rest;
+        });
+
         return {
           content: [
-            { type: "text", text: JSON.stringify(data.game, null, 2) },
+            {
+              type: "text",
+              text: JSON.stringify({
+                appid,
+                gameName: data.game.gameName,
+                achievement_count: achievements.length,
+                stat_count: stats.length,
+                achievements: shown,
+                ...(include_stats === false ? {} : { stats }),
+              }),
+            },
           ],
         };
       } catch (error) {

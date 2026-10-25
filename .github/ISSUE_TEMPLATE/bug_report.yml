@@ -1,0 +1,54 @@
+name: Bug report
+description: A tool returns wrong data, errors, or misbehaves.
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Security problems go through private reporting, not here. See SECURITY.md.
+        Never paste your STEAM_API_KEY, cookie jar, or session cookies.
+  - type: input
+    id: version
+    attributes:
+      label: steam-mcp version
+      placeholder: "0.9.1 (npx @tmhs/steam-mcp --version, or package.json)"
+    validations:
+      required: true
+  - type: input
+    id: client
+    attributes:
+      label: MCP client
+      placeholder: "Cursor 2.x, Claude Desktop, Claude Code, VS Code, ..."
+    validations:
+      required: true
+  - type: input
+    id: tool
+    attributes:
+      label: Tool name
+      placeholder: steam_getReviews
+    validations:
+      required: true
+  - type: textarea
+    id: input
+    attributes:
+      label: Tool input (redacted)
+      description: The arguments the tool was called with. Remove keys and personal Steam IDs.
+      render: json
+  - type: textarea
+    id: actual
+    attributes:
+      label: What happened
+      description: The tool output or error text.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected
+    validations:
+      required: true
+  - type: input
+    id: node
+    attributes:
+      label: Node.js version and OS
+      placeholder: "Node 24.1, Windows 11"

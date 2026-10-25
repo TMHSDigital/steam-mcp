@@ -2,6 +2,7 @@ import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { errorResponse } from "../utils/steam-api.js";
 import { fetchAppReviews } from "../utils/reviews.js";
+import { READ_ONLY } from "../utils/annotations.js";
 
 const inputSchema = {
   appid: z
@@ -12,10 +13,15 @@ const inputSchema = {
 };
 
 export function register(server: McpServer): void {
-  server.tool(
+  server.registerTool(
     "steam_getAppReviewSummary",
-    "Get all-time review summary statistics for a Steam app across all languages and purchase types: total positive/negative counts, review score, and score description. No individual reviews returned. No API key required.",
-    inputSchema,
+    {
+      title: "Get App Review Summary",
+      description:
+        "Get all-time review summary statistics for a Steam app across all languages and purchase types: total positive/negative counts, review score, and score description. No individual reviews returned. No API key required.",
+      inputSchema,
+      annotations: READ_ONLY,
+    },
     async ({ appid }) => {
       try {
         const data = await fetchAppReviews({

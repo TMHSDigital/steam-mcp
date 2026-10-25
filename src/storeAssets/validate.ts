@@ -1,7 +1,11 @@
-import { readFileSync } from "node:fs";
+import { readFileSync, readdirSync, statSync } from "node:fs";
+import { join } from "node:path";
 import { SLOT_SPECS, type StoreAssetSlot } from "./slots.js";
 import { parseImage } from "./png.js";
 import { analyzeHero } from "./heroHeuristics.js";
+
+/** Files above this are refused before reading. Steam store images are far smaller. */
+export const MAX_FILE_BYTES = 50 * 1024 * 1024;
 
 export type ValidationIssue = {
   code: string;
@@ -34,6 +38,14 @@ export function validateStoreAsset(path: string, slot: StoreAssetSlot): StoreAss
 
   let buf: Buffer;
   try {
+    const bytes = statSync(path).size;
+    if (bytes > MAX_FILE_BYTES) {
+      errors.push({
+        code: "FILE_SIZE",
+        message: `File is ${bytes} bytes; store images over ${MAX_FILE_BYTES} bytes are rejected without reading.`,
+      });
+      return result;
+    }
     buf = readFileSync(path);
   } catch (error) {
     errors.push({
@@ -43,10 +55,19 @@ export function validateStoreAsset(path: string, slot: StoreAssetSlot): StoreAss
     return result;
   }
 
-  const decodePixels = slot === "libraryHero";
+  // Read the header first. Pixels are decoded only for a libraryHero whose
+  // declared size is already correct, so a bogus IHDR never drives allocation.
   let image;
   try {
-    image = parseImage(buf, decodePixels);
+    image = parseImage(buf, false);
+    const decodePixels =
+      slot === "libraryHero" &&
+      image.format === "png" &&
+      image.width === spec.width &&
+      image.height === spec.height;
+    if (decodePixels) {
+      image = parseImage(buf, true);
+    }
   } catch (error) {
     errors.push({
       code: "PARSE",
@@ -147,4 +168,55 @@ export function validateStoreAsset(path: string, slot: StoreAssetSlot): StoreAss
 
   result.ok = errors.length === 0;
   return result;
+}
+
+
+export type AchievementIconSetValidation = {
+  ok: boolean;
+  directory: string;
+  checked: number;
+  /** Base names with only one of the _achieved / _unachieved pair. */
+  missing_pairs: Array<{ name: string; missing: "achieved" | "unachieved" }>;
+  /** Image files whose name does not end in _achieved or _unachieved. */
+  unpaired_names: string[];
+  files: StoreAssetValidation[];
+};
+
+const ICON_EXT = /\.(jpe?g|png)$/i;
+const PAIR_SUFFIX = /^(.*)_(achieved|unachieved)$/i;
+
+/**
+ * Validate every image in a directory as an achievement icon (256x256 JPEG)
+ * and check that each `<name>_achieved` has a matching `<name>_unachieved`.
+ */
+export function validateAchievementIconDir(directory: string): AchievementIconSetValidation {
+  const names = readdirSync(directory).filter((n) => ICON_EXT.test(n)).sort();
+  const files = names.map((n) => validateStoreAsset(join(directory, n), "achievementIcon"));
+
+  const pairs = new Map<string, Set<string>>();
+  const unpaired: string[] = [];
+  for (const n of names) {
+    const m = n.replace(ICON_EXT, "").match(PAIR_SUFFIX);
+    if (!m) {
+      unpaired.push(n);
+      continue;
+    }
+    const set = pairs.get(m[1]) ?? new Set<string>();
+    set.add(m[2].toLowerCase());
+    pairs.set(m[1], set);
+  }
+  const missing: AchievementIconSetValidation["missing_pairs"] = [];
+  for (const [name, set] of pairs) {
+    if (!set.has("achieved")) missing.push({ name, missing: "achieved" });
+    if (!set.has("unachieved")) missing.push({ name, missing: "unachieved" });
+  }
+
+  return {
+    ok: names.length > 0 && missing.length === 0 && files.every((f) => f.ok),
+    directory,
+    checked: names.length,
+    missing_pairs: missing,
+    unpaired_names: unpaired,
+    files,
+  };
 }
