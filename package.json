@@ -52,6 +52,6 @@
     "@vitest/coverage-v8": "^4.1.12",
     "tsx": "^4.19.4",
     "typescript": "^5.8.3",
-    "vitest": "^4.1.2"
+    "vitest": "^5.0.5"
   }
 }
