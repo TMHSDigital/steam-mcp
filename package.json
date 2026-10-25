@@ -1,7 +1,7 @@
 {
   "name": "@tmhs/steam-mcp",
   "version": "0.9.0",
-  "description": "MCP server for Steam & Steamworks APIs - 37 tools (30 read, 5 write, 2 SDK guides) for store data, player stats, reviews, pricing, achievements, workshop, leaderboards, inventory, and lobbies.",
+  "description": "MCP server for Steam & Steamworks APIs - 39 tools (32 read, 5 write, 2 SDK guides) for store data, player stats, reviews, pricing, achievements, workshop, leaderboards, inventory, and lobbies.",
   "type": "module",
   "main": "dist/index.js",
   "bin": {

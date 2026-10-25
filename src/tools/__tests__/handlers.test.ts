@@ -269,10 +269,28 @@ const CASES: Record<string, Case> = {
     needsKey: true,
     errorFixture: {},
   },
+  steam_getSalesSummary: {
+    args: { start_date: "2026-10-01" },
+    fixture: { response: { results: [{ country_code: "US", net_units_sold: 3, net_sales_usd: "29.97" }], max_id: "0" } },
+    expect: ['"country":"US"', '"net_sales_usd":29.97'],
+    host: "partner.steam-api.com",
+    needsKey: true,
+  },
+  steam_getChangedSalesDates: {
+    args: {},
+    fixture: { response: { dates: ["2026/10/01"], result_highwatermark: "120" } },
+    expect: ['"result_highwatermark":"120"'],
+    host: "partner.steam-api.com",
+    needsKey: true,
+    errorFixture: {},
+  },
 };
 
-const tools = registeredTools();beforeEach(() => {
+const tools = registeredTools();
+
+beforeEach(() => {
   delete process.env.STEAM_API_KEY;
+  delete process.env.STEAM_FINANCIAL_API_KEY;
 });
 
 afterEach(() => {

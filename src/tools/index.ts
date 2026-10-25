@@ -37,6 +37,8 @@ import { register as registerCheckAppOwnership } from "./checkAppOwnership.js";
 import { register as registerGetInventory } from "./getInventory.js";
 import { register as registerGetUserStatsForGame } from "./getUserStatsForGame.js";
 import { register as registerGetPlayerBans } from "./getPlayerBans.js";
+import { register as registerGetSalesSummary } from "./getSalesSummary.js";
+import { register as registerGetChangedSalesDates } from "./getChangedSalesDates.js";
 
 type Registrar = (server: McpServer) => void;
 
@@ -78,6 +80,8 @@ export const TOOLSETS = {
     registerGetAppBuilds,
     registerCheckAppOwnership,
     registerGetInventory,
+    registerGetSalesSummary,
+    registerGetChangedSalesDates,
   ],
   mutations: [
     registerUpdateWorkshopItem,
