@@ -153,7 +153,7 @@ These work without an API key:
 
 | Tool | Description |
 |------|-------------|
-| `steam_getAppDetails` | Store data: price, description, reviews, tags, platforms, system requirements |
+| `steam_getAppDetails` | Store data. Compact summary by default (price, release date, genres, platforms, metacritic); `detail: "full"` or `fields` for descriptions, requirements, screenshots, DLC |
 | `steam_searchApps` | Search for games/apps by name or keyword |
 | `steam_getPlayerCount` | Current concurrent player count |
 | `steam_getAchievementStats` | Global achievement unlock percentages |
@@ -175,11 +175,11 @@ These require `STEAM_API_KEY` to be set:
 | Tool | Description |
 |------|-------------|
 | `steam_getPlayerSummary` | Player profile: name, avatar, online status |
-| `steam_getOwnedGames` | Game library with playtime data |
+| `steam_getOwnedGames` | Game library size and total playtime, plus the top 50 games by playtime (`sort`, `limit`, `appids`) |
 | `steam_queryWorkshop` | Search/browse Workshop items with filters. Titles and short descriptions are untrusted user-authored text. |
 | `steam_getLeaderboardEntries` | Leaderboard scores and rankings (pass numeric ID from Steamworks dashboard) |
 | `steam_resolveVanityURL` | Convert vanity URL to 64-bit Steam ID |
-| `steam_getSchemaForGame` | Achievement/stat schema with display names, descriptions, and icon URLs |
+| `steam_getSchemaForGame` | Achievement/stat schema with display names and descriptions; up to 100 achievements, icons on request (`limit`, `include_icons`, `include_stats`) |
 | `steam_getPlayerAchievements` | Per-player achievement unlock status and timestamps |
 | `steam_getLeaderboardsForGame` | List all leaderboards with numeric IDs, names, and sort methods. Needs a publisher key. |
 

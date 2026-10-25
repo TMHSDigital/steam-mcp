@@ -25,6 +25,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Large outputs are capped by default to save agent context (#35):
+  - `steam_getAppDetails` returns a compact summary (about 2 KB instead of about 30 KB). `detail: "full"` returns every field, `fields` picks specific ones. Store HTML is stripped and long text truncated unless `include_html: true`.
+  - `steam_getOwnedGames` returns `game_count`, `total_playtime_minutes`, and the top 50 games by playtime. New `sort` (`playtime`, `recent`, `name`), `limit`, and `appids` inputs.
+  - `steam_getSchemaForGame` returns up to 100 achievements without icon URLs, plus `achievement_count`. New `limit`, `include_icons`, and `include_stats` inputs.
+  - These three tools emit compact JSON.
 - **Requires Node.js 22 or later.** Node 20 reached end of life on 2026-04-30. CI tests Node 22 and 24. (#56)
 - Release pipeline: the publish job uses Node 24's bundled npm instead of an unpinned `npm@latest`, and all release-path actions are pinned by commit SHA. (#56)
 - The stale bot no longer closes issues. Issues are labeled stale after 60 days; security, high/critical priority, decision, pinned, and milestoned items are exempt. PRs still close 7 days after going stale. (#41)

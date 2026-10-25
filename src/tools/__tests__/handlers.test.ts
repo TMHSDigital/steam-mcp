@@ -35,7 +35,7 @@ const CASES: Record<string, Case> = {
   steam_getAppDetails: {
     args: { appid: 440 },
     fixture: { "440": { success: true, data: { type: "game", name: "Team Fortress 2", steam_appid: 440, is_free: true } } },
-    expect: ['"name": "Team Fortress 2"'],
+    expect: ['"name":"Team Fortress 2"'],
     host: "store.steampowered.com",
     errorFixture: { "440": { success: false } },
   },
@@ -68,7 +68,7 @@ const CASES: Record<string, Case> = {
   steam_getOwnedGames: {
     args: { steamid: STEAMID },
     fixture: { response: { game_count: 1, games: [{ appid: 440, playtime_forever: 120 }] } },
-    expect: ['"game_count": 1'],
+    expect: ['"game_count":1'],
     needsKey: true,
     errorFixture: { response: {} },
   },
@@ -163,7 +163,7 @@ const CASES: Record<string, Case> = {
   steam_getSchemaForGame: {
     args: { appid: 440 },
     fixture: { game: { gameName: "Team Fortress 2", availableGameStats: { achievements: [{ name: "TF_PLAY_GAME_EVERYCLASS" }] } } },
-    expect: ['"gameName": "Team Fortress 2"'],
+    expect: ['"gameName":"Team Fortress 2"'],
     needsKey: true,
     errorFixture: {},
   },
