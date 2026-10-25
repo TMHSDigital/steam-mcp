@@ -9,6 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Five new tools (31 total), all keyless:
+  - `steam_getGlobalStatsForGame`: all-player totals for aggregated stats, with optional daily history. (#68)
+  - `steam_getDeckCompatibility`: Steam Deck category and each test result in plain language, for up to 20 apps. Uses the store's unofficial Deck report endpoint. (#58)
+  - `steam_getFeatured`: top sellers, new releases, specials, and coming soon for a region. (#49)
+  - `steam_compareApps`: one compact table for 2-10 apps with price, release date, genres, metacritic, reviews, current players, and language count. (#49)
+  - `steam_validateStoreAssetDir`: audits a local art folder, infers each image's slot, and lists missing required slots and screenshots. (#43)
+- `launch-readiness` MCP prompt: PASS/FAIL checklist from the art folder plus the live store page, regional prices, and Deck status. `competitor-snapshot` now uses `steam_compareApps`. (#43)
 - MCP prompts: `competitor-snapshot`, `achievement-health`, `review-digest`, `regional-price-audit`, and `workshop-health`. MCP resources: `steam://specs/store-assets`, `steam://enums/eresult`, `steam://enums/ugc-query-type`, `steam://enums/review-filters`, and the `steam://app/{appid}/summary` template. (#62)
 - `steam_validateStoreAsset` checks four more slots: `achievementIcon` (256x256 JPG), `communityIcon` (184x184 JPG), `eventCover` (800x450), and `eventHeader` (1920x622). With slot `achievementIcon`, `path` can be a directory: every icon is checked and each `<name>_achieved` must have a `<name>_unachieved`. Partner `steam_uploadStoreImage` accepts only the slots it can upload. (#66)
 - Toolsets: `STEAM_MCP_TOOLSETS` picks which tool groups load (`store`, `community`, `publisher`, `mutations`, `sdk`, `assets`, or `all`), and `STEAM_MCP_READ_ONLY=1` removes `mutations` even if listed. A `steam://server-info` MCP resource reports what is enabled. **Breaking:** the five live-mutation tools are now off by default. Set `STEAM_MCP_TOOLSETS=all` (or include `mutations`) to load them. (#61)

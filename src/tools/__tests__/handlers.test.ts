@@ -192,10 +192,38 @@ const CASES: Record<string, Case> = {
     expect: ['"ok": false', "PARSE"],
     noFetch: true,
   },
+  steam_getGlobalStatsForGame: {
+    args: { appid: 480, stat_names: ["FeetTraveled"] },
+    fixture: { response: { result: 1, globalstats: { FeetTraveled: { total: "123" } } } },
+    expect: ['"FeetTraveled"'],
+    host: "api.steampowered.com",
+    errorFixture: { response: { result: 8, error: "Stat 'X' is not an aggregated stat" } },
+  },
+  steam_getDeckCompatibility: {
+    args: { appids: [570] },
+    fixture: { success: 1, results: { resolved_category: 2, resolved_items: [{ display_type: 3, loc_token: "#SteamDeckVerified_TestResult_InterfaceTextIsNotLegible" }] } },
+    expect: ['"category":"playable"', "Interface text is not legible"],
+    host: "store.steampowered.com",
+  },
+  steam_getFeatured: {
+    args: { categories: ["top_sellers"] },
+    fixture: { top_sellers: { items: [{ id: 620, name: "Portal 2", final_price: 999, currency: "USD", windows_available: true }] } },
+    expect: ['"name":"Portal 2"'],
+    host: "store.steampowered.com",
+  },
+  steam_compareApps: {
+    args: { appids: [620, 400] },
+    fixture: { "620": { success: true, data: { name: "Portal 2" } }, "400": { success: true, data: { name: "Portal" } } },
+    expect: ['"name":"Portal 2"', '"name":"Portal"'],
+  },
+  steam_validateStoreAssetDir: {
+    args: { dir: tmpdir() },
+    expect: ['"missing_slots"'],
+    noFetch: true,
+  },
 };
 
 const tools = registeredTools();
-
 beforeEach(() => {
   delete process.env.STEAM_API_KEY;
 });

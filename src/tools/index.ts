@@ -26,6 +26,11 @@ import { register as registerGetNewsForApp } from "./getNewsForApp.js";
 import { register as registerGetLeaderboardsForGame } from "./getLeaderboardsForGame.js";
 import { register as registerGetPlayerAchievements } from "./getPlayerAchievements.js";
 import { register as registerValidateStoreAsset } from "./validateStoreAsset.js";
+import { register as registerValidateStoreAssetDir } from "./validateStoreAssetDir.js";
+import { register as registerGetGlobalStatsForGame } from "./getGlobalStatsForGame.js";
+import { register as registerGetDeckCompatibility } from "./getDeckCompatibility.js";
+import { register as registerGetFeatured } from "./getFeatured.js";
+import { register as registerCompareApps } from "./compareApps.js";
 
 type Registrar = (server: McpServer) => void;
 
@@ -44,6 +49,9 @@ export const TOOLSETS = {
     registerGetReviews,
     registerGetAppReviewSummary,
     registerGetNewsForApp,
+    registerGetDeckCompatibility,
+    registerGetFeatured,
+    registerCompareApps,
   ],
   community: [
     registerGetPlayerSummary,
@@ -53,7 +61,12 @@ export const TOOLSETS = {
     registerGetWorkshopItem,
     registerQueryWorkshop,
   ],
-  publisher: [registerGetLeaderboardsForGame, registerGetLeaderboardEntries, registerGetSchemaForGame],
+  publisher: [
+    registerGetLeaderboardsForGame,
+    registerGetLeaderboardEntries,
+    registerGetSchemaForGame,
+    registerGetGlobalStatsForGame,
+  ],
   mutations: [
     registerUpdateWorkshopItem,
     registerSetAchievement,
@@ -62,7 +75,7 @@ export const TOOLSETS = {
     registerGrantInventoryItem,
   ],
   sdk: [registerCreateLobby, registerUploadWorkshopItem],
-  assets: [registerValidateStoreAsset],
+  assets: [registerValidateStoreAsset, registerValidateStoreAssetDir],
 } satisfies Record<string, Registrar[]>;
 
 export type ToolsetName = keyof typeof TOOLSETS;

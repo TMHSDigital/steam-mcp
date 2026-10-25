@@ -4,7 +4,7 @@
 
 ## What is this?
 
-An MCP (Model Context Protocol) server that exposes Steam Web API endpoints as structured tools for AI-powered IDEs. It is the companion server for the [Steam Developer Tools](https://github.com/TMHSDigital/Steam-Cursor-Plugin) Cursor plugin, which provides 30 skills and 9 rules for Steam/Steamworks development. The server provides 26 tools: 19 read-only, 5 write (Partner API mutations gated by confirm/dry-run), and 2 SDK code-example generators.
+An MCP (Model Context Protocol) server that exposes Steam Web API endpoints as structured tools for AI-powered IDEs. It is the companion server for the [Steam Developer Tools](https://github.com/TMHSDigital/Steam-Cursor-Plugin) Cursor plugin, which provides 30 skills and 9 rules for Steam/Steamworks development. The server provides 31 tools: 24 read-only, 5 write (Partner API mutations gated by confirm/dry-run), and 2 SDK code-example generators.
 
 The plugin's skills reference these MCP tools to fetch live data from Steam - player stats, store info, workshop items, leaderboards, and more.
 

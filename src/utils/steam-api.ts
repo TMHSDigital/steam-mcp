@@ -37,6 +37,15 @@ function buildUrl(
   return url.toString();
 }
 
+/** Web API array parameters are sent as name[0], name[1], ... */
+export function indexedParams(name: string, values: readonly (string | number)[] | undefined): Record<string, string | number> {
+  const out: Record<string, string | number> = {};
+  values?.forEach((v, i) => {
+    out[`${name}[${i}]`] = v;
+  });
+  return out;
+}
+
 export function steamApiUrl(
   path: string,
   params: Record<string, string | number | boolean | undefined> = {},

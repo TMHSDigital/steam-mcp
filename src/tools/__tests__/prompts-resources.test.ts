@@ -28,7 +28,7 @@ const toolNames = new Set(registeredTools().keys());
 describe("prompts", () => {
   it("registers the workflow prompts", () => {
     expect([...prompts.keys()].sort()).toEqual(
-      ["achievement-health", "competitor-snapshot", "regional-price-audit", "review-digest", "workshop-health"],
+      ["achievement-health", "competitor-snapshot", "launch-readiness", "regional-price-audit", "review-digest", "workshop-health"],
     );
   });
 
@@ -38,6 +38,7 @@ describe("prompts", () => {
     ["review-digest", { appid: "440" }],
     ["regional-price-audit", { appid: "440" }],
     ["workshop-health", { appid: "4000" }],
+    ["launch-readiness", { dir: "./art", appid: "620" }],
   ])("%s only names tools that exist", (name, args) => {
     const prompt = prompts.get(name)!;
     expect(z.object(prompt.argsSchema).safeParse(args).success).toBe(true);

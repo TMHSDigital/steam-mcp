@@ -3,6 +3,7 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import {
   steamApiUrl,
   steamFetch,
+  indexedParams,
   requireApiKey,
   errorResponse,
 } from "../utils/steam-api.js";
@@ -21,14 +22,6 @@ export const QUERY_TYPES = {
 
 const SORTS = Object.keys(QUERY_TYPES) as [keyof typeof QUERY_TYPES, ...Array<keyof typeof QUERY_TYPES>];
 
-/** Web API array parameters are sent as name[0], name[1], ... */
-function indexed(name: string, values: string[] | undefined): Record<string, string> {
-  const out: Record<string, string> = {};
-  values?.forEach((v, i) => {
-    out[`${name}[${i}]`] = v;
-  });
-  return out;
-}
 
 const inputSchema = {
   appid: z
@@ -121,8 +114,8 @@ export function register(server: McpServer): void {
           numperpage: numperpage ?? 10,
           query_type: QUERY_TYPES[effectiveSort],
           days: effectiveSort === "trend" ? (days ?? 7) : undefined,
-          ...indexed("requiredtags", requiredtags),
-          ...indexed("excludedtags", excludedtags),
+          ...indexedParams("requiredtags", requiredtags),
+          ...indexedParams("excludedtags", excludedtags),
           match_all_tags: hasTags ? (match_all_tags ?? true) : undefined,
           return_tags: return_tags ?? true,
           return_previews: return_previews || undefined,

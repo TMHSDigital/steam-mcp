@@ -19,13 +19,13 @@
 
 <p align="center">
   <a href="package.json"><img src="https://img.shields.io/node/v/@tmhs/steam-mcp" alt="node"></a>
-  <a href="https://github.com/TMHSDigital/Steam-MCP#available-tools---26-total"><img src="https://img.shields.io/badge/MCP_tools-26-blue" alt="MCP tools"></a>
+  <a href="https://github.com/TMHSDigital/Steam-MCP#available-tools---31-total"><img src="https://img.shields.io/badge/MCP_tools-31-blue" alt="MCP tools"></a>
   <img src="https://img.shields.io/badge/Steam_Web_API-powered-1b2838" alt="Steam Web API">
 </p>
 
 ---
 
-<p align="center"><strong>26 MCP tools</strong> - 19 read - 5 write - 2 SDK guides</p>
+<p align="center"><strong>31 MCP tools</strong> - 24 read - 5 write - 2 SDK guides</p>
 
 Query Steam store data, player statistics, achievements, reviews, pricing, workshop items, leaderboards, inventory, and player profiles - all as structured MCP tools callable from Cursor's AI agent.
 
@@ -164,7 +164,7 @@ That combination is the only way a write tool sends a Partner API request.
 
 See [SECURITY.md](SECURITY.md) for supported versions and how to report a vulnerability.
 
-## Available Tools - 26 Total
+## Available Tools - 31 Total
 
 ### Toolsets
 
@@ -172,11 +172,11 @@ Tools are grouped into toolsets so an agent only loads the ones you need. Set `S
 
 | Toolset | Tools | Default |
 |---------|-------|---------|
-| `store` | getAppDetails, searchApps, getPlayerCount, getAchievementStats, getPriceOverview, getRegionalPricing, getReviews, getAppReviewSummary, getNewsForApp | on |
+| `store` | getAppDetails, searchApps, getPlayerCount, getAchievementStats, getPriceOverview, getRegionalPricing, getReviews, getAppReviewSummary, getNewsForApp, getDeckCompatibility, getFeatured, compareApps | on |
 | `community` | getPlayerSummary, getOwnedGames, getPlayerAchievements, resolveVanityURL, getWorkshopItem, queryWorkshop | on |
-| `publisher` | getLeaderboardsForGame, getLeaderboardEntries, getSchemaForGame | on |
+| `publisher` | getLeaderboardsForGame, getLeaderboardEntries, getSchemaForGame, getGlobalStatsForGame | on |
 | `sdk` | createLobby, uploadWorkshopItem (code guides, no network) | on |
-| `assets` | validateStoreAsset | on |
+| `assets` | validateStoreAsset, validateStoreAssetDir | on |
 | `mutations` | updateWorkshopItem, setAchievement, clearAchievement, uploadLeaderboardScore, grantInventoryItem | **off** |
 
 ```json
@@ -196,6 +196,7 @@ Ready-made workflows that most clients show as slash commands. Each one tells th
 | `review-digest` | `appid`, optional `language` | Positive and negative review themes with counts and quotes |
 | `regional-price-audit` | `appid` | Regional prices in USD, with outliers flagged |
 | `workshop-health` | `appid` | Trending vs top-rated Workshop items, stale top items, common tags |
+| `launch-readiness` | `dir`, optional `appid` | PASS/FAIL checklist from your local art folder plus the live store page, prices, and Deck status |
 
 ### Resources
 
@@ -211,7 +212,7 @@ Reference data a client can attach so the agent does not guess:
 | `steam://server-info` | Version and enabled toolsets |
 
 <details>
-<summary><strong>Read Tools (No Auth) - 11 tools</strong></summary>
+<summary><strong>Read Tools (No Auth) - 16 tools</strong></summary>
 
 These work without an API key:
 
@@ -228,6 +229,11 @@ These work without an API key:
 | `steam_getRegionalPricing` | Pricing breakdown across multiple countries/regions |
 | `steam_getNewsForApp` | Recent news articles with title, URL, contents, date, and author. Article text is third-party and labeled untrusted. |
 | `steam_validateStoreAsset` | Local PNG/JPEG vs Valve store, library, achievement, community, and event sizes, plus library-hero heuristics. Checks a whole achievement icon folder for missing achieved/unachieved pairs. |
+| `steam_validateStoreAssetDir` | Launch-readiness audit of a local art folder: infers each slot, validates it, and lists missing required slots and screenshots |
+| `steam_getDeckCompatibility` | Steam Deck category (verified, playable, unsupported) and each test result in plain language, for up to 20 apps. Unofficial store endpoint. |
+| `steam_getFeatured` | Current top sellers, new releases, specials, and coming soon for a region |
+| `steam_compareApps` | One compact table for 2-10 apps: price, release date, genres, metacritic, reviews, current players, languages |
+| `steam_getGlobalStatsForGame` | All-player totals for aggregated stats, with optional daily history. Keyless when stat names are given. |
 
 </details>
 
@@ -267,7 +273,7 @@ The five HTTP write tools are in the `mutations` toolset, which is off unless `S
 </details>
 
 <details>
-<summary><strong>Steam API Endpoints (19 endpoints)</strong></summary>
+<summary><strong>Steam API Endpoints (22 endpoints)</strong></summary>
 
 | Endpoint | Auth |
 |----------|------|
@@ -278,6 +284,9 @@ The five HTTP write tools are in the `mutations` toolset, which is off unless `S
 | `ISteamNews/GetNewsForApp/v2` | None |
 | `ISteamRemoteStorage/GetPublishedFileDetails/v1` | None |
 | `IUserReviewsService/GetAppReviews/v1` | None |
+| `ISteamUserStats/GetGlobalStatsForGame/v1` | None |
+| `store.steampowered.com/api/featuredcategories` | None |
+| `store.steampowered.com/saleaction/ajaxgetdeckappcompatibilityreport` (unofficial) | None |
 | `ISteamUser/GetPlayerSummaries/v2` | API key |
 | `IPlayerService/GetOwnedGames/v1` | API key |
 | `ISteamUser/ResolveVanityURL/v1` | API key |

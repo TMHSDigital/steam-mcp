@@ -25,6 +25,10 @@ const CHECKS = [
   ["steam_getPriceOverview", { appids: [620], cc: "US" }, ["prices.620"]],
   ["steam_getRegionalPricing", { appid: 620, countries: ["US", "DE"] }, ["regions.US", "regions.DE"]],
   ["steam_getNewsForApp", { appid: 440, count: 1 }, ["newsitems.0.title"]],
+  ["steam_getGlobalStatsForGame", { appid: 480, stat_names: ["FeetTraveled"] }, ["stats.FeetTraveled"]],
+  ["steam_getDeckCompatibility", { appids: [620] }, ["reports.0.category", "reports.0.tests.0.result"]],
+  ["steam_getFeatured", { limit: 2 }, ["lists.top_sellers.0.appid", "lists.new_releases.0.name"]],
+  ["steam_compareApps", { appids: [620, 400] }, ["apps.0.name", "apps.0.review_count", "apps.1.price"]],
 ];
 
 function get(obj, path) {
