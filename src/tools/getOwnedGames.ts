@@ -6,6 +6,7 @@ import {
   requireApiKey,
   errorResponse,
 } from "../utils/steam-api.js";
+import { READ_ONLY } from "../utils/annotations.js";
 
 const inputSchema = {
   steamid: z
@@ -23,10 +24,15 @@ const inputSchema = {
 };
 
 export function register(server: McpServer): void {
-  server.tool(
+  server.registerTool(
     "steam_getOwnedGames",
-    "Get a player's game library with playtime data. Shows all owned games, total playtime, and recent playtime. Requires STEAM_API_KEY.",
-    inputSchema,
+    {
+      title: "Get Owned Games",
+      description:
+        "Get a player's game library with playtime data. Shows all owned games, total playtime, and recent playtime. Requires STEAM_API_KEY.",
+      inputSchema,
+      annotations: READ_ONLY,
+    },
     async ({ steamid, include_played_free_games, include_appinfo }) => {
       try {
         const key = requireApiKey();

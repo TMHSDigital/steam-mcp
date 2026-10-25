@@ -5,7 +5,7 @@ import {
   steamStoreUrl,
   steamPartnerUrl,
   errorResponse,
-  getApiKey,
+  requireApiKey,
 } from "../steam-api.js";
 import {
   SteamApiError,
@@ -48,7 +48,7 @@ describe("URL builders", () => {
   });
 });
 
-describe("getApiKey", () => {
+describe("requireApiKey", () => {
   const originalKey = process.env.STEAM_API_KEY;
 
   afterEach(() => {
@@ -61,12 +61,12 @@ describe("getApiKey", () => {
 
   it("returns key when set", () => {
     process.env.STEAM_API_KEY = "TESTKEY123";
-    expect(getApiKey()).toBe("TESTKEY123");
+    expect(requireApiKey()).toBe("TESTKEY123");
   });
 
   it("throws MissingApiKeyError when not set", () => {
     delete process.env.STEAM_API_KEY;
-    expect(() => getApiKey()).toThrow(MissingApiKeyError);
+    expect(() => requireApiKey()).toThrow(MissingApiKeyError);
   });
 });
 
@@ -153,7 +153,7 @@ describe("steamFetch", () => {
 
     await expect(
       steamFetch("https://api.steampowered.com/test"),
-    ).rejects.toThrow("Unexpected response");
+    ).rejects.toThrow("Unexpected non-JSON response");
   });
 
   it("retries on 429 then succeeds", async () => {

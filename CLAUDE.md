@@ -12,11 +12,12 @@ The plugin's skills reference these MCP tools to fetch live data from Steam - pl
 
 ```
 src/
-  index.ts              Entry point - creates McpServer, registers tools, starts stdio transport
+  index.ts              Entry point - creates McpServer, calls registerAllTools, starts stdio transport
   tools/
+    index.ts             registerAllTools(server) - the one list of default-bin tools
     getAppDetails.ts     Each file exports a register(server) function
-    searchApps.ts        that adds one tool with its name, description,
-    getPlayerCount.ts    zod input schema, and async handler
+    searchApps.ts        that calls server.registerTool with name, title,
+    getPlayerCount.ts    description, zod input schema, annotations, and handler
     validateStoreAsset.ts
     ...
   storeAssets/
@@ -27,12 +28,15 @@ src/
   utils/
     steam-api.ts         Shared fetch wrapper, URL builders, API key helper, error formatting
     confirm.ts           Shared dry_run/confirm gate for any live mutation
+    annotations.ts       MCP tool annotation presets (READ_ONLY, LOCAL_ONLY, LIVE_WRITE)
+    reviews.ts           IUserReviewsService/GetAppReviews client and enum mapping
     errors.ts            Custom error classes (rate limit, missing key, unavailable)
 ```
 
 **Key patterns:**
 
-- Each tool is a self-contained module that exports `register(server: McpServer)`.
+- Each tool is a self-contained module that exports `register(server: McpServer)` and calls `server.registerTool()` (never the deprecated `server.tool()`). Add new tools to `src/tools/index.ts`.
+- Every tool declares `annotations` from `src/utils/annotations.ts`. Confirm-gated writes use `LIVE_WRITE` or `LIVE_WRITE_IDEMPOTENT`; `annotations.test.ts` enforces this.
 - `steam-api.ts` provides `steamFetch()` which handles timeouts (15s via AbortController with `TimeoutError`), HTTP error detection (429 rate limits with up to 2 retries and exponential backoff, 5xx unavailable), and JSON parsing.
 - `errorResponse()` formats errors as MCP-compatible `{ isError: true }` responses.
 - Tools that need an API key call `requireApiKey()` which reads `STEAM_API_KEY` from env and throws `MissingApiKeyError` with setup instructions if missing.

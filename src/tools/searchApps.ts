@@ -1,6 +1,7 @@
 import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { steamStoreUrl, steamFetch, errorResponse } from "../utils/steam-api.js";
+import { READ_ONLY } from "../utils/annotations.js";
 
 const inputSchema = {
   query: z.string().min(1).describe("Search query for games or apps (e.g. 'Hades', 'Counter-Strike')"),
@@ -16,10 +17,15 @@ const inputSchema = {
 };
 
 export function register(server: McpServer): void {
-  server.tool(
+  server.registerTool(
     "steam_searchApps",
-    "Search the Steam store for games and apps by name or keyword. Returns app IDs, names, icons, and price info. No API key required.",
-    inputSchema,
+    {
+      title: "Search Apps",
+      description:
+        "Search the Steam store for games and apps by name or keyword. Returns app IDs, names, icons, and price info. No API key required.",
+      inputSchema,
+      annotations: READ_ONLY,
+    },
     async ({ query, cc, l }) => {
       try {
         const url = steamStoreUrl("/api/storesearch/", {

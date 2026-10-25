@@ -6,6 +6,15 @@ import { errorResponse } from "../utils/steam-api.js";
 import { refuseIfUnconfirmed } from "../utils/confirm.js";
 import { STORE_ASSET_SLOTS, SLOT_FORM_FIELD } from "../storeAssets/slots.js";
 import { validateStoreAsset } from "../storeAssets/validate.js";
+import {
+  parseCookieJar,
+  cookieHeaderFor,
+  redactCookies,
+  type JarCookie,
+} from "./cookieJar.js";
+import { LIVE_WRITE, LOCAL_ONLY } from "../utils/annotations.js";
+
+const UPLOAD_TIMEOUT_MS = 60_000;
 
 export { refuseIfUnconfirmed };
 
@@ -30,10 +39,15 @@ function authError(message: string): {
 }
 
 export function registerPartnerLogin(server: McpServer): void {
-  server.tool(
+  server.registerTool(
     "steam_partnerLogin",
-    "Check Partner-admin session sources (cookie jar path or Chromium profile dir). Does not print cookie values. Requires STEAM_PARTNER_ADMIN=1.",
-    {},
+    {
+      title: "Partner Login",
+      description:
+        "Check Partner-admin session sources (cookie jar path or Chromium profile dir). Does not print cookie values. Requires STEAM_PARTNER_ADMIN=1.",
+      inputSchema: {},
+      annotations: LOCAL_ONLY,
+    },
     async () => {
       const cookies = cookiePath();
       const profile = profileDir();
@@ -71,11 +85,17 @@ const uploadImageSchema = {
 };
 
 export function registerUploadStoreImage(server: McpServer): void {
-  server.tool(
+  server.registerTool(
     "steam_uploadStoreImage",
-    "Upload a store or library image via Partner admin save. Default dry_run=true. Requires confirm=true to POST. Never publishes. Session cookies, not a Web API key.",
-    uploadImageSchema,
+    {
+      title: "Upload Store Image",
+      description:
+        "Upload a store or library image via Partner admin save. Default dry_run=true. Requires confirm=true to POST. Never publishes. Session cookies, not a Web API key.",
+      inputSchema: uploadImageSchema,
+      annotations: LIVE_WRITE,
+    },
     async ({ storeItemId, slot, path, dry_run, confirm }) => {
+      let jar: JarCookie[] = [];
       try {
         const dryRun = dry_run !== false;
         const blocked = refuseIfUnconfirmed(dryRun, confirm);
@@ -138,36 +158,68 @@ export function registerUploadStoreImage(server: McpServer): void {
           );
         }
 
-        const cookieHeader = loadCookieHeader(cookies);
+        jar = parseCookieJar(readFileSync(cookies, "utf8"));
+        const cookieHeader = cookieHeaderFor(jar, new URL(url).hostname);
         const buf = readFileSync(path);
         const body = new FormData();
         body.append(formKey, new File([buf], basename(path)));
 
-        const response = await fetch(url, {
-          method: "POST",
-          headers: { Cookie: cookieHeader },
-          body,
-        });
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), UPLOAD_TIMEOUT_MS);
+        let response: Response;
+        let text: string;
+        try {
+          response = await fetch(url, {
+            method: "POST",
+            headers: { Cookie: cookieHeader },
+            body,
+            redirect: "manual",
+            signal: controller.signal,
+          });
+          text = await response.text();
+        } catch (error) {
+          if (error instanceof DOMException && error.name === "AbortError") {
+            return errorResponse(new Error(`Partner upload timed out after ${UPLOAD_TIMEOUT_MS / 1000}s.`));
+          }
+          throw error;
+        } finally {
+          clearTimeout(timeout);
+        }
 
-        const text = await response.text();
+        // An expired session redirects to /login. Without redirect: "manual",
+        // fetch would follow it and the login page would come back as a 200.
+        if (response.status >= 300 && response.status < 400) {
+          return authError(
+            `Partner session expired or invalid (HTTP ${response.status} redirect to ${response.headers.get("location") ?? "login"}). Log in again and re-export the cookie jar. Nothing was uploaded.`,
+          );
+        }
+
+        let parsed: { success?: unknown } | undefined;
+        try {
+          parsed = JSON.parse(text) as { success?: unknown };
+        } catch {
+          parsed = undefined;
+        }
+        if (response.ok && parsed === undefined) {
+          return authError(
+            "Partner returned a non-JSON page, which usually means the session expired. Log in again and re-export the cookie jar.",
+          );
+        }
+
+        const succeeded = response.ok && (parsed?.success === 1 || parsed?.success === true);
+        const result = {
+          ...payload,
+          ok: succeeded,
+          httpStatus: response.status,
+          success: parsed?.success,
+          bodyPreview: redactCookies(redact(text), jar).slice(0, 500),
+        };
         return {
-          content: [
-            {
-              type: "text" as const,
-              text: JSON.stringify(
-                {
-                  ...payload,
-                  httpStatus: response.status,
-                  bodyPreview: redact(text).slice(0, 500),
-                },
-                null,
-                2,
-              ),
-            },
-          ],
+          content: [{ type: "text" as const, text: JSON.stringify(result, null, 2) }],
+          ...(succeeded ? {} : { isError: true as const }),
         };
       } catch (error) {
-        return errorResponse(redactError(error));
+        return errorResponse(redactError(error, jar));
       }
     },
   );
@@ -181,10 +233,15 @@ const trailerSchema = {
 };
 
 export function registerUploadTrailer(server: McpServer): void {
-  server.tool(
+  server.registerTool(
     "steam_uploadTrailer",
-    "Plan or run a Partner trailer upload (movieuploadbegincloud plus S3). Default dry_run=true. Requires confirm=true to upload. Playwright is an optional local dep, not part of @tmhs/steam-mcp. Never publishes.",
-    trailerSchema,
+    {
+      title: "Upload Trailer",
+      description:
+        "Plan or run a Partner trailer upload (movieuploadbegincloud plus S3). Default dry_run=true. Requires confirm=true to upload. Playwright is an optional local dep, not part of @tmhs/steam-mcp. Never publishes.",
+      inputSchema: trailerSchema,
+      annotations: LIVE_WRITE,
+    },
     async ({ storeItemId, path, dry_run, confirm }) => {
       const dryRun = dry_run !== false;
       const blocked = refuseIfUnconfirmed(dryRun, confirm);
@@ -243,30 +300,12 @@ export function registerUploadTrailer(server: McpServer): void {
   );
 }
 
-function loadCookieHeader(jarPath: string): string {
-  const raw = readFileSync(jarPath, "utf8");
-  const headerParts: string[] = [];
-  for (const line of raw.split(/\r?\n/)) {
-    if (!line || line.startsWith("#")) {
-      continue;
-    }
-    const cols = line.split("\t");
-    if (cols.length >= 7) {
-      headerParts.push(`${cols[5]}=${cols[6]}`);
-    }
-  }
-  if (headerParts.length === 0) {
-    throw new Error("Cookie jar has no Netscape cookie rows.");
-  }
-  return headerParts.join("; ");
-}
-
 function redact(text: string): string {
   const name = "steamLogin" + "Secure";
   return text.replace(new RegExp(`${name}=[^;\\s"]+`, "gi"), `${name}=****`);
 }
 
-function redactError(error: unknown): Error {
+function redactError(error: unknown, jar: JarCookie[]): Error {
   const message = error instanceof Error ? error.message : String(error);
-  return new Error(redact(message));
+  return new Error(redactCookies(redact(message), jar));
 }

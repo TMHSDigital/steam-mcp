@@ -3,6 +3,7 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { errorResponse } from "../utils/steam-api.js";
 import { STORE_ASSET_SLOTS } from "../storeAssets/slots.js";
 import { validateStoreAsset } from "../storeAssets/validate.js";
+import { LOCAL_ONLY } from "../utils/annotations.js";
 
 const inputSchema = {
   path: z.string().min(1).describe("Local filesystem path to a PNG or JPEG"),
@@ -14,10 +15,15 @@ const inputSchema = {
 };
 
 export function register(server: McpServer): void {
-  server.tool(
+  server.registerTool(
     "steam_validateStoreAsset",
-    "Validate a local store or library image against current Valve pixel sizes, format rules, and library-hero heuristics. No API key required.",
-    inputSchema,
+    {
+      title: "Validate Store Asset",
+      description:
+        "Validate a local store or library image against current Valve pixel sizes, format rules, and library-hero heuristics. No API key required.",
+      inputSchema,
+      annotations: LOCAL_ONLY,
+    },
     async ({ path, slot }) => {
       try {
         const result = validateStoreAsset(path, slot);

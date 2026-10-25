@@ -12,6 +12,7 @@ import {
   refusal,
   dryRunResponse,
 } from "../utils/confirm.js";
+import { LIVE_WRITE_IDEMPOTENT } from "../utils/annotations.js";
 
 const inputSchema = {
   publishedfileid: z
@@ -43,10 +44,15 @@ const inputSchema = {
 };
 
 export function register(server: McpServer): void {
-  server.tool(
+  server.registerTool(
     "steam_updateWorkshopItem",
-    "MUTATES LIVE WORKSHOP ITEM METADATA. Default dry_run=true; requires confirm=true to send. Update metadata for an existing Steam Workshop item (title, description, visibility, tags) via the partner API. Does not change the store page listing. Requires a publisher API key with server IP allowlisted. File content updates require the SDK.",
-    inputSchema,
+    {
+      title: "Update Workshop Item",
+      description:
+        "MUTATES LIVE WORKSHOP ITEM METADATA. Default dry_run=true; requires confirm=true to send. Update metadata for an existing Steam Workshop item (title, description, visibility, tags) via the partner API. Does not change the store page listing. Requires a publisher API key with server IP allowlisted. File content updates require the SDK.",
+      inputSchema,
+      annotations: LIVE_WRITE_IDEMPOTENT,
+    },
     async ({ publishedfileid, appid, title, file_description, visibility, tags, dry_run, confirm }) => {
       try {
         const dryRun = dry_run !== false;

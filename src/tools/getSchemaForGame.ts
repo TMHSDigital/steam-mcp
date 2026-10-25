@@ -6,6 +6,7 @@ import {
   requireApiKey,
   errorResponse,
 } from "../utils/steam-api.js";
+import { READ_ONLY } from "../utils/annotations.js";
 
 const inputSchema = {
   appid: z
@@ -16,10 +17,15 @@ const inputSchema = {
 };
 
 export function register(server: McpServer): void {
-  server.tool(
+  server.registerTool(
     "steam_getSchemaForGame",
-    "Get the achievement and stat schema for a Steam app. Returns achievement internal names, display names, descriptions, and icon URLs, plus stat definitions. Useful for mapping internal ACH_ names to human-readable names. Requires STEAM_API_KEY.",
-    inputSchema,
+    {
+      title: "Get Schema For Game",
+      description:
+        "Get the achievement and stat schema for a Steam app. Returns achievement internal names, display names, descriptions, and icon URLs, plus stat definitions. Useful for mapping internal ACH_ names to human-readable names. Requires STEAM_API_KEY.",
+      inputSchema,
+      annotations: READ_ONLY,
+    },
     async ({ appid }) => {
       try {
         const key = requireApiKey();

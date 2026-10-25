@@ -3,9 +3,10 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import {
   steamApiUrl,
   steamFetch,
-  getApiKey,
+  requireApiKey,
   errorResponse,
 } from "../utils/steam-api.js";
+import { READ_ONLY } from "../utils/annotations.js";
 
 const inputSchema = {
   appid: z
@@ -16,13 +17,18 @@ const inputSchema = {
 };
 
 export function register(server: McpServer): void {
-  server.tool(
+  server.registerTool(
     "steam_getLeaderboardsForGame",
-    "List all leaderboards for a Steam app with their numeric IDs, names, and sort methods. Requires a free Steam Web API key (STEAM_API_KEY). No publisher access needed.",
-    inputSchema,
+    {
+      title: "Get Leaderboards For Game",
+      description:
+        "List all leaderboards for a Steam app with their numeric IDs, names, and sort methods. Requires a free Steam Web API key (STEAM_API_KEY). No publisher access needed.",
+      inputSchema,
+      annotations: READ_ONLY,
+    },
     async ({ appid }) => {
       try {
-        const key = getApiKey();
+        const key = requireApiKey();
         const url = steamApiUrl(
           "/ISteamLeaderboards/GetLeaderboardsForGame/v2/",
           { key, appid },

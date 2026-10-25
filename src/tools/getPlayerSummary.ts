@@ -6,6 +6,7 @@ import {
   requireApiKey,
   errorResponse,
 } from "../utils/steam-api.js";
+import { READ_ONLY } from "../utils/annotations.js";
 
 const inputSchema = {
   steamid: z
@@ -15,10 +16,15 @@ const inputSchema = {
 };
 
 export function register(server: McpServer): void {
-  server.tool(
+  server.registerTool(
     "steam_getPlayerSummary",
-    "Get a player's Steam profile including display name, avatar, online status, and profile visibility. Requires STEAM_API_KEY.",
-    inputSchema,
+    {
+      title: "Get Player Summary",
+      description:
+        "Get a player's Steam profile including display name, avatar, online status, and profile visibility. Requires STEAM_API_KEY.",
+      inputSchema,
+      annotations: READ_ONLY,
+    },
     async ({ steamid }) => {
       try {
         const key = requireApiKey();

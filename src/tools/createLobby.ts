@@ -1,6 +1,7 @@
 import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { escapeStringLiteral } from "../utils/string-literal.js";
+import { LOCAL_ONLY } from "../utils/annotations.js";
 
 const inputSchema = {
   type: z
@@ -21,10 +22,15 @@ const inputSchema = {
 };
 
 export function register(server: McpServer): void {
-  server.tool(
+  server.registerTool(
     "steam_createLobby",
-    "Get code examples and documentation for creating Steam multiplayer lobbies. Lobby creation is a client-side SDK operation (ISteamMatchmaking) and cannot be done via HTTP API. This tool returns ready-to-use code for C++, C#, and GDScript.",
-    inputSchema,
+    {
+      title: "Create Lobby (SDK Guide)",
+      description:
+        "Get code examples and documentation for creating Steam multiplayer lobbies. Lobby creation is a client-side SDK operation (ISteamMatchmaking) and cannot be done via HTTP API. This tool returns ready-to-use code for C++, C#, and GDScript.",
+      inputSchema,
+      annotations: LOCAL_ONLY,
+    },
     async ({ type, max_members, metadata }) => {
       const lobbyTypeMap: Record<string, string> = {
         private: "k_ELobbyTypePrivate",

@@ -1,6 +1,7 @@
 import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { escapeStringLiteral } from "../utils/string-literal.js";
+import { LOCAL_ONLY } from "../utils/annotations.js";
 
 const inputSchema = {
   appid: z
@@ -32,10 +33,15 @@ const inputSchema = {
 };
 
 export function register(server: McpServer): void {
-  server.tool(
+  server.registerTool(
     "steam_uploadWorkshopItem",
-    "Get code examples and documentation for uploading new Steam Workshop items. Workshop uploads require the Steamworks SDK (ISteamUGC) running in a client or dedicated tool — there is no HTTP upload endpoint. This tool returns ready-to-use code for C++, C#, and GDScript.",
-    inputSchema,
+    {
+      title: "Upload Workshop Item (SDK Guide)",
+      description:
+        "Get code examples and documentation for uploading new Steam Workshop items. Workshop uploads require the Steamworks SDK (ISteamUGC) running in a client or dedicated tool — there is no HTTP upload endpoint. This tool returns ready-to-use code for C++, C#, and GDScript.",
+      inputSchema,
+      annotations: LOCAL_ONLY,
+    },
     async ({ appid, title, description, content_path, preview_path, tags, visibility }) => {
       const visMap: Record<string, string> = {
         public: "k_ERemoteStoragePublishedFileVisibilityPublic",
