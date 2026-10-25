@@ -120,6 +120,8 @@ Set `STEAM_MCP_DEBUG=1` in the server's `env` block. The server then writes one 
 
 Only query parameter names are logged, never values, so the API key cannot appear in a log. Logs are safe to paste into an issue.
 
+Public GET responses are cached briefly (30 seconds for player counts, up to an hour for achievement schemas), and requests to each Steam host are rate-limited so bursts queue instead of hitting a 429. Set `STEAM_MCP_CACHE_TTL=0` to turn the cache off.
+
 ## Security model
 
 All five write tools default to `dry_run: true` and require `confirm: true` before they POST to the Steam Partner Web API. A call with no flags returns a plan and sends nothing. A live call without `confirm: true` is refused. That confirm gate is the control.

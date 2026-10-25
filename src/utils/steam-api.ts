@@ -7,6 +7,7 @@ import {
   TimeoutError,
 } from "./errors.js";
 import { debug, describeUrl } from "./log.js";
+import { acquireToken, cacheGet, cacheKey, cacheSet, cacheTtlSeconds } from "./cache.js";
 
 const DEFAULT_TIMEOUT_MS = 15_000;
 
@@ -157,14 +158,57 @@ function endpointOf(url: string): string {
   }
 }
 
+const inFlight = new Map<string, Promise<unknown>>();
+
+/**
+ * Fetch and parse a Steam JSON response. Public GETs listed in cache.ts are
+ * cached briefly and identical concurrent GETs share one request. Every
+ * request waits for a per-host rate-limit token, so bursts queue instead of
+ * tripping Steam's 429.
+ */
 export async function steamFetch(
   url: string,
   options: RequestInit = {},
 ): Promise<unknown> {
+  const method = (options.method ?? "GET").toUpperCase();
+  const ttl = method === "GET" ? cacheTtlSeconds(url) : 0;
+  if (ttl === 0) {
+    return fetchWithRetry(url, options);
+  }
+
+  const key = cacheKey(url);
+  const cached = cacheGet(key);
+  if (cached.hit) {
+    debug(`${method} ${describeUrl(url)} -> cache hit`);
+    return cached.value;
+  }
+  const pending = inFlight.get(key);
+  if (pending) {
+    return structuredClone(await pending);
+  }
+
+  const request = fetchWithRetry(url, options).then((value) => {
+    cacheSet(key, value, ttl);
+    return value;
+  });
+  inFlight.set(key, request);
+  try {
+    return structuredClone(await request);
+  } finally {
+    inFlight.delete(key);
+  }
+}
+
+async function fetchWithRetry(url: string, options: RequestInit): Promise<unknown> {
   const method = options.method ?? "GET";
   const target = describeUrl(url);
+  const host = new URL(url).host;
 
   for (let attempt = 0; ; attempt++) {
+    const queued = await acquireToken(host);
+    if (queued > 0) {
+      debug(`${method} ${target} queued ${queued}ms by the ${host} rate limiter`);
+    }
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), DEFAULT_TIMEOUT_MS);
     const started = Date.now();

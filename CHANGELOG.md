@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Public GET responses are cached in memory for a short time (player count 30s; store data, news, and reviews 10 min; achievement schema and global percentages 1h). Identical concurrent requests share one call. Per-user and Partner API responses are never cached. `STEAM_MCP_CACHE_TTL=0` disables the cache. Requests also wait for a per-host rate-limit token, so bursts such as `steam_getRegionalPricing` queue instead of tripping the Store's 429. (#45)
 - `STEAM_MCP_DEBUG=1` logs every Steam request to stderr and to MCP logging notifications: method, host and path, query parameter names (never values), status, attempt number, latency, and retry waits. A startup line reports the version, tool count, and whether `STEAM_API_KEY` is set. (#67)
 
 ### Fixed
