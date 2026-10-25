@@ -28,6 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- `steam_getPriceOverview` and `steam_getRegionalPricing` no longer report `free: true` when Steam lists no price. That response also covers coming-soon, delisted, and unavailable paid games, so it now returns `price_overview: null` with `reason: "no_price_listed"`. **Breaking:** the `free` field is gone. The regional default list uses `DE` instead of the non-country `EU`, failed regions keep their error message and `error_type`, and regional lookups run at most four at a time. Contributed by @ect2000. (#33)
 - `steam_getReviews` and `steam_getAppReviewSummary` now call `IUserReviewsService/GetAppReviews`. Valve disabled the Store `/appreviews` endpoint on 2026-10-22, so both tools failed on every call. Both remain keyless. `steam_getReviews` adds a `funny` sort and accepts a comma-separated `language` list. `steam_getAppReviewSummary` now counts all purchase types, matching the store page total. (#27)
 - `steam_setAchievement` and `steam_clearAchievement` report success only when Steam returns EResult 1. A response with no `result` object used to read as success. Failures now include the EResult. (#52)
 - `steam_grantInventoryItem` sends the documented AddItem parameters: one `itemdefid[n]` per copy (`quantity` capped at 100), `notify` as `1`/`0`, and a `requestid` so Steam executes a grant at most once. The dry run generates a `requestid`; pass it to the live call. New optional `itempropsjson` input. (#28)

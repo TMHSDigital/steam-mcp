@@ -15,7 +15,7 @@ type Handler = (args: Record<string, unknown>) => Promise<ToolResult>;
 
 function handlerFor(register: (server: McpServer) => void): Handler {
   let handler: Handler | undefined;
-  register({ tool(...args: unknown[]) { handler = args[args.length - 1] as Handler; } } as unknown as McpServer);
+  register({ registerTool(...args: unknown[]) { handler = args[args.length - 1] as Handler; } } as unknown as McpServer);
   if (!handler) throw new Error("Tool was not registered");
   return handler;
 }
