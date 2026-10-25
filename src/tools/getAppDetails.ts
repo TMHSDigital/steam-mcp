@@ -1,6 +1,7 @@
 import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { steamStoreUrl, steamFetch, errorResponse } from "../utils/steam-api.js";
+import { READ_ONLY } from "../utils/annotations.js";
 
 const inputSchema = {
   appid: z
@@ -20,10 +21,15 @@ const inputSchema = {
 };
 
 export function register(server: McpServer): void {
-  server.tool(
+  server.registerTool(
     "steam_getAppDetails",
-    "Get Steam store data for an app including price, description, reviews, tags, platforms, and system requirements. No API key required.",
-    inputSchema,
+    {
+      title: "Get App Details",
+      description:
+        "Get Steam store data for an app including price, description, reviews, tags, platforms, and system requirements. No API key required.",
+      inputSchema,
+      annotations: READ_ONLY,
+    },
     async ({ appid, cc, l }) => {
       try {
         const url = steamStoreUrl("/api/appdetails", {

@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - All five write tools share one publisher-key error path (`publisherErrorResponse` in `src/utils/steam-api.ts`).
+- Every tool now registers with `registerTool()` instead of the deprecated `server.tool()`, and declares a `title` and MCP `annotations`. Read tools are `readOnlyHint: true`. Confirm-gated writes are `destructiveHint: true`, so hosts can prompt before calling them. SDK guides and `steam_validateStoreAsset` are `openWorldHint: false`. A test enforces annotations on every tool. (#32)
 
 ### Security
 

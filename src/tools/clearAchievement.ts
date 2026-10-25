@@ -13,6 +13,7 @@ import {
   refusal,
   dryRunResponse,
 } from "../utils/confirm.js";
+import { LIVE_WRITE_IDEMPOTENT } from "../utils/annotations.js";
 
 const inputSchema = {
   steamid: z
@@ -34,10 +35,15 @@ const inputSchema = {
 };
 
 export function register(server: McpServer): void {
-  server.tool(
+  server.registerTool(
     "steam_clearAchievement",
-    "MUTATES LIVE ACHIEVEMENT STATE. Default dry_run=true; requires confirm=true to send. Clear (re-lock) an achievement for a player via the partner API. Intended for dev/test use. Requires a publisher API key with server IP allowlisted in Steamworks partner settings.",
-    inputSchema,
+    {
+      title: "Clear Achievement",
+      description:
+        "MUTATES LIVE ACHIEVEMENT STATE. Default dry_run=true; requires confirm=true to send. Clear (re-lock) an achievement for a player via the partner API. Intended for dev/test use. Requires a publisher API key with server IP allowlisted in Steamworks partner settings.",
+      inputSchema,
+      annotations: LIVE_WRITE_IDEMPOTENT,
+    },
     async ({ steamid, appid, achievement, dry_run, confirm }) => {
       try {
         const dryRun = dry_run !== false;

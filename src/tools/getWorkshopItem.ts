@@ -1,6 +1,7 @@
 import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { steamApiUrl, steamFetch, errorResponse } from "../utils/steam-api.js";
+import { READ_ONLY } from "../utils/annotations.js";
 
 const inputSchema = {
   publishedfileid: z
@@ -10,10 +11,15 @@ const inputSchema = {
 };
 
 export function register(server: McpServer): void {
-  server.tool(
+  server.registerTool(
     "steam_getWorkshopItem",
-    "Get details for a Steam Workshop item including title, description, tags, preview images, and subscriber count. No API key required.",
-    inputSchema,
+    {
+      title: "Get Workshop Item",
+      description:
+        "Get details for a Steam Workshop item including title, description, tags, preview images, and subscriber count. No API key required.",
+      inputSchema,
+      annotations: READ_ONLY,
+    },
     async ({ publishedfileid }) => {
       try {
         const url = steamApiUrl(

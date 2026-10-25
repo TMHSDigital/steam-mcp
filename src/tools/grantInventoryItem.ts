@@ -13,6 +13,7 @@ import {
   refusal,
   dryRunResponse,
 } from "../utils/confirm.js";
+import { LIVE_WRITE } from "../utils/annotations.js";
 
 const MAX_QUANTITY = 100;
 
@@ -66,10 +67,15 @@ const inputSchema = {
 };
 
 export function register(server: McpServer): void {
-  server.tool(
+  server.registerTool(
     "steam_grantInventoryItem",
-    "MUTATES LIVE INVENTORY. Default dry_run=true; requires confirm=true to send. Grant an inventory item to a player via the partner API. Intended for dev/test or server-side rewards. Requires a publisher API key with server IP allowlisted in Steamworks partner settings.",
-    inputSchema,
+    {
+      title: "Grant Inventory Item",
+      description:
+        "MUTATES LIVE INVENTORY. Default dry_run=true; requires confirm=true to send. Grant an inventory item to a player via the partner API. Intended for dev/test or server-side rewards. Requires a publisher API key with server IP allowlisted in Steamworks partner settings.",
+      inputSchema,
+      annotations: LIVE_WRITE,
+    },
     async ({ appid, steamid, itemdefid, quantity, notify, itempropsjson, requestid, dry_run, confirm }) => {
       try {
         const dryRun = dry_run !== false;

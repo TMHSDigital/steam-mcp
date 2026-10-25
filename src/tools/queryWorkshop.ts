@@ -6,6 +6,7 @@ import {
   requireApiKey,
   errorResponse,
 } from "../utils/steam-api.js";
+import { READ_ONLY } from "../utils/annotations.js";
 
 const inputSchema = {
   appid: z
@@ -42,10 +43,15 @@ const inputSchema = {
 };
 
 export function register(server: McpServer): void {
-  server.tool(
+  server.registerTool(
     "steam_queryWorkshop",
-    "Search and browse Steam Workshop items for a given app. Filter by text, tags, and sort order. Requires STEAM_API_KEY.",
-    inputSchema,
+    {
+      title: "Query Workshop",
+      description:
+        "Search and browse Steam Workshop items for a given app. Filter by text, tags, and sort order. Requires STEAM_API_KEY.",
+      inputSchema,
+      annotations: READ_ONLY,
+    },
     async ({ appid, search_text, cursor, numperpage, query_type, requiredtags }) => {
       try {
         const key = requireApiKey();

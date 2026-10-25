@@ -6,6 +6,7 @@ import {
   requireApiKey,
   errorResponse,
 } from "../utils/steam-api.js";
+import { READ_ONLY } from "../utils/annotations.js";
 
 const inputSchema = {
   appid: z
@@ -47,10 +48,15 @@ const inputSchema = {
 };
 
 export function register(server: McpServer): void {
-  server.tool(
+  server.registerTool(
     "steam_getLeaderboardEntries",
-    "Get leaderboard scores and rankings for a Steam app. Pass the numeric leaderboard ID from your Steamworks dashboard, not the name. Uses the partner API (partner.steam-api.com) which requires a publisher API key with server IP allowlisted in Steamworks. Supports global, around-user, and friends-only views.",
-    inputSchema,
+    {
+      title: "Get Leaderboard Entries",
+      description:
+        "Get leaderboard scores and rankings for a Steam app. Pass the numeric leaderboard ID from your Steamworks dashboard, not the name. Uses the partner API (partner.steam-api.com) which requires a publisher API key with server IP allowlisted in Steamworks. Supports global, around-user, and friends-only views.",
+      inputSchema,
+      annotations: READ_ONLY,
+    },
     async ({
       appid,
       leaderboardid,

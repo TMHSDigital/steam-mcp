@@ -12,6 +12,7 @@ import {
   redactCookies,
   type JarCookie,
 } from "./cookieJar.js";
+import { LIVE_WRITE, LOCAL_ONLY } from "../utils/annotations.js";
 
 const UPLOAD_TIMEOUT_MS = 60_000;
 
@@ -38,10 +39,15 @@ function authError(message: string): {
 }
 
 export function registerPartnerLogin(server: McpServer): void {
-  server.tool(
+  server.registerTool(
     "steam_partnerLogin",
-    "Check Partner-admin session sources (cookie jar path or Chromium profile dir). Does not print cookie values. Requires STEAM_PARTNER_ADMIN=1.",
-    {},
+    {
+      title: "Partner Login",
+      description:
+        "Check Partner-admin session sources (cookie jar path or Chromium profile dir). Does not print cookie values. Requires STEAM_PARTNER_ADMIN=1.",
+      inputSchema: {},
+      annotations: LOCAL_ONLY,
+    },
     async () => {
       const cookies = cookiePath();
       const profile = profileDir();
@@ -79,10 +85,15 @@ const uploadImageSchema = {
 };
 
 export function registerUploadStoreImage(server: McpServer): void {
-  server.tool(
+  server.registerTool(
     "steam_uploadStoreImage",
-    "Upload a store or library image via Partner admin save. Default dry_run=true. Requires confirm=true to POST. Never publishes. Session cookies, not a Web API key.",
-    uploadImageSchema,
+    {
+      title: "Upload Store Image",
+      description:
+        "Upload a store or library image via Partner admin save. Default dry_run=true. Requires confirm=true to POST. Never publishes. Session cookies, not a Web API key.",
+      inputSchema: uploadImageSchema,
+      annotations: LIVE_WRITE,
+    },
     async ({ storeItemId, slot, path, dry_run, confirm }) => {
       let jar: JarCookie[] = [];
       try {
@@ -222,10 +233,15 @@ const trailerSchema = {
 };
 
 export function registerUploadTrailer(server: McpServer): void {
-  server.tool(
+  server.registerTool(
     "steam_uploadTrailer",
-    "Plan or run a Partner trailer upload (movieuploadbegincloud plus S3). Default dry_run=true. Requires confirm=true to upload. Playwright is an optional local dep, not part of @tmhs/steam-mcp. Never publishes.",
-    trailerSchema,
+    {
+      title: "Upload Trailer",
+      description:
+        "Plan or run a Partner trailer upload (movieuploadbegincloud plus S3). Default dry_run=true. Requires confirm=true to upload. Playwright is an optional local dep, not part of @tmhs/steam-mcp. Never publishes.",
+      inputSchema: trailerSchema,
+      annotations: LIVE_WRITE,
+    },
     async ({ storeItemId, path, dry_run, confirm }) => {
       const dryRun = dry_run !== false;
       const blocked = refuseIfUnconfirmed(dryRun, confirm);

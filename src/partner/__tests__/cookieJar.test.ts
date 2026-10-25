@@ -85,7 +85,7 @@ describe("steam_uploadStoreImage live auth detection", () => {
     process.env.STEAM_PARTNER_COOKIES = jarPath;
 
     let handler: Handler | undefined;
-    const server = { tool: (...args: unknown[]) => { handler = args[args.length - 1] as Handler; } };
+    const server = { registerTool: (...args: unknown[]) => { handler = args[args.length - 1] as Handler; } };
     registerUploadStoreImage(server as unknown as McpServer);
     const h = handler!;
     return (args) => h({ storeItemId: "123", slot: "libraryHero", path: imgPath, ...args });

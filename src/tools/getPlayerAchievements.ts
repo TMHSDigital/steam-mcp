@@ -7,6 +7,7 @@ import {
   errorResponse,
 } from "../utils/steam-api.js";
 import { SteamApiError } from "../utils/errors.js";
+import { READ_ONLY } from "../utils/annotations.js";
 
 const inputSchema = {
   steamid: z
@@ -21,10 +22,15 @@ const inputSchema = {
 };
 
 export function register(server: McpServer): void {
-  server.tool(
+  server.registerTool(
     "steam_getPlayerAchievements",
-    "Get a specific player's achievement unlock status and timestamps for a Steam app. The player's profile must be public. Requires STEAM_API_KEY.",
-    inputSchema,
+    {
+      title: "Get Player Achievements",
+      description:
+        "Get a specific player's achievement unlock status and timestamps for a Steam app. The player's profile must be public. Requires STEAM_API_KEY.",
+      inputSchema,
+      annotations: READ_ONLY,
+    },
     async ({ steamid, appid }) => {
       try {
         const key = requireApiKey();
