@@ -27,32 +27,38 @@ import { register as registerGetLeaderboardsForGame } from "./getLeaderboardsFor
 import { register as registerGetPlayerAchievements } from "./getPlayerAchievements.js";
 import { register as registerValidateStoreAsset } from "./validateStoreAsset.js";
 
-/** Registers every default-bin tool. Partner-admin tools live in src/partner. */
-export function registerAllTools(server: McpServer): void {
-  registerGetAppDetails(server);
-  registerSearchApps(server);
-  registerGetPlayerCount(server);
-  registerGetAchievementStats(server);
-  registerGetPlayerSummary(server);
-  registerGetOwnedGames(server);
-  registerGetWorkshopItem(server);
-  registerQueryWorkshop(server);
-  registerGetLeaderboardEntries(server);
-  registerResolveVanityURL(server);
-  registerCreateLobby(server);
-  registerUploadWorkshopItem(server);
-  registerUpdateWorkshopItem(server);
-  registerSetAchievement(server);
-  registerUploadLeaderboardScore(server);
-  registerGrantInventoryItem(server);
-  registerGetReviews(server);
-  registerGetPriceOverview(server);
-  registerGetAppReviewSummary(server);
-  registerGetRegionalPricing(server);
-  registerClearAchievement(server);
-  registerGetSchemaForGame(server);
-  registerGetNewsForApp(server);
-  registerGetLeaderboardsForGame(server);
-  registerGetPlayerAchievements(server);
-  registerValidateStoreAsset(server);
+/** Every default-bin tool. Partner-admin tools live in src/partner. */
+const REGISTRARS: Array<(server: McpServer) => void> = [
+  registerGetAppDetails,
+  registerSearchApps,
+  registerGetPlayerCount,
+  registerGetAchievementStats,
+  registerGetPlayerSummary,
+  registerGetOwnedGames,
+  registerGetWorkshopItem,
+  registerQueryWorkshop,
+  registerGetLeaderboardEntries,
+  registerResolveVanityURL,
+  registerCreateLobby,
+  registerUploadWorkshopItem,
+  registerUpdateWorkshopItem,
+  registerSetAchievement,
+  registerUploadLeaderboardScore,
+  registerGrantInventoryItem,
+  registerGetReviews,
+  registerGetPriceOverview,
+  registerGetAppReviewSummary,
+  registerGetRegionalPricing,
+  registerClearAchievement,
+  registerGetSchemaForGame,
+  registerGetNewsForApp,
+  registerGetLeaderboardsForGame,
+  registerGetPlayerAchievements,
+  registerValidateStoreAsset,
+];
+
+/** Registers every default-bin tool and returns how many were registered. */
+export function registerAllTools(server: McpServer): number {
+  for (const register of REGISTRARS) register(server);
+  return REGISTRARS.length;
 }

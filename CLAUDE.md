@@ -88,6 +88,7 @@ No-auth tools can be tested without setting `STEAM_API_KEY`.
 | Variable | Required | Description |
 |----------|----------|-------------|
 | `STEAM_API_KEY` | For some tools | Steam Web API key from https://steamcommunity.com/dev/apikey |
+| `STEAM_MCP_DEBUG` | No | `1` logs each Steam request (host, path, query keys, status, attempt, latency) to stderr and MCP logging. Never logs values. |
 | `STEAM_PARTNER_ADMIN` | Partner process only | Must be `1` to start `src/partner/index.ts`. Ignored by the default bin. |
 | `STEAM_PARTNER_COOKIES` | Partner process only | Path to a cookie jar. Never a cookie string. Gitignored. |
 | `STEAM_PARTNER_PROFILE_DIR` | Partner process only | Chromium user-data dir outside the repo. |

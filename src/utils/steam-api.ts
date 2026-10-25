@@ -6,6 +6,7 @@ import {
   SteamUnavailableError,
   TimeoutError,
 } from "./errors.js";
+import { debug, describeUrl } from "./log.js";
 
 const DEFAULT_TIMEOUT_MS = 15_000;
 
@@ -160,9 +161,13 @@ export async function steamFetch(
   url: string,
   options: RequestInit = {},
 ): Promise<unknown> {
+  const method = options.method ?? "GET";
+  const target = describeUrl(url);
+
   for (let attempt = 0; ; attempt++) {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), DEFAULT_TIMEOUT_MS);
+    const started = Date.now();
     let response: Response;
     let text: string;
 
@@ -174,27 +179,38 @@ export async function steamFetch(
       text = await readBody(response);
     } catch (error) {
       if (error instanceof DOMException && error.name === "AbortError") {
+        debug(`${method} ${target} -> timeout after ${DEFAULT_TIMEOUT_MS}ms (attempt ${attempt + 1})`);
         throw new TimeoutError(DEFAULT_TIMEOUT_MS);
       }
-      throw new SteamApiError(
-        `Failed to reach Steam API: ${error instanceof Error ? error.message : String(error)}`,
-      );
+      const reason = error instanceof Error ? error.message : String(error);
+      debug(`${method} ${target} -> network error: ${reason} (attempt ${attempt + 1})`);
+      throw new SteamApiError(`Failed to reach Steam API: ${reason}`);
     } finally {
       clearTimeout(timeout);
     }
+
+    debug(
+      `${method} ${target} -> ${response.status} in ${Date.now() - started}ms (attempt ${attempt + 1}${
+        response.headers.get("x-eresult") ? `, eresult ${response.headers.get("x-eresult")}` : ""
+      })`,
+    );
 
     const canRetry = attempt < MAX_RETRIES;
 
     if (response.status === 429) {
       if (canRetry) {
-        await sleep(retryDelayMs(response.headers.get("Retry-After"), attempt));
+        const wait = retryDelayMs(response.headers.get("Retry-After"), attempt);
+        debug(`${method} ${target} rate limited, retrying in ${Math.round(wait)}ms`);
+        await sleep(wait);
         continue;
       }
       throw new RateLimitError();
     }
 
     if (TRANSIENT_STATUSES.has(response.status) && canRetry) {
-      await sleep(backoffMs(attempt));
+      const wait = backoffMs(attempt);
+      debug(`${method} ${target} transient ${response.status}, retrying in ${Math.round(wait)}ms`);
+      await sleep(wait);
       continue;
     }
 

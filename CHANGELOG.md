@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `STEAM_MCP_DEBUG=1` logs every Steam request to stderr and to MCP logging notifications: method, host and path, query parameter names (never values), status, attempt number, latency, and retry waits. A startup line reports the version, tool count, and whether `STEAM_API_KEY` is set. (#67)
+
 ### Fixed
 
 - `steam_getReviews` and `steam_getAppReviewSummary` now call `IUserReviewsService/GetAppReviews`. Valve disabled the Store `/appreviews` endpoint on 2026-10-22, so both tools failed on every call. Both remain keyless. `steam_getReviews` adds a `funny` sort and accepts a comma-separated `language` list. `steam_getAppReviewSummary` now counts all purchase types, matching the store page total. (#27)
