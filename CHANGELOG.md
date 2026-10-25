@@ -18,6 +18,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - All five write tools share one publisher-key error path (`publisherErrorResponse` in `src/utils/steam-api.ts`).
 
+### Security
+
+- Upgraded `zod` to 4.x (GHSA-mrhx-c7xc-m3w5) and `@modelcontextprotocol/sdk` to 1.32.2. `npm audit` is clean. CI now fails on high-severity runtime advisories, and Dependabot covers npm. (#31)
+
 ## [0.9.0] - 2026-09-17
 
 ### Security

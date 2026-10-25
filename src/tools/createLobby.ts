@@ -12,7 +12,7 @@ const inputSchema = {
     .max(250)
     .describe("Maximum number of players in the lobby"),
   metadata: z
-    .record(z.string())
+    .record(z.string(), z.string())
     .optional()
     .describe(
       "Key-value pairs for lobby metadata (e.g. map name, game mode)",
