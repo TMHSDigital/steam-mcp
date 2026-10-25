@@ -17,6 +17,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `steamFetch` parses `Retry-After` as seconds or an HTTP-date. It used to compute `NaN` for dates and retry with no delay during a rate limit. 502/503/504 are now retried with jittered backoff. A non-JSON body reports its content type and first 100 characters, so a retired endpoint returning HTML is obvious. (#34)
 - Error messages no longer tell users to set `STEAM_API_KEY` when it is already set. A bad key is detected from Steam's 403 page and reported as such. `steam_getPlayerAchievements` says "profile or game details are private" on 403 and "no stats or invalid parameters" on 400. Write tools give the publisher-key hint only on 401/403. Steam's `X-eresult` / `X-error_message` headers (or a JSON `error` field) are included whenever present. (#55)
 
+- `steam_queryWorkshop` replaces the integer `query_type` with a `sort` enum (`vote`, `date`, `trend`, `text_search`, `subscriptions`, `playtime`, `updated`) mapped to the correct `EPublishedFileQueryType` values. The old description had "trending" pointing at AcceptedForGame. `requiredtags` is now an array sent as `requiredtags[n]`, with new `match_all_tags`, `excludedtags`, `days`, `return_tags`, and `return_previews` inputs. A search defaults to relevance ordering. **Breaking:** callers passing `query_type` or a comma-separated `requiredtags` string must switch to `sort` and an array. (#53)
+
 ### Changed
 
 - Removed `getApiKey()`, a duplicate of `requireApiKey()`. `SteamApiError.endpoint` no longer includes the query string, so it never carries the API key.
