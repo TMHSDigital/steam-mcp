@@ -2,7 +2,7 @@
 
 ## Prerequisites
 
-- Node.js 20 or later
+- Node.js 22 or later
 - npm
 - A Steam Web API key for testing authenticated tools (free at https://steamcommunity.com/dev/apikey)
 
