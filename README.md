@@ -242,7 +242,7 @@ npm run test:watch  # Test watch mode
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for how to add new tools and submit PRs.
 
-Partner-admin tools (`steam_partnerLogin`, `steam_uploadStoreImage`, `steam_uploadTrailer`) are not registered by this package's default bin and are not in the npm tarball. They live in `src/partner/` for local use only (`STEAM_PARTNER_ADMIN=1` plus a cookie-jar path or Chromium profile dir outside the repo). There is no Publish tool.
+Partner-admin tools (`steam_partnerLogin`, `steam_uploadStoreImage`, `steam_uploadTrailer`) are not registered by this package's default bin and are not in the npm tarball. They live in `src/partner/` for local use only (`STEAM_PARTNER_ADMIN=1` plus a cookie-jar path or Chromium profile dir outside the repo). `steam_uploadTrailer` is plan-only: live trailer upload is not implemented and returns `[NOT_IMPLEMENTED]`. There is no Publish tool.
 
 </details>
 

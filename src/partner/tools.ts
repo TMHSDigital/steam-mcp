@@ -3,7 +3,7 @@ import { basename } from "node:path";
 import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { errorResponse } from "../utils/steam-api.js";
-import { refuseIfUnconfirmed } from "../utils/confirm.js";
+import { refuseIfUnconfirmed, refusal } from "../utils/confirm.js";
 import { STORE_ASSET_SLOTS, SLOT_FORM_FIELD } from "../storeAssets/slots.js";
 import { validateStoreAsset } from "../storeAssets/validate.js";
 import {
@@ -99,11 +99,7 @@ export function registerUploadStoreImage(server: McpServer): void {
       try {
         const dryRun = dry_run !== false;
         const blocked = refuseIfUnconfirmed(dryRun, confirm);
-        if (blocked) {
-          return {
-            content: [{ type: "text" as const, text: JSON.stringify({ ok: false, error: blocked }, null, 2) }],
-          };
-        }
+        if (blocked) return refusal(blocked);
 
         const validation = validateStoreAsset(path, slot);
         if (!validation.ok) {
@@ -118,6 +114,7 @@ export function registerUploadStoreImage(server: McpServer): void {
                 ),
               },
             ],
+            isError: true as const,
           };
         }
 
@@ -228,26 +225,32 @@ export function registerUploadStoreImage(server: McpServer): void {
 const trailerSchema = {
   storeItemId: z.string().min(1).describe("Partner store item id"),
   path: z.string().min(1).describe("Local MP4 path"),
-  dry_run: z.boolean().optional().describe("If true (default), do not upload"),
-  confirm: z.boolean().optional().describe("Required true when dry_run is false"),
+  dry_run: z
+    .boolean()
+    .optional()
+    .describe("Must be true or omitted. Live trailer upload is not implemented."),
 };
 
 export function registerUploadTrailer(server: McpServer): void {
   server.registerTool(
     "steam_uploadTrailer",
     {
-      title: "Upload Trailer",
+      title: "Plan Trailer Upload",
       description:
-        "Plan or run a Partner trailer upload (movieuploadbegincloud plus S3). Default dry_run=true. Requires confirm=true to upload. Playwright is an optional local dep, not part of @tmhs/steam-mcp. Never publishes.",
+        "Plan a Partner trailer upload (dry run only). Checks the local MP4 and reports what an upload would send. Live upload (movieuploadbegincloud plus S3) is NOT implemented; dry_run=false returns [NOT_IMPLEMENTED]. Never publishes.",
       inputSchema: trailerSchema,
-      annotations: LIVE_WRITE,
+      annotations: LOCAL_ONLY,
     },
-    async ({ storeItemId, path, dry_run, confirm }) => {
-      const dryRun = dry_run !== false;
-      const blocked = refuseIfUnconfirmed(dryRun, confirm);
-      if (blocked) {
+    async ({ storeItemId, path, dry_run }) => {
+      if (dry_run === false) {
         return {
-          content: [{ type: "text" as const, text: JSON.stringify({ ok: false, error: blocked }, null, 2) }],
+          content: [
+            {
+              type: "text" as const,
+              text: "[NOT_IMPLEMENTED] Live trailer upload is not implemented in this build. Nothing was uploaded. Upload the trailer in the Steamworks Partner site.",
+            },
+          ],
+          isError: true as const,
         };
       }
 
@@ -256,39 +259,19 @@ export function registerUploadTrailer(server: McpServer): void {
       }
       const bytes = statSync(path).size;
 
-      if (dryRun) {
-        return {
-          content: [
-            {
-              type: "text" as const,
-              text: JSON.stringify(
-                {
-                  ok: true,
-                  dry_run: true,
-                  storeItemId,
-                  path,
-                  bytes,
-                  requiresPlaywright: true,
-                  publishes: false,
-                  note: "Live trailer upload needs Playwright in this working tree (not shipped on npm). Install locally if you intend to set dry_run=false.",
-                },
-                null,
-                2,
-              ),
-            },
-          ],
-        };
-      }
-
       return {
         content: [
           {
             type: "text" as const,
             text: JSON.stringify(
               {
-                ok: false,
-                error:
-                  "Live movieuploadbegincloud plus S3 is not wired in this build. Re-run with dry_run=true or complete the Playwright flow locally. Do not add Playwright to the published package.",
+                ok: true,
+                dry_run: true,
+                storeItemId,
+                path,
+                bytes,
+                publishes: false,
+                note: "Plan only. Live trailer upload is not implemented; upload the trailer in the Steamworks Partner site.",
               },
               null,
               2,
@@ -299,7 +282,6 @@ export function registerUploadTrailer(server: McpServer): void {
     },
   );
 }
-
 function redact(text: string): string {
   const name = "steamLogin" + "Secure";
   return text.replace(new RegExp(`${name}=[^;\\s"]+`, "gi"), `${name}=****`);
