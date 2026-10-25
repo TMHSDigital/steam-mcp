@@ -1,152 +1,134 @@
 import { describe, it, expect } from "vitest";
-import { z } from "zod";
+import type { z } from "zod";
+import { registeredTools } from "./harness.js";
 
-// Re-declare schemas inline to test validation without importing tool registration.
-// These mirror the schemas in each tool file.
+// Validates the schemas the tools actually register, not copies of them.
 
-const steamIdSchema = z.string().regex(/^\d{17}$/, "Must be a 17-digit Steam64 ID");
-const publishedFileIdSchema = z.string().regex(/^\d+$/, "Must be a numeric Workshop item ID");
-const appIdSchema = z.number().int().positive();
-const countryCodeSchema = z.string().length(2);
+const tools = registeredTools();
 
-describe("Steam ID validation", () => {
-  it("accepts valid 17-digit ID", () => {
-    expect(steamIdSchema.parse("76561197960435530")).toBe("76561197960435530");
+function field(tool: string, key: string): z.ZodTypeAny {
+  const schema = tools.get(tool)?.inputSchema[key];
+  if (!schema) throw new Error(`${tool} has no input field ${key}`);
+  return schema as z.ZodTypeAny;
+}
+
+const ok = (schema: z.ZodTypeAny, value: unknown) => schema.safeParse(value).success;
+
+describe("Steam ID validation (steam_getPlayerSummary.steamid)", () => {
+  const steamid = field("steam_getPlayerSummary", "steamid");
+
+  it("accepts a valid 17-digit ID", () => {
+    expect(ok(steamid, "76561197960435530")).toBe(true);
   });
 
-  it("rejects empty string", () => {
-    expect(() => steamIdSchema.parse("")).toThrow();
-  });
+  it.each(["", "abcdefghijklmnopq", "12345", "123456789012345678", "7656119796043 530"])(
+    "rejects %j",
+    (value) => {
+      expect(ok(steamid, value)).toBe(false);
+    },
+  );
 
-  it("rejects non-numeric string", () => {
-    expect(() => steamIdSchema.parse("abcdefghijklmnopq")).toThrow();
-  });
-
-  it("rejects too-short numeric string", () => {
-    expect(() => steamIdSchema.parse("12345")).toThrow();
-  });
-
-  it("rejects too-long numeric string", () => {
-    expect(() => steamIdSchema.parse("123456789012345678")).toThrow();
-  });
-
-  it("rejects string with spaces", () => {
-    expect(() => steamIdSchema.parse("7656119796043 530")).toThrow();
-  });
-});
-
-describe("Published file ID validation", () => {
-  it("accepts numeric string", () => {
-    expect(publishedFileIdSchema.parse("814498849")).toBe("814498849");
-  });
-
-  it("accepts large numeric string", () => {
-    expect(publishedFileIdSchema.parse("99999999999")).toBe("99999999999");
-  });
-
-  it("rejects empty string", () => {
-    expect(() => publishedFileIdSchema.parse("")).toThrow();
-  });
-
-  it("rejects non-numeric characters", () => {
-    expect(() => publishedFileIdSchema.parse("abc123")).toThrow();
-  });
-
-  it("rejects string with special chars", () => {
-    expect(() => publishedFileIdSchema.parse("123-456")).toThrow();
+  it("is the same rule on every tool that takes a steamid", () => {
+    for (const tool of tools.values()) {
+      const schema = tool.inputSchema.steamid as z.ZodTypeAny | undefined;
+      if (!schema) continue;
+      expect(ok(schema, "12345"), tool.name).toBe(false);
+      expect(ok(schema, "76561197960435530"), tool.name).toBe(true);
+    }
   });
 });
 
-describe("App ID validation", () => {
-  it("accepts positive integer", () => {
-    expect(appIdSchema.parse(440)).toBe(440);
+describe("Published file ID validation (steam_getWorkshopItem.publishedfileid)", () => {
+  const id = field("steam_getWorkshopItem", "publishedfileid");
+
+  it("accepts numeric strings", () => {
+    expect(ok(id, "814498849")).toBe(true);
+    expect(ok(id, "99999999999")).toBe(true);
   });
 
-  it("rejects zero", () => {
-    expect(() => appIdSchema.parse(0)).toThrow();
-  });
-
-  it("rejects negative", () => {
-    expect(() => appIdSchema.parse(-1)).toThrow();
-  });
-
-  it("rejects float", () => {
-    expect(() => appIdSchema.parse(1.5)).toThrow();
-  });
-
-  it("rejects string", () => {
-    expect(() => appIdSchema.parse("440")).toThrow();
+  it.each(["", "abc123", "123-456"])("rejects %j", (value) => {
+    expect(ok(id, value)).toBe(false);
   });
 });
 
-describe("Country code validation", () => {
-  it("accepts two-letter code", () => {
-    expect(countryCodeSchema.parse("US")).toBe("US");
+describe("App ID validation (every tool's appid)", () => {
+  const withAppid = [...tools.values()].filter((t) => t.inputSchema.appid);
+
+  it("covers most tools", () => {
+    expect(withAppid.length).toBeGreaterThan(15);
   });
 
-  it("rejects single letter", () => {
-    expect(() => countryCodeSchema.parse("U")).toThrow();
+  it.each([0, -1, 1.5, "440"])("rejects %j everywhere", (value) => {
+    for (const tool of withAppid) {
+      expect(ok(tool.inputSchema.appid as z.ZodTypeAny, value), tool.name).toBe(false);
+    }
   });
 
-  it("rejects three letters", () => {
-    expect(() => countryCodeSchema.parse("USA")).toThrow();
-  });
-});
-
-describe("Leaderboard datarequest + steamid cross-validation", () => {
-  const datarequestSchema = z.number().int().min(0).max(2).optional();
-
-  it("datarequest 0 (global) is valid without steamid", () => {
-    expect(datarequestSchema.parse(0)).toBe(0);
-  });
-
-  it("datarequest rejects values > 2", () => {
-    expect(() => datarequestSchema.parse(3)).toThrow();
-  });
-
-  it("datarequest rejects negative values", () => {
-    expect(() => datarequestSchema.parse(-1)).toThrow();
+  it("accepts 440 everywhere", () => {
+    for (const tool of withAppid) {
+      expect(ok(tool.inputSchema.appid as z.ZodTypeAny, 440), tool.name).toBe(true);
+    }
   });
 });
 
-describe("Vanity URL validation", () => {
-  const vanityUrlSchema = z.string().min(1);
-  const urlTypeSchema = z.number().int().min(1).max(3).optional();
+describe("Leaderboard datarequest (steam_getLeaderboardEntries.datarequest)", () => {
+  const datarequest = field("steam_getLeaderboardEntries", "datarequest");
 
-  it("accepts valid vanity URL", () => {
-    expect(vanityUrlSchema.parse("gabelogannewell")).toBe("gabelogannewell");
+  it("accepts 0-2 and omission", () => {
+    for (const v of [0, 1, 2, undefined]) expect(ok(datarequest, v)).toBe(true);
   });
 
-  it("rejects empty vanity URL", () => {
-    expect(() => vanityUrlSchema.parse("")).toThrow();
-  });
-
-  it("url_type accepts 1-3", () => {
-    expect(urlTypeSchema.parse(1)).toBe(1);
-    expect(urlTypeSchema.parse(2)).toBe(2);
-    expect(urlTypeSchema.parse(3)).toBe(3);
-  });
-
-  it("url_type rejects 0 and 4", () => {
-    expect(() => urlTypeSchema.parse(0)).toThrow();
-    expect(() => urlTypeSchema.parse(4)).toThrow();
+  it("rejects out-of-range values", () => {
+    expect(ok(datarequest, 3)).toBe(false);
+    expect(ok(datarequest, -1)).toBe(false);
   });
 });
 
-describe("Workshop query validation", () => {
-  const numperpageSchema = z.number().int().min(1).max(100).optional();
+describe("Vanity URL (steam_resolveVanityURL)", () => {
+  const vanityurl = field("steam_resolveVanityURL", "vanityurl");
+  const urlType = field("steam_resolveVanityURL", "url_type");
 
-  it("accepts valid page sizes", () => {
-    expect(numperpageSchema.parse(1)).toBe(1);
-    expect(numperpageSchema.parse(50)).toBe(50);
-    expect(numperpageSchema.parse(100)).toBe(100);
+  it("requires a non-empty vanity URL", () => {
+    expect(ok(vanityurl, "gabelogannewell")).toBe(true);
+    expect(ok(vanityurl, "")).toBe(false);
   });
 
-  it("rejects 0", () => {
-    expect(() => numperpageSchema.parse(0)).toThrow();
+  it("url_type accepts 1-3 only", () => {
+    for (const v of [1, 2, 3]) expect(ok(urlType, v)).toBe(true);
+    expect(ok(urlType, 0)).toBe(false);
+    expect(ok(urlType, 4)).toBe(false);
+  });
+});
+
+describe("Workshop query (steam_queryWorkshop)", () => {
+  const numperpage = field("steam_queryWorkshop", "numperpage");
+  const sort = field("steam_queryWorkshop", "sort");
+  const requiredtags = field("steam_queryWorkshop", "requiredtags");
+
+  it("numperpage is 1-100", () => {
+    for (const v of [1, 50, 100]) expect(ok(numperpage, v)).toBe(true);
+    expect(ok(numperpage, 0)).toBe(false);
+    expect(ok(numperpage, 101)).toBe(false);
   });
 
-  it("rejects > 100", () => {
-    expect(() => numperpageSchema.parse(101)).toThrow();
+  it("sort is a named enum, not a raw integer", () => {
+    expect(ok(sort, "trend")).toBe(true);
+    expect(ok(sort, 2)).toBe(false);
+  });
+
+  it("requiredtags is an array, not a comma string", () => {
+    expect(ok(requiredtags, ["Map", "Addon"])).toBe(true);
+    expect(ok(requiredtags, "Map,Addon")).toBe(false);
+  });
+});
+
+describe("Write tools confirm flags", () => {
+  it("every gated tool takes boolean dry_run and confirm", () => {
+    const gated = [...tools.values()].filter((t) => "confirm" in t.inputSchema);
+    expect(gated.length).toBe(5);
+    for (const tool of gated) {
+      expect(ok(tool.inputSchema.confirm as z.ZodTypeAny, "yes"), tool.name).toBe(false);
+      expect(ok(tool.inputSchema.dry_run as z.ZodTypeAny, true), tool.name).toBe(true);
+    }
   });
 });

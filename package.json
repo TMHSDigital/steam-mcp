@@ -18,6 +18,8 @@
     "start": "node dist/index.js",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "contract": "node scripts/contract-check.mjs",
     "prepublishOnly": "npm run build"
   },
   "author": "TMHSDigital",
@@ -47,6 +49,7 @@
   },
   "devDependencies": {
     "@types/node": "^22.15.3",
+    "@vitest/coverage-v8": "^4.1.12",
     "tsx": "^4.19.4",
     "typescript": "^5.8.3",
     "vitest": "^4.1.2"

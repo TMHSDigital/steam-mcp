@@ -57,11 +57,13 @@ npm run dev       # tsx watch for development
 **Automated tests (vitest):**
 
 ```bash
-npm test            # single run
-npm run test:watch  # watch mode
+npm test                # single run
+npm run test:watch      # watch mode
+npm run test:coverage   # with the coverage floor CI enforces
+npm run contract        # live calls to every no-auth tool (after npm run build)
 ```
 
-Tests cover error classes, `steamFetch` behavior (mocked fetch), retry logic, Zod input validation for tools, and the confirm/dry-run gate on write tools.
+`src/tools/__tests__/harness.ts` captures the real registrations, so tests use the tools' own schemas and handlers. `handlers.test.ts` needs a success and error case for every tool and fails when a new tool has none. Tests also cover `steamFetch` retries and error detail, the confirm/dry-run gate and exact request bodies of write tools, and doc count drift. A nightly workflow (`contract.yml`) runs `npm run contract` and opens an issue when a live endpoint breaks.
 
 **Manual testing** via MCP inspector or by configuring as an MCP server in Cursor:
 

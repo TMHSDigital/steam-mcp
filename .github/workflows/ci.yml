@@ -28,7 +28,7 @@ jobs:
       - run: npm run build
       - name: Type-check Partner-admin code (excluded from the published build)
         run: npx tsc -p tsconfig.partner.json
-      - run: npm test
+      - run: npm run test:coverage
 
   secrets-scan:
     runs-on: ubuntu-latest
