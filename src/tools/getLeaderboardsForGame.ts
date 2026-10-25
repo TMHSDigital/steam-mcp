@@ -3,7 +3,7 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import {
   steamApiUrl,
   steamFetch,
-  getApiKey,
+  requireApiKey,
   errorResponse,
 } from "../utils/steam-api.js";
 import { READ_ONLY } from "../utils/annotations.js";
@@ -28,7 +28,7 @@ export function register(server: McpServer): void {
     },
     async ({ appid }) => {
       try {
-        const key = getApiKey();
+        const key = requireApiKey();
         const url = steamApiUrl(
           "/ISteamLeaderboards/GetLeaderboardsForGame/v2/",
           { key, appid },

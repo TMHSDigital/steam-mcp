@@ -1,6 +1,7 @@
 import {
   SteamApiError,
   MissingApiKeyError,
+  InvalidApiKeyError,
   RateLimitError,
   SteamUnavailableError,
   TimeoutError,
@@ -12,16 +13,12 @@ const STEAM_API_BASE = "https://api.steampowered.com";
 const STEAM_STORE_BASE = "https://store.steampowered.com";
 const STEAM_PARTNER_BASE = "https://partner.steam-api.com";
 
-export function getApiKey(): string {
+export function requireApiKey(): string {
   const key = process.env.STEAM_API_KEY;
   if (!key) {
     throw new MissingApiKeyError();
   }
   return key;
-}
-
-export function requireApiKey(): string {
-  return getApiKey();
 }
 
 function buildUrl(
@@ -80,77 +77,162 @@ export async function steamPartnerPost(
 const MAX_RETRIES = 2;
 const BASE_RETRY_DELAY_MS = 1_000;
 
+const MAX_RETRY_DELAY_MS = 10_000;
+const TRANSIENT_STATUSES = new Set([502, 503, 504]);
+
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+/** Exponential backoff with up to 25% jitter, so concurrent callers spread out. */
+function backoffMs(attempt: number): number {
+  const base = BASE_RETRY_DELAY_MS * 2 ** attempt;
+  return Math.min(base + Math.random() * base * 0.25, MAX_RETRY_DELAY_MS);
+}
+
+/** Retry-After is either delta-seconds or an HTTP-date. Falls back to backoff when unparseable. */
+export function retryDelayMs(retryAfter: string | null, attempt: number): number {
+  if (retryAfter) {
+    const trimmed = retryAfter.trim();
+    const ms = /^\d+$/.test(trimmed)
+      ? Number(trimmed) * 1000
+      : Date.parse(trimmed) - Date.now();
+    if (Number.isFinite(ms)) {
+      return Math.min(Math.max(ms, 0), MAX_RETRY_DELAY_MS);
+    }
+  }
+  return backoffMs(attempt);
+}
+
+/** A JSON `error` string at the top level or one level down, e.g. `{ playerstats: { error } }`. */
+function bodyErrorMessage(body: string): string | undefined {
+  try {
+    const data = JSON.parse(body) as Record<string, unknown>;
+    for (const value of [data, ...Object.values(data)]) {
+      const message = (value as { error?: unknown } | null)?.error;
+      if (typeof message === "string" && message) return message;
+    }
+  } catch {
+    // Not JSON.
+  }
+  return undefined;
+}
+
+/** Steam's own failure detail: X-eresult / X-error_message headers, else a JSON body `error`. */
+function steamErrorDetail(
+  headers: Headers,
+  body: string,
+): { eresult?: number; steamMessage?: string } {
+  const raw = headers.get("x-eresult");
+  const eresult = raw !== null && /^\d+$/.test(raw) ? Number(raw) : undefined;
+  const steamMessage = headers.get("x-error_message") ?? bodyErrorMessage(body);
+  return { eresult, steamMessage };
+}
+
+function describeNonJson(text: string, contentType: string | null): string {
+  const snippet = text.replace(/\s+/g, " ").trim().slice(0, 100);
+  const looksHtml = /html/i.test(contentType ?? "") || snippet.startsWith("<");
+  return (
+    `Unexpected non-JSON response from Steam API (content-type: ${contentType ?? "unknown"}; starts with: ${JSON.stringify(snippet)}).` +
+    (looksHtml ? " Received HTML: the endpoint may be retired or require login." : "")
+  );
+}
+
+async function readBody(response: Response): Promise<string> {
+  try {
+    return await response.text();
+  } catch {
+    return "";
+  }
+}
+
+/** URL without its query string, so error objects never carry the API key. */
+function endpointOf(url: string): string {
+  try {
+    const u = new URL(url);
+    return u.origin + u.pathname;
+  } catch {
+    return url.split("?")[0];
+  }
 }
 
 export async function steamFetch(
   url: string,
   options: RequestInit = {},
 ): Promise<unknown> {
-  let lastError: unknown;
-
-  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+  for (let attempt = 0; ; attempt++) {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), DEFAULT_TIMEOUT_MS);
+    let response: Response;
+    let text: string;
 
     try {
-      const response = await fetch(url, {
+      response = await fetch(url, {
         ...options,
         signal: controller.signal,
       });
-
-      if (response.status === 429) {
-        const retryAfter = response.headers.get("Retry-After");
-        const delayMs = retryAfter
-          ? Math.min(parseInt(retryAfter, 10) * 1000, 10_000)
-          : BASE_RETRY_DELAY_MS * 2 ** attempt;
-
-        if (attempt < MAX_RETRIES) {
-          await sleep(delayMs);
-          continue;
-        }
-        throw new RateLimitError();
-      }
-
-      if (response.status >= 500) {
-        throw new SteamUnavailableError();
-      }
-
-      if (!response.ok) {
-        throw new SteamApiError(
-          `Steam API returned HTTP ${response.status}`,
-          response.status,
-          url,
-        );
-      }
-
-      const text = await response.text();
-      try {
-        return JSON.parse(text);
-      } catch {
-        throw new SteamApiError("Unexpected response from Steam API.");
-      }
+      text = await readBody(response);
     } catch (error) {
-      if (error instanceof SteamApiError) {
-        throw error;
-      }
       if (error instanceof DOMException && error.name === "AbortError") {
         throw new TimeoutError(DEFAULT_TIMEOUT_MS);
       }
-      lastError = error;
       throw new SteamApiError(
         `Failed to reach Steam API: ${error instanceof Error ? error.message : String(error)}`,
       );
     } finally {
       clearTimeout(timeout);
     }
-  }
 
-  throw (
-    lastError ??
-    new SteamApiError("Steam API request failed after retries.")
-  );
+    const canRetry = attempt < MAX_RETRIES;
+
+    if (response.status === 429) {
+      if (canRetry) {
+        await sleep(retryDelayMs(response.headers.get("Retry-After"), attempt));
+        continue;
+      }
+      throw new RateLimitError();
+    }
+
+    if (TRANSIENT_STATUSES.has(response.status) && canRetry) {
+      await sleep(backoffMs(attempt));
+      continue;
+    }
+
+    if (response.status >= 500) {
+      throw new SteamUnavailableError();
+    }
+
+    if (!response.ok) {
+      // Steam answers a bad key with a 403 HTML page asking to verify key=.
+      if (response.status === 403 && /verify your\s*(<[^>]+>\s*)*key=/i.test(text)) {
+        throw new InvalidApiKeyError(endpointOf(url));
+      }
+      const { eresult, steamMessage } = steamErrorDetail(response.headers, text);
+      const detail = [
+        eresult !== undefined ? `EResult ${eresult}` : undefined,
+        steamMessage,
+      ]
+        .filter(Boolean)
+        .join(": ");
+      throw new SteamApiError(
+        `Steam API returned HTTP ${response.status}${detail ? ` (${detail})` : ""}`,
+        response.status,
+        endpointOf(url),
+        eresult,
+        steamMessage,
+      );
+    }
+
+    try {
+      return JSON.parse(text);
+    } catch {
+      throw new SteamApiError(
+        describeNonJson(text, response.headers.get("content-type")),
+        response.status,
+        endpointOf(url),
+      );
+    }
+  }
 }
 
 /**
@@ -162,12 +244,32 @@ export function eresultOf(data: unknown): number | undefined {
   return typeof result?.result === "number" ? result.result : undefined;
 }
 
-/** errorResponse() plus a publisher-key hint for the 400/403 Partner API returns on a bad key or IP. */
+/** " Steam says: EResult n: message." when Steam sent failure headers, else "". */
+export function steamDetailSuffix(error: SteamApiError): string {
+  const parts = [
+    error.eresult !== undefined ? `EResult ${error.eresult}` : undefined,
+    error.steamMessage,
+  ].filter(Boolean);
+  return parts.length ? ` Steam says: ${parts.join(": ")}.` : "";
+}
+
+/**
+ * errorResponse() for Partner API calls. 401/403 means the key is not a
+ * publisher key or the server IP is not allowlisted. 400 means Steam rejected
+ * the parameters, which is not a key problem.
+ */
 export function publisherErrorResponse(error: unknown): ReturnType<typeof errorResponse> {
-  if (error instanceof SteamApiError && (error.statusCode === 400 || error.statusCode === 403)) {
+  if (error instanceof SteamApiError && (error.statusCode === 401 || error.statusCode === 403)) {
     return errorResponse(
       new Error(
-        `HTTP ${error.statusCode} - This tool requires a Steam Publisher API key with the server's IP allowlisted in your Steamworks partner settings. Set STEAM_API_KEY to a publisher key and add the server IP to your Web API key's allowed IP list at https://partner.steamgames.com/doc/webapi_overview/auth`,
+        `HTTP ${error.statusCode} - This tool requires a Steam Publisher API key with the server's IP allowlisted in your Steamworks partner settings. Set STEAM_API_KEY to a publisher key and add the server IP to your Web API key's allowed IP list at https://partner.steamgames.com/doc/webapi_overview/auth.${steamDetailSuffix(error)}`,
+      ),
+    );
+  }
+  if (error instanceof SteamApiError && error.statusCode === 400) {
+    return errorResponse(
+      new Error(
+        `HTTP 400 - Steam rejected the request. Check the appid, Steam ID, and any achievement, leaderboard, item, or file IDs.${steamDetailSuffix(error)}`,
       ),
     );
   }
