@@ -8,6 +8,12 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
+    ignore:
+      # Types must match the oldest supported runtime (engines.node >=22), or
+      # code using newer Node APIs typechecks and then crashes on Node 22.
+      # Bump this major by hand when engines.node moves.
+      - dependency-name: "@types/node"
+        update-types: ["version-update:semver-major"]
     groups:
       npm-minor-and-patch:
         update-types:
