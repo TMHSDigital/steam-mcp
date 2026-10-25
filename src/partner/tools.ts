@@ -4,7 +4,7 @@ import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { errorResponse } from "../utils/steam-api.js";
 import { refuseIfUnconfirmed, refusal } from "../utils/confirm.js";
-import { STORE_ASSET_SLOTS, SLOT_FORM_FIELD } from "../storeAssets/slots.js";
+import { UPLOADABLE_SLOTS, SLOT_FORM_FIELD } from "../storeAssets/slots.js";
 import { validateStoreAsset } from "../storeAssets/validate.js";
 import {
   parseCookieJar,
@@ -72,7 +72,9 @@ export function registerPartnerLogin(server: McpServer): void {
 
 const uploadImageSchema = {
   storeItemId: z.string().min(1).describe("Partner store item id (not a public appid)"),
-  slot: z.enum(STORE_ASSET_SLOTS).describe("Asset slot to upload"),
+  slot: z
+    .enum(UPLOADABLE_SLOTS)
+    .describe("Store or library slot to upload. Achievement, community, and event art are uploaded elsewhere in Steamworks."),
   path: z.string().min(1).describe("Local PNG or JPEG path"),
   dry_run: z
     .boolean()

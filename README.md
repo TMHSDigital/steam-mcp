@@ -197,7 +197,7 @@ These work without an API key:
 | `steam_getAppReviewSummary` | Review score, total counts, and positive percentage (no individual reviews) |
 | `steam_getRegionalPricing` | Pricing breakdown across multiple countries/regions |
 | `steam_getNewsForApp` | Recent news articles with title, URL, contents, date, and author. Article text is third-party and labeled untrusted. |
-| `steam_validateStoreAsset` | Local PNG/JPEG vs Valve store and library sizes, plus library-hero heuristics |
+| `steam_validateStoreAsset` | Local PNG/JPEG vs Valve store, library, achievement, community, and event sizes, plus library-hero heuristics. Checks a whole achievement icon folder for missing achieved/unachieved pairs. |
 
 </details>
 
