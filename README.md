@@ -303,8 +303,8 @@ The five HTTP write tools are in the `mutations` toolset, which is off unless `S
 | Tool | Type | Description |
 |------|------|-------------|
 | `steam_updateWorkshopItem` | HTTP POST | Update Workshop item metadata via IPublishedFileService. Default dry_run=true; confirm=true to send. Does not change the store page listing. |
-| `steam_setAchievement` | HTTP POST | Set/unlock achievements via ISteamUserStats (dev/test). Default dry_run=true; confirm=true to send. |
-| `steam_clearAchievement` | HTTP POST | Clear/re-lock achievements via ISteamUserStats (dev/test). Default dry_run=true; confirm=true to send. |
+| `steam_setAchievement` | HTTP POST | Set/unlock achievements via ISteamUserStats (dev/test). One `achievement` or up to 100 `achievements` per call. Default dry_run=true; confirm=true to send. |
+| `steam_clearAchievement` | HTTP POST | Clear/re-lock achievements via ISteamUserStats (dev/test). One `achievement` or up to 100 `achievements` per call. Default dry_run=true; confirm=true to send. |
 | `steam_uploadLeaderboardScore` | HTTP POST | Upload scores via ISteamLeaderboards. Default dry_run=true; confirm=true to send. A dry run accepts `leaderboard_name` and shows the resolved ID; the live call takes the numeric `leaderboardid`. |
 | `steam_grantInventoryItem` | HTTP POST | Grant inventory items via IInventoryService. Default dry_run=true; confirm=true to send. |
 | `steam_createLobby` | SDK guide | Returns C++/C#/GDScript code for ISteamMatchmaking lobby creation. No network call. |

@@ -251,3 +251,81 @@ describe("steam_grantInventoryItem AddItem body", () => {
     expect(plan).not.toHaveProperty("itemdefid");
   });
 });
+
+describe("achievement batches (#91)", () => {
+  beforeEach(() => {
+    process.env.STEAM_API_KEY = "TESTKEY_NOT_REAL";
+  });
+
+  afterEach(() => {
+    delete process.env.STEAM_API_KEY;
+  });
+
+  const batch = ["ACH_A", "ACH_B", "ACH_C"];
+
+  for (const [register, value] of [
+    [registerSetAchievement, "1"],
+    [registerClearAchievement, "0"],
+  ] as const) {
+    it(`sends count and name[n]/value[n]=${value} for a batch of 3 in one POST`, async () => {
+      const fetchMock = okFetch({ result: { result: 1 } });
+      vi.stubGlobal("fetch", fetchMock);
+
+      const result = await captureHandler(register)({
+        steamid: STEAMID,
+        appid: 480,
+        achievements: batch,
+        dry_run: false,
+        confirm: true,
+      });
+
+      expect(result.isError).toBeUndefined();
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+      const body = new URLSearchParams(String((fetchMock.mock.calls[0][1] as RequestInit).body));
+      expect(Object.fromEntries(body)).toEqual({
+        key: "TESTKEY_NOT_REAL",
+        steamid: STEAMID,
+        appid: "480",
+        count: "3",
+        "name[0]": "ACH_A",
+        "value[0]": value,
+        "name[1]": "ACH_B",
+        "value[1]": value,
+        "name[2]": "ACH_C",
+        "value[2]": value,
+      });
+      expect(JSON.parse(result.content[0].text).achievements).toEqual(batch);
+    });
+  }
+
+  it("lists every change in one dry run without a fetch", async () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+
+    const result = await captureHandler(registerSetAchievement)({
+      steamid: STEAMID,
+      appid: 480,
+      achievements: [...batch, "ACH_A"],
+    });
+    const plan = JSON.parse(result.content[0].text).would_send;
+    expect(plan.achievements).toEqual(batch);
+    expect(plan.params.count).toBe(3);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("refuses both achievement and achievements before any network I/O", async () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+
+    const result = await captureHandler(registerSetAchievement)({
+      steamid: STEAMID,
+      appid: 480,
+      achievement: "ACH_A",
+      achievements: batch,
+      dry_run: false,
+      confirm: true,
+    });
+    expect(result.isError).toBe(true);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+});
