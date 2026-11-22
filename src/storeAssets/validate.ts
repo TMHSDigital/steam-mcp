@@ -1,7 +1,7 @@
 import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { SLOT_SPECS, type StoreAssetSlot } from "./slots.js";
-import { parseImage } from "./png.js";
+import { parseImage, UnsupportedPixelFormatError } from "./png.js";
 import { analyzeHero } from "./heroHeuristics.js";
 
 /** Files above this are refused before reading. Steam store images are far smaller. */
@@ -66,7 +66,19 @@ export function validateStoreAsset(path: string, slot: StoreAssetSlot): StoreAss
       image.width === spec.width &&
       image.height === spec.height;
     if (decodePixels) {
-      image = parseImage(buf, true);
+      try {
+        image = parseImage(buf, true);
+      } catch (error) {
+        // Palette, grayscale, 16-bit, and interlaced PNGs are valid uploads.
+        // Only the optional hero heuristics need pixels, so skip them.
+        if (!(error instanceof UnsupportedPixelFormatError)) {
+          throw error;
+        }
+        warnings.push({
+          code: "HERO_HEURISTICS_SKIPPED",
+          message: `Hero heuristics skipped: ${error.message} Size and format were still checked.`,
+        });
+      }
     }
   } catch (error) {
     errors.push({

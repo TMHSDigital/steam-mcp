@@ -44,6 +44,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `steam_getLeaderboardsForGame` calls `partner.steam-api.com` and says it needs a publisher key. Valve documents `ISteamLeaderboards` as a publisher interface; the tool claimed a free key was enough. A 401/403 now explains the key and IP-allowlist requirement. (#64)
 - Partner `steam_uploadTrailer` no longer advertises a live upload it cannot perform. It is now plan-only: no `confirm` input, annotated read-only, and `dry_run: false` returns `isError` with `[NOT_IMPLEMENTED]` instead of a success-shaped `ok: false`. (#65)
 - Partner `steam_uploadStoreImage` refuses an unconfirmed live call through the shared `refusal()` (`isError` plus `[CONFIRM_REQUIRED]`), matching the default-bin write tools. A failed pre-upload validation is also `isError`. (#22)
+- `steam_validateStoreAsset` accepts a correctly sized `libraryHero` PNG that is palette-indexed, grayscale, 16-bit, or interlaced (for example after pngquant). Such files used to fail with a `PARSE` error. Only the hero heuristics need decoded pixels, so they are skipped with a `HERO_HEURISTICS_SKIPPED` warning. (#78)
 
 ### Changed
 

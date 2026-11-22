@@ -9,6 +9,19 @@ export type DecodedImage = {
   rgba?: Uint8Array;
 };
 
+/**
+ * The PNG is well formed but its pixel layout (interlace, bit depth, or
+ * colour type) is one the built-in decoder does not handle. Steam accepts
+ * these files, so callers treat this as "cannot inspect pixels", not as a
+ * broken image.
+ */
+export class UnsupportedPixelFormatError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "UnsupportedPixelFormatError";
+  }
+}
+
 /** Upper bound on decoded pixels (64 MB of RGBA). The largest slot, libraryHero, is 3840x1240. */
 export const MAX_DECODE_PIXELS = 16_000_000;
 
@@ -108,13 +121,15 @@ function parsePng(buf: Buffer, decodePixels: boolean): DecodedImage {
   }
 
   if (interlace !== 0) {
-    throw new Error("Interlaced PNG is not supported.");
+    throw new UnsupportedPixelFormatError("Interlaced PNG is not supported.");
   }
   if (bitDepth !== 8) {
-    throw new Error(`PNG bit depth ${bitDepth} is not supported (need 8).`);
+    throw new UnsupportedPixelFormatError(`PNG bit depth ${bitDepth} is not supported (need 8).`);
   }
   if (colorType !== 2 && colorType !== 6) {
-    throw new Error(`PNG color type ${colorType} is not supported (need RGB or RGBA).`);
+    throw new UnsupportedPixelFormatError(
+      `PNG color type ${colorType} is not supported (need RGB or RGBA).`,
+    );
   }
 
   if (width * height > MAX_DECODE_PIXELS) {

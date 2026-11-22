@@ -239,12 +239,18 @@ describe("validateStoreAsset resource bounds", () => {
     return Buffer.concat([len, body, crc]);
   }
 
-  function craftedPng(width: number, height: number, idat: Buffer): string {
+  function craftedPng(
+    width: number,
+    height: number,
+    idat: Buffer,
+    { bitDepth = 8, colorType = 2, interlace = 0 } = {},
+  ): string {
     const ihdr = Buffer.alloc(13);
     ihdr.writeUInt32BE(width, 0);
     ihdr.writeUInt32BE(height, 4);
-    ihdr[8] = 8;
-    ihdr[9] = 2;
+    ihdr[8] = bitDepth;
+    ihdr[9] = colorType;
+    ihdr[12] = interlace;
     const buf = Buffer.concat([
       Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
       chunk("IHDR", ihdr),
@@ -272,6 +278,23 @@ describe("validateStoreAsset resource bounds", () => {
     expect(result.ok).toBe(false);
     expect(result.errors[0].code).toBe("PARSE");
     expect(result.errors[0].message).toMatch(/inflates past/);
+  });
+
+  it.each([
+    ["palette (colour type 3)", { bitDepth: 8, colorType: 3 }, /color type 3/],
+    ["grayscale (colour type 0)", { bitDepth: 8, colorType: 0 }, /color type 0/],
+    ["16-bit RGB", { bitDepth: 16, colorType: 2 }, /bit depth 16/],
+    ["interlaced RGB", { interlace: 1 }, /Interlaced/],
+  ])("accepts a correctly sized %s libraryHero and skips the heuristics", (_label, ihdr, why) => {
+    const path = craftedPng(3840, 1240, deflateSync(Buffer.alloc(16)), ihdr);
+    const result = validateStoreAsset(path, "libraryHero");
+    expect(result.ok).toBe(true);
+    expect(result.errors).toEqual([]);
+    expect(result.width).toBe(3840);
+    expect(result.height).toBe(1240);
+    expect(result.format).toBe("png");
+    expect(result.warnings.map((w) => w.code)).toEqual(["HERO_HEURISTICS_SKIPPED"]);
+    expect(result.warnings[0].message).toMatch(why);
   });
 
   it("refuses to decode beyond the pixel cap even when asked directly", () => {
