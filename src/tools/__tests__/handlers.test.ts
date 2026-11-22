@@ -308,7 +308,11 @@ describe.each(Object.entries(CASES))("%s handler", (name, c) => {
 
   it("returns the expected success output", async () => {
     if (c.needsKey) process.env.STEAM_API_KEY = "TESTKEY_NOT_REAL";
-    const fetchMock = vi.fn(c.noFetch ? () => Promise.reject(new Error("no network expected")) : jsonFetch(c.fixture));
+    const fetchMock = vi.fn(
+      c.noFetch
+        ? (_input?: string | URL | Request) => Promise.reject(new Error("no network expected"))
+        : jsonFetch(c.fixture),
+    );
     vi.stubGlobal("fetch", fetchMock);
 
     const result = await tool.handler(c.args);

@@ -31,6 +31,8 @@ jobs:
       - run: npm run build
       - name: Type-check Partner-admin code (excluded from the published build)
         run: npx tsc -p tsconfig.partner.json
+      - name: Type-check tests and config (vitest strips types without checking)
+        run: npm run typecheck
       - run: npm run test:coverage
 
   docker:

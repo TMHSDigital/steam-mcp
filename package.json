@@ -20,7 +20,8 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "contract": "node scripts/contract-check.mjs",
-    "prepublishOnly": "npm run build"
+    "prepublishOnly": "npm run build",
+    "typecheck": "tsc -p tsconfig.test.json"
   },
   "author": "TMHSDigital",
   "license": "CC-BY-NC-ND-4.0",

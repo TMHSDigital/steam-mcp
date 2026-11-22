@@ -35,7 +35,7 @@ describe("parseSteamId", () => {
 describe("resolveSteamId", () => {
   it("resolves a vanity through ResolveVanityURL and reports where it came from", async () => {
     vi.stubEnv("STEAM_API_KEY", "TESTKEY_NOT_REAL");
-    const fetchMock = vi.fn(() =>
+    const fetchMock = vi.fn((_input: string | URL | Request) =>
       Promise.resolve(new Response(JSON.stringify({ response: { success: 1, steamid: "76561197960287930" } }))),
     );
     vi.stubGlobal("fetch", fetchMock);

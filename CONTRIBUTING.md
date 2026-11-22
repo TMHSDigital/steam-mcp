@@ -114,7 +114,7 @@ npm test
 - Note whether the endpoint requires authentication
 - Test with real Steam API calls before submitting
 - Keep changes focused - avoid unrelated refactors in the same PR
-- Make sure `npm run build` and `npm test` pass
+- Make sure `npm run build`, `npm run typecheck`, and `npm test` pass
 
 ## Release checklist
 
@@ -124,7 +124,7 @@ The version lives only in `package.json`. Both servers read it at runtime from `
 2. `npm version <patch|minor|major> --no-git-tag-version` (updates `package.json` and `package-lock.json`).
 3. If the tool list changed, update the counts in `package.json` `description`, the README badge, summary line, and tool tables, and `CLAUDE.md`. `npm test` fails until they match the registered tools.
 4. If a supported-version boundary moved, update the table in `SECURITY.md`.
-5. `npm run build && npx tsc -p tsconfig.partner.json && npm test`
+5. `npm run build && npx tsc -p tsconfig.partner.json && npm run typecheck && npm test`
 6. Commit, push, and publish a GitHub release tagged `vX.Y.Z`. The publish workflow ships it to npm.
 
 ## Developer Certificate of Origin and Inbound License Grant

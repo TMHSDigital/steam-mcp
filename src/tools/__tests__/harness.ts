@@ -37,5 +37,7 @@ export function schemaOf(tool: RegisteredTool): z.ZodObject<z.ZodRawShape> {
 
 /** A fetch mock that answers every call with the same JSON body. */
 export function jsonFetch(body: unknown, status = 200) {
-  return () => Promise.resolve(new Response(JSON.stringify(body), { status }));
+  // Typed like fetch so mock.calls[n][0] is the requested URL.
+  return (_input?: string | URL | Request, _init?: RequestInit) =>
+    Promise.resolve(new Response(JSON.stringify(body), { status }));
 }

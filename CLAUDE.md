@@ -65,6 +65,7 @@ npm run dev       # tsx watch for development
 npm test                # single run
 npm run test:watch      # watch mode
 npm run test:coverage   # with the coverage floor CI enforces
+npm run typecheck       # tsc over src incl. tests (vitest strips types unchecked)
 npm run contract        # live calls to every no-auth tool (after npm run build)
 ```
 
