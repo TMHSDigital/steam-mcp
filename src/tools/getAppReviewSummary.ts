@@ -12,6 +12,16 @@ const inputSchema = {
     .describe("Steam application ID"),
 };
 
+const outputSchema = {
+  appid: z.number().int(),
+  review_score: z.number().optional().describe("Steam's 0-9 review score"),
+  review_score_desc: z.string().optional().describe('For example "Very Positive"'),
+  total_reviews: z.number().int(),
+  total_positive: z.number().int(),
+  total_negative: z.number().int(),
+  positive_percentage: z.number().describe("Rounded share of positive reviews, 0-100"),
+};
+
 export function register(server: McpServer): void {
   server.registerTool(
     "steam_getAppReviewSummary",
@@ -20,6 +30,7 @@ export function register(server: McpServer): void {
       description:
         "Get all-time review summary statistics for a Steam app across all languages and purchase types: total positive/negative counts, review score, and score description. No individual reviews returned. No API key required.",
       inputSchema,
+      outputSchema,
       annotations: READ_ONLY,
     },
     async ({ appid }) => {
@@ -43,23 +54,18 @@ export function register(server: McpServer): void {
           ? Math.round((totalPositive / s.total_reviews) * 100)
           : 0;
 
+        const structured = {
+          appid,
+          review_score: s.review_score,
+          review_score_desc: s.review_score_desc,
+          total_reviews: s.total_reviews,
+          total_positive: totalPositive,
+          total_negative: s.total_negative ?? 0,
+          positive_percentage: pct,
+        };
         return {
-          content: [
-            {
-              type: "text" as const,
-              text: JSON.stringify(
-                {
-                  appid,
-                  review_score: s.review_score,
-                  review_score_desc: s.review_score_desc,
-                  total_reviews: s.total_reviews,
-                  total_positive: totalPositive,
-                  total_negative: s.total_negative ?? 0,
-                  positive_percentage: pct,
-                }
-              ),
-            },
-          ],
+          content: [{ type: "text" as const, text: JSON.stringify(structured) }],
+          structuredContent: structured,
         };
       } catch (error) {
         return errorResponse(error);

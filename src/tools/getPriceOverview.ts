@@ -16,6 +16,32 @@ const inputSchema = {
     .describe("Two-letter country code for pricing (e.g. US, GB, DE). Defaults to server region."),
 };
 
+// Fields are optional and extra keys allowed: this is Steam's object passed
+// through, and a strict schema would fail the whole call if Steam changed it.
+const priceOverview = z.looseObject({
+  currency: z.string().optional(),
+  initial: z.number().optional(),
+  final: z.number().optional(),
+  discount_percent: z.number().optional(),
+  initial_formatted: z.string().optional(),
+  final_formatted: z.string().optional(),
+});
+
+const outputSchema = {
+  region: z.string().describe('Country code, or "default"'),
+  prices: z
+    .record(
+      z.string(),
+      // priceOverview accepts any object, so it goes last.
+      z.union([
+        z.object({ error: z.string() }),
+        z.object({ price_overview: z.null(), reason: z.literal("no_price_listed") }),
+        priceOverview,
+      ]),
+    )
+    .describe("Keyed by appid: Steam's price_overview (prices in cents), no listed price, or an error"),
+};
+
 export function register(server: McpServer): void {
   server.registerTool(
     "steam_getPriceOverview",
@@ -24,6 +50,7 @@ export function register(server: McpServer): void {
       description:
         "Batch price check for multiple Steam apps in a specific region. Returns formatted price data including base price, discount, and final price. No API key required.",
       inputSchema,
+      outputSchema,
       annotations: READ_ONLY,
     },
     async ({ appids, cc }) => {
@@ -51,15 +78,10 @@ export function register(server: McpServer): void {
           }
         }
 
+        const structured = { region: cc ?? "default", prices: results };
         return {
-          content: [
-            {
-              type: "text" as const,
-              text: JSON.stringify(
-                { region: cc ?? "default", prices: results }
-              ),
-            },
-          ],
+          content: [{ type: "text" as const, text: JSON.stringify(structured) }],
+          structuredContent: structured,
         };
       } catch (error) {
         return errorResponse(error);

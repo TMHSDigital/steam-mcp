@@ -11,6 +11,11 @@ const inputSchema = {
     .describe("Steam application ID (e.g. 730 for Counter-Strike 2)"),
 };
 
+const outputSchema = {
+  appid: z.number().int(),
+  player_count: z.number().int().describe("Concurrent players right now"),
+};
+
 export function register(server: McpServer): void {
   server.registerTool(
     "steam_getPlayerCount",
@@ -19,6 +24,7 @@ export function register(server: McpServer): void {
       description:
         "Get the current number of concurrent players for a Steam app. No API key required.",
       inputSchema,
+      outputSchema,
       annotations: READ_ONLY,
     },
     async ({ appid }) => {
@@ -44,18 +50,10 @@ export function register(server: McpServer): void {
           );
         }
 
+        const structured = { appid, player_count: data.response.player_count };
         return {
-          content: [
-            {
-              type: "text",
-              text: JSON.stringify(
-                {
-                  appid,
-                  player_count: data.response.player_count,
-                }
-              ),
-            },
-          ],
+          content: [{ type: "text", text: JSON.stringify(structured) }],
+          structuredContent: structured,
         };
       } catch (error) {
         return errorResponse(error);

@@ -5,6 +5,7 @@ import { registerAllTools } from "../index.js";
 
 export type ToolResult = {
   content: Array<{ type: string; text: string }>;
+  structuredContent?: Record<string, unknown>;
   isError?: boolean;
 };
 
@@ -15,6 +16,7 @@ export interface RegisteredTool {
   title?: string;
   description?: string;
   inputSchema: z.ZodRawShape;
+  outputSchema?: z.ZodRawShape;
   annotations?: ToolAnnotations;
   handler: ToolHandler;
 }
