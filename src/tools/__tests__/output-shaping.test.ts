@@ -123,4 +123,10 @@ describe("stripHtml", () => {
   it("removes tags, decodes entities, and keeps line breaks", () => {
     expect(stripHtml("A&nbsp;&amp;&#39;B<br>C<li>D</li>")).toBe("A &'B\nC\nD");
   });
+
+  it("leaves out-of-range numeric entities as-is instead of throwing (#81)", () => {
+    expect(stripHtml("a &#1114112; b")).toBe("a &#1114112; b");
+    expect(stripHtml("&#x110000;&#x10FFFF;")).toBe("&#x110000;\u{10FFFF}");
+    expect(stripHtml("&#99999999999999999999;")).toBe("&#99999999999999999999;");
+  });
 });
