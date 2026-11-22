@@ -45,6 +45,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Partner `steam_uploadTrailer` no longer advertises a live upload it cannot perform. It is now plan-only: no `confirm` input, annotated read-only, and `dry_run: false` returns `isError` with `[NOT_IMPLEMENTED]` instead of a success-shaped `ok: false`. (#65)
 - Partner `steam_uploadStoreImage` refuses an unconfirmed live call through the shared `refusal()` (`isError` plus `[CONFIRM_REQUIRED]`), matching the default-bin write tools. A failed pre-upload validation is also `isError`. (#22)
 - `steam_validateStoreAsset` accepts a correctly sized `libraryHero` PNG that is palette-indexed, grayscale, 16-bit, or interlaced (for example after pngquant). Such files used to fail with a `PARSE` error. Only the hero heuristics need decoded pixels, so they are skipped with a `HERO_HEURISTICS_SKIPPED` warning. (#78)
+- `steam_validateStoreAssetDir` recognizes screenshots named after a scene, such as `screenshot_main_menu.png` or `ss_hero_fight.png`. The slot word in the name used to win, so these were checked as `mainCapsule` or `libraryHero` and failed. A name starting with `ss` now counts as a screenshot only when a digit or separator follows. (#77)
 
 ### Changed
 

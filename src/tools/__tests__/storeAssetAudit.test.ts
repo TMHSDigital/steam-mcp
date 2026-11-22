@@ -20,9 +20,25 @@ describe("inferSlot", () => {
     ["Hero Capsule.png", "verticalCapsule"],
     ["library-header.png", "libraryHeader"],
     ["header.png", "headerCapsule"],
+    ["header_capsule.png", "headerCapsule"],
     ["ss_01.png", "screenshot"],
+    ["ss01.png", "screenshot"],
+    // Screenshots named after the scene must not match the slot word (#77).
+    ["screenshot_main_menu.png", "screenshot"],
+    ["screenshot_hero_fight.png", "screenshot"],
+    ["ss_logo_reveal.png", "screenshot"],
+    ["screenshot-small-town.png", "screenshot"],
+    ["screenshot_background_city.png", "screenshot"],
+    ["Screenshot Vertical Slice.jpg", "screenshot"],
   ])("%s -> %s by name", (name, slot) => {
     expect(inferSlot(png(dir, name, 10, 10), name)).toEqual({ slot, by: "name" });
+  });
+
+  it("does not treat a word that merely starts with ss as a screenshot hint", () => {
+    expect(inferSlot(png(dir, "ssao_header.png", 10, 10), "ssao_header.png")).toEqual({
+      slot: "headerCapsule",
+      by: "name",
+    });
   });
 
   it("falls back to exact size", () => {

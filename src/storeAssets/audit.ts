@@ -36,8 +36,16 @@ const NAME_HINTS: Array<[RegExp, StoreAssetSlot]> = [
   [/eventheader/, "eventHeader"],
   [/communityicon/, "communityIcon"],
   [/achieved|unachieved|achievement/, "achievementIcon"],
-  [/screenshot|^ss\d|^ss/, "screenshot"],
 ];
+
+/**
+ * Screenshots are checked before NAME_HINTS: they are often named after the
+ * scene ("screenshot_main_menu", "ss_hero_fight"), and those words would
+ * otherwise match another slot. Tested on the lowercased name without the
+ * extension, so "ss" must be followed by a digit or separator ("ssao.png" is
+ * not a screenshot hint).
+ */
+const SCREENSHOT_HINT = /screenshot|^ss(?:\d|[\s_.-]|$)/;
 
 const IMAGE = /\.(png|jpe?g)$/i;
 
@@ -53,7 +61,9 @@ function slotBySize(width: number, height: number): StoreAssetSlot | undefined {
 }
 
 export function inferSlot(path: string, name: string): { slot?: StoreAssetSlot; by: "name" | "size" | "none" } {
-  const key = name.toLowerCase().replace(IMAGE, "").replace(/[\s_.-]+/g, "");
+  const base = name.toLowerCase().replace(IMAGE, "");
+  if (SCREENSHOT_HINT.test(base)) return { slot: "screenshot", by: "name" };
+  const key = base.replace(/[\s_.-]+/g, "");
   for (const [pattern, slot] of NAME_HINTS) {
     if (pattern.test(key)) return { slot, by: "name" };
   }
