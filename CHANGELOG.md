@@ -54,6 +54,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- README has a Configuration table covering every environment variable, including `STEAM_MCP_TRANSPORT`, `HOST`/`PORT`, and the Partner-admin settings. `.env.example` lists all of them with defaults, and notes that the server does not load `.env` (but `docker run --env-file` does). (#90)
 - README onboarding starts with a one-snippet npx quick start and adds setup for Claude Desktop, Claude Code, VS Code, and Windsurf, plus a troubleshooting table. Removed the `.env` instructions: the server never loaded `.env`. (#39)
 - Large outputs are capped by default to save agent context (#35):
   - `steam_getAppDetails` returns a compact summary (about 2 KB instead of about 30 KB). `detail: "full"` returns every field, `fields` picks specific ones. Store HTML is stripped and long text truncated unless `include_html: true`.

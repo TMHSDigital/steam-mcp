@@ -111,6 +111,27 @@ About half the tools work with no key at all. The rest need a free Steam Web API
 
 Set the key in the `env` block of your client config, as in the Quick start. The server reads `STEAM_API_KEY` from its environment only. It does not load a `.env` file.
 
+## Configuration
+
+Every setting is an environment variable. Put it in the `env` block of your client config, next to `STEAM_API_KEY`. [`.env.example`](.env.example) lists them all, and it also works with `docker run --env-file`.
+
+| Variable | Default | What it does |
+|----------|---------|--------------|
+| `STEAM_API_KEY` | unset | Steam Web API key. Needed by about half the tools. Leaderboard, partner, and write tools need a publisher key with the server IP allowlisted. |
+| `STEAM_FINANCIAL_API_KEY` | `STEAM_API_KEY` | Financial API Group key for `steam_getSalesSummary` and `steam_getChangedSalesDates`. |
+| `STEAM_MCP_TOOLSETS` | all but `mutations` | Comma-separated toolsets to load (`store`, `community`, `publisher`, `mutations`, `sdk`, `assets`) or `all`. See [Toolsets](#toolsets). |
+| `STEAM_MCP_READ_ONLY` | unset | `1` removes `mutations` even if `STEAM_MCP_TOOLSETS` lists it. |
+| `STEAM_MCP_CACHE_TTL` | per endpoint | Unset: 30s for player counts up to 1h for schemas. `0` disables the cache. Any other number of seconds replaces every TTL. |
+| `STEAM_MCP_DEBUG` | unset | `1` logs each Steam request to stderr and MCP logging (see [Debugging](#debugging)). |
+| `STEAM_MCP_TRANSPORT` | `stdio` | `stdio` or `http`. Same as `--transport`. |
+| `HOST` | `127.0.0.1` | HTTP bind address. Same as `--host`. |
+| `PORT` | `3000` | HTTP port. Same as `--port`. |
+| `STEAM_MCP_ALLOWED_HOSTS` | `localhost,127.0.0.1,[::1]` | HTTP only: `Host` header values to accept. `*` disables the check. |
+| `STEAM_MCP_HTTP_ALLOW_WRITES` | unset | HTTP only: `1` lets the `mutations` toolset load. |
+| `STEAM_PARTNER_ADMIN` | unset | Partner-admin process only (`src/partner/index.ts`): must be `1` to start it. Ignored by the default server. |
+| `STEAM_PARTNER_COOKIES` | unset | Partner-admin only: path to a cookie-jar file (never a cookie string). |
+| `STEAM_PARTNER_PROFILE_DIR` | unset | Partner-admin only: Chromium user-data directory outside the repo, for the login helper. |
+
 ## Troubleshooting
 
 | Symptom | Cause and fix |
