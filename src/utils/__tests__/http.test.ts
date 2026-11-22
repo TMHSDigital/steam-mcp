@@ -1,8 +1,9 @@
 import { request, type Server } from "node:http";
 import type { AddressInfo } from "node:net";
-import { describe, it, expect, beforeAll, afterAll } from "vitest";
+import { describe, it, expect, beforeAll, afterAll, vi } from "vitest";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
+import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import { startHttpServer } from "../../http.js";
 
 let server: Server;
@@ -24,10 +25,15 @@ afterAll(() => {
 
 /** Raw request so the Host header can be forged (fetch forbids setting it). */
 function raw(path: string, method: string, host: string, body?: string): Promise<number> {
+  return rawWithBody(path, method, host, body).then((r) => r.status);
+}
+
+function rawWithBody(path: string, method: string, host: string, body?: string): Promise<{ status: number; body: string }> {
   return new Promise((resolve, reject) => {
     const req = request({ host: "127.0.0.1", port, path, method, headers: { Host: host, "Content-Type": "application/json", Accept: "application/json, text/event-stream" } }, (res) => {
-      res.resume();
-      resolve(res.statusCode ?? 0);
+      const chunks: Buffer[] = [];
+      res.on("data", (c: Buffer) => chunks.push(c));
+      res.on("end", () => resolve({ status: res.statusCode ?? 0, body: Buffer.concat(chunks).toString("utf8") }));
     });
     req.on("error", reject);
     req.end(body);
@@ -59,5 +65,29 @@ describe("HTTP transport", () => {
     expect(await raw("/mcp", "GET", "localhost")).toBe(405);
     expect(await raw("/other", "GET", "localhost")).toBe(404);
     expect(await raw("/mcp", "POST", "localhost", "{not json")).toBe(400);
+  });
+
+  it("answers an oversized body with 413 instead of resetting the connection (#87)", async () => {
+    const res = await rawWithBody("/mcp", "POST", "localhost", "x".repeat(2 * 1024 * 1024));
+    expect(res.status).toBe(413);
+    expect(JSON.parse(res.body).error.code).toBe(-32600);
+  });
+
+  it("returns a JSON-RPC 500 when the transport throws (#87)", async () => {
+    const spy = vi
+      .spyOn(StreamableHTTPServerTransport.prototype, "handleRequest")
+      .mockRejectedValueOnce(new Error("boom"));
+    try {
+      const res = await rawWithBody(
+        "/mcp",
+        "POST",
+        "localhost",
+        JSON.stringify({ jsonrpc: "2.0", id: 1, method: "tools/list" }),
+      );
+      expect(res.status).toBe(500);
+      expect(JSON.parse(res.body)).toMatchObject({ jsonrpc: "2.0", error: { code: -32603 } });
+    } finally {
+      spy.mockRestore();
+    }
   });
 });

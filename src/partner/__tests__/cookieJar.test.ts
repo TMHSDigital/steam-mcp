@@ -132,4 +132,17 @@ describe("steam_uploadStoreImage live auth detection", () => {
     expect(JSON.parse(failed.content[0].text).ok).toBe(false);
     expect(failed.content[0].text).not.toContain("SECRETLOGINVALUE");
   });
+
+  it("redacts cookie values from a network error (#87)", async () => {
+    vi.stubGlobal(
+      "fetch",
+      // The jar's value echoed back in the error must not survive.
+      vi.fn().mockRejectedValue(new Error("socket hang up while sending SECRETLOGINVALUE")),
+    );
+
+    const result = await setup()({ dry_run: false, confirm: true });
+    expect(result.isError).toBe(true);
+    expect(result.content[0].text).toContain("socket hang up");
+    expect(result.content[0].text).not.toContain("SECRETLOGINVALUE");
+  });
 });

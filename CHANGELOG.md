@@ -50,6 +50,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `steam_getAppDetails` and `steam_compareApps` no longer fail when store HTML contains a numeric entity above U+10FFFF (such as `&#x110000;`). `stripHtml` leaves out-of-range entities as they are instead of throwing a `RangeError`. (#81)
 - `steam_getSalesSummary` rejects impossible dates such as `2024-02-30` or `2024-13-01` with "not a valid date". It used to roll `2024-02-30` over to March 1 and sum that day, or report a misleading "end_date is before start_date". (#82)
 - `STEAM_API_KEY` is trimmed in every tool, as `STEAM_FINANCIAL_API_KEY` already was, so a key pasted with a trailing space or newline no longer gets a 403 from most tools while the sales tools accept it. `steam_getGlobalStatsForGame` reads the key through the shared helper, and `steam_getLeaderboardEntries` gives the publisher-key and IP-allowlist guidance on 401/403 like the other partner tools. (#86)
+- HTTP transport: a request body over 1 MiB now gets a `413` JSON-RPC error. The server used to destroy the request mid-upload, so the client saw a connection reset. Tests now cover this, the 500 path, the `getGlobalStatsForGame` schema fallback, the `steam://app/{appid}/summary` resource, and cookie redaction on a failed Partner upload. (#87)
 
 ### Changed
 

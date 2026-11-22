@@ -19,6 +19,8 @@ export interface HttpOptions {
 
 const MAX_BODY_BYTES = 1024 * 1024;
 
+class BodyTooLargeError extends Error {}
+
 function readJson(req: IncomingMessage): Promise<unknown> {
   return new Promise((resolve, reject) => {
     let size = 0;
@@ -26,8 +28,11 @@ function readJson(req: IncomingMessage): Promise<unknown> {
     req.on("data", (chunk: Buffer) => {
       size += chunk.length;
       if (size > MAX_BODY_BYTES) {
-        reject(new Error("Request body too large"));
-        req.destroy();
+        // Stop buffering and discard the rest, so the 413 reaches the client.
+        // Destroying the request here reset the connection instead.
+        req.removeAllListeners("data");
+        req.resume();
+        reject(new BodyTooLargeError());
         return;
       }
       chunks.push(chunk);
@@ -78,7 +83,19 @@ export function startHttpServer(options: HttpOptions): Promise<Server> {
     let body: unknown;
     try {
       body = await readJson(req);
-    } catch {
+    } catch (error) {
+      if (error instanceof BodyTooLargeError) {
+        // Close the connection after replying; a client that keeps
+        // streaming is cut off after a few seconds.
+        res.setHeader("Connection", "close");
+        res.on("finish", () => setTimeout(() => req.destroy(), 5_000).unref());
+        json(413, {
+          jsonrpc: "2.0",
+          error: { code: -32600, message: `Request body over ${MAX_BODY_BYTES} bytes` },
+          id: null,
+        });
+        return;
+      }
       json(400, { jsonrpc: "2.0", error: { code: -32700, message: "Parse error" }, id: null });
       return;
     }

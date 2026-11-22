@@ -1,9 +1,9 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi, afterEach } from "vitest";
 import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { registerPrompts } from "../../prompts.js";
 import { registerResources } from "../../resources.js";
-import { registeredTools } from "./harness.js";
+import { registeredTools, jsonFetch } from "./harness.js";
 
 type PromptCb = (args: Record<string, string>) => { messages: Array<{ content: { text: string } }> };
 type ResourceCb = (uri: URL, vars?: Record<string, string>) => Promise<{ contents: Array<{ text: string }> }> | { contents: Array<{ text: string }> };
@@ -77,5 +77,47 @@ describe("resources", () => {
     const uri = new URL("steam://enums/ugc-query-type");
     const types = JSON.parse((await resources.get(uri.href)!(uri)).contents[0].text);
     expect(types.trend).toBe(3);
+  });
+
+  it("eresult and review-filters return JSON reference data", async () => {
+    for (const href of ["steam://enums/eresult", "steam://enums/review-filters"]) {
+      const uri = new URL(href);
+      const data = JSON.parse((await resources.get(href)!(uri)).contents[0].text);
+      expect(Object.keys(data).length).toBeGreaterThan(0);
+    }
+  });
+
+  describe("steam://app/{appid}/summary (#87)", () => {
+    const summary = resources.get("steam://app/{appid}/summary")!;
+
+    afterEach(() => {
+      vi.unstubAllGlobals();
+    });
+
+    it("returns the compact summary for a stubbed app", async () => {
+      const fetchMock = vi.fn(
+        jsonFetch({ "620": { success: true, data: { type: "game", name: "Portal 2", steam_appid: 620, is_free: false } } }),
+      );
+      vi.stubGlobal("fetch", fetchMock);
+
+      const uri = new URL("steam://app/620/summary");
+      const data = JSON.parse((await summary(uri, { appid: "620" })).contents[0].text);
+      expect(data).toMatchObject({ name: "Portal 2", steam_appid: 620 });
+      expect(new URL(fetchMock.mock.calls[0][0] as string).searchParams.get("appids")).toBe("620");
+    });
+
+    it("rejects a non-numeric appid without calling Steam", async () => {
+      const fetchMock = vi.fn();
+      vi.stubGlobal("fetch", fetchMock);
+      await expect(summary(new URL("steam://app/abc/summary"), { appid: "abc" })).rejects.toThrow(/Invalid appid/);
+      expect(fetchMock).not.toHaveBeenCalled();
+    });
+
+    it("reports an app the store does not have", async () => {
+      vi.stubGlobal("fetch", vi.fn(jsonFetch({ "999999": { success: false } })));
+      await expect(summary(new URL("steam://app/999999/summary"), { appid: "999999" })).rejects.toThrow(
+        /not available in the Steam store/,
+      );
+    });
   });
 });
