@@ -256,7 +256,7 @@ These require `STEAM_API_KEY` to be set:
 | `steam_getPlayerSummary` | Player profile: name, avatar, online status |
 | `steam_getOwnedGames` | Game library size and total playtime, plus the top 50 games by playtime (`sort`, `limit`, `appids`) |
 | `steam_queryWorkshop` | Search/browse Workshop items with filters. Titles and short descriptions are untrusted user-authored text. |
-| `steam_getLeaderboardEntries` | Leaderboard scores and rankings (pass numeric ID from Steamworks dashboard) |
+| `steam_getLeaderboardEntries` | Leaderboard scores and rankings, by numeric `leaderboardid` or `leaderboard_name` |
 | `steam_resolveVanityURL` | Convert vanity URL to 64-bit Steam ID |
 | `steam_getSchemaForGame` | Achievement/stat schema with display names and descriptions; up to 100 achievements, icons on request (`limit`, `include_icons`, `include_stats`) |
 | `steam_getPlayerAchievements` | Per-player achievement unlock status and timestamps |
@@ -282,7 +282,7 @@ The five HTTP write tools are in the `mutations` toolset, which is off unless `S
 | `steam_updateWorkshopItem` | HTTP POST | Update Workshop item metadata via IPublishedFileService. Default dry_run=true; confirm=true to send. Does not change the store page listing. |
 | `steam_setAchievement` | HTTP POST | Set/unlock achievements via ISteamUserStats (dev/test). Default dry_run=true; confirm=true to send. |
 | `steam_clearAchievement` | HTTP POST | Clear/re-lock achievements via ISteamUserStats (dev/test). Default dry_run=true; confirm=true to send. |
-| `steam_uploadLeaderboardScore` | HTTP POST | Upload scores via ISteamLeaderboards. Default dry_run=true; confirm=true to send. |
+| `steam_uploadLeaderboardScore` | HTTP POST | Upload scores via ISteamLeaderboards. Default dry_run=true; confirm=true to send. A dry run accepts `leaderboard_name` and shows the resolved ID; the live call takes the numeric `leaderboardid`. |
 | `steam_grantInventoryItem` | HTTP POST | Grant inventory items via IInventoryService. Default dry_run=true; confirm=true to send. |
 | `steam_createLobby` | SDK guide | Returns C++/C#/GDScript code for ISteamMatchmaking lobby creation. No network call. |
 | `steam_uploadWorkshopItem` | SDK guide | Returns code for ISteamUGC Workshop upload workflow. No network call. |

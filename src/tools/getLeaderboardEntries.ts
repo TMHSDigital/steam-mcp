@@ -7,6 +7,11 @@ import {
   errorResponse,
 } from "../utils/steam-api.js";
 import { READ_ONLY } from "../utils/annotations.js";
+import {
+  leaderboardNameSchema,
+  leaderboardSelectorError,
+  resolveLeaderboardName,
+} from "../utils/leaderboards.js";
 
 const inputSchema = {
   appid: z
@@ -18,7 +23,9 @@ const inputSchema = {
     .number()
     .int()
     .positive()
-    .describe("Numeric leaderboard ID from your Steamworks dashboard (Settings > Leaderboards). This is NOT the leaderboard name - use the numeric ID."),
+    .optional()
+    .describe("Numeric leaderboard ID (Steamworks dashboard > Leaderboards, or steam_getLeaderboardsForGame). Pass this or leaderboard_name."),
+  leaderboard_name: leaderboardNameSchema,
   rangestart: z
     .number()
     .int()
@@ -53,19 +60,24 @@ export function register(server: McpServer): void {
     {
       title: "Get Leaderboard Entries",
       description:
-        "Get leaderboard scores and rankings for a Steam app. Pass the numeric leaderboard ID from your Steamworks dashboard, not the name. Uses the partner API (partner.steam-api.com) which requires a publisher API key with server IP allowlisted in Steamworks. Supports global, around-user, and friends-only views.",
+        "Get leaderboard scores and rankings for a Steam app. Pass the numeric leaderboardid or the leaderboard_name (resolved through GetLeaderboardsForGame; the output then includes resolved_from). Uses the partner API (partner.steam-api.com) which requires a publisher API key with server IP allowlisted in Steamworks. Supports global, around-user, and friends-only views.",
       inputSchema,
       annotations: READ_ONLY,
     },
     async ({
       appid,
       leaderboardid,
+      leaderboard_name,
       rangestart,
       rangeend,
       datarequest,
       steamid,
     }) => {
       try {
+        const selectorError = leaderboardSelectorError(leaderboardid, leaderboard_name);
+        if (selectorError) {
+          return errorResponse(new Error(selectorError));
+        }
         if ((datarequest === 1 || datarequest === 2) && !steamid) {
           return errorResponse(
             new Error(
@@ -75,12 +87,16 @@ export function register(server: McpServer): void {
         }
 
         const key = requireApiKey();
+        const resolved =
+          leaderboard_name !== undefined
+            ? await resolveLeaderboardName(appid, leaderboard_name, key)
+            : { leaderboardid: leaderboardid as number, resolved_from: undefined };
         const url = steamPartnerUrl(
           "/ISteamLeaderboards/GetLeaderboardEntries/v1/",
           {
             key,
             appid,
-            leaderboardid,
+            leaderboardid: resolved.leaderboardid,
             rangestart: rangestart ?? 0,
             rangeend: rangeend ?? 100,
             datarequest: datarequest ?? 0,
@@ -102,7 +118,7 @@ export function register(server: McpServer): void {
         if (!info) {
           return errorResponse(
             new Error(
-              `No leaderboard data found for app ${appid}, leaderboard ${leaderboardid}. The IDs may be invalid or the leaderboard may be empty.`,
+              `No leaderboard data found for app ${appid}, leaderboard ${resolved.leaderboardid}. The IDs may be invalid or the leaderboard may be empty.`,
             ),
           );
         }
@@ -111,7 +127,11 @@ export function register(server: McpServer): void {
           content: [
             {
               type: "text",
-              text: JSON.stringify(info, null, 2),
+              text: JSON.stringify(
+                resolved.resolved_from ? { resolved_from: resolved.resolved_from, ...info } : info,
+                null,
+                2,
+              ),
             },
           ],
         };
