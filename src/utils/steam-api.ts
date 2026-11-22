@@ -16,7 +16,9 @@ const STEAM_STORE_BASE = "https://store.steampowered.com";
 const STEAM_PARTNER_BASE = "https://partner.steam-api.com";
 
 export function requireApiKey(): string {
-  const key = process.env.STEAM_API_KEY;
+  // Trim like financialKey(), so a key pasted with a trailing space or
+  // newline behaves the same in every tool.
+  const key = process.env.STEAM_API_KEY?.trim();
   if (!key) {
     throw new MissingApiKeyError();
   }

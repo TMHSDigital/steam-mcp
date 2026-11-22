@@ -5,6 +5,7 @@ import {
   steamFetch,
   requireApiKey,
   errorResponse,
+  publisherErrorResponse,
 } from "../utils/steam-api.js";
 import { READ_ONLY } from "../utils/annotations.js";
 import {
@@ -136,7 +137,7 @@ export function register(server: McpServer): void {
           ],
         };
       } catch (error) {
-        return errorResponse(error);
+        return publisherErrorResponse(error);
       }
     },
   );

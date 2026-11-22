@@ -148,3 +148,24 @@ describe("leaderboard_name (#80)", () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 });
+
+describe("steam_getLeaderboardEntries errors (#86)", () => {
+  it("gives the publisher-key guidance on 403", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response("", { status: 403 })));
+
+    const result = await captureHandler(registerEntries)({ appid: 480, leaderboardid: 1 });
+    expect(result.isError).toBe(true);
+    expect(result.content[0].text).toContain("Publisher API key");
+  });
+
+  it("sends a trimmed STEAM_API_KEY", async () => {
+    process.env.STEAM_API_KEY = "abc ";
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ leaderboardEntryInformation: { leaderboardID: 1 } })),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    await captureHandler(registerEntries)({ appid: 480, leaderboardid: 1 });
+    expect(new URL(fetchMock.mock.calls[0][0] as string).searchParams.get("key")).toBe("abc");
+  });
+});

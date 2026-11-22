@@ -5,7 +5,9 @@ import {
   steamFetch,
   indexedParams,
   errorResponse,
+  requireApiKey,
 } from "../utils/steam-api.js";
+import { MissingApiKeyError } from "../utils/errors.js";
 import { READ_ONLY } from "../utils/annotations.js";
 
 const inputSchema = {
@@ -30,8 +32,11 @@ const inputSchema = {
 type GlobalStats = Record<string, { total?: number | string | null; history?: Array<{ date: number; total: number | string }> }>;
 
 async function schemaStatNames(appid: number): Promise<string[]> {
-  const key = process.env.STEAM_API_KEY;
-  if (!key) {
+  let key: string;
+  try {
+    key = requireApiKey();
+  } catch (error) {
+    if (!(error instanceof MissingApiKeyError)) throw error;
     throw new Error(
       "Pass stat_names. Without STEAM_API_KEY the server cannot look up the app's stat names (steam_getSchemaForGame needs a key).",
     );

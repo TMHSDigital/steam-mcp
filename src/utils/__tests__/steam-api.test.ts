@@ -68,6 +68,16 @@ describe("requireApiKey", () => {
     delete process.env.STEAM_API_KEY;
     expect(() => requireApiKey()).toThrow(MissingApiKeyError);
   });
+
+  it("trims surrounding whitespace, like the financial key (#86)", () => {
+    process.env.STEAM_API_KEY = " abc \n";
+    expect(requireApiKey()).toBe("abc");
+  });
+
+  it("treats a whitespace-only key as missing", () => {
+    process.env.STEAM_API_KEY = "   ";
+    expect(() => requireApiKey()).toThrow(MissingApiKeyError);
+  });
 });
 
 describe("errorResponse", () => {
