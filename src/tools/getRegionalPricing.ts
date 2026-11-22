@@ -82,9 +82,7 @@ export function register(server: McpServer): void {
             {
               type: "text" as const,
               text: JSON.stringify(
-                { appid, regions: results },
-                null,
-                2,
+                { appid, regions: results }
               ),
             },
           ],

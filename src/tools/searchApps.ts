@@ -49,7 +49,7 @@ export function register(server: McpServer): void {
 
         return {
           content: [
-            { type: "text", text: JSON.stringify(data.items, null, 2) },
+            { type: "text", text: JSON.stringify(data.items) },
           ],
         };
       } catch (error) {

@@ -56,9 +56,7 @@ export function register(server: McpServer): void {
             {
               type: "text" as const,
               text: JSON.stringify(
-                { region: cc ?? "default", prices: results },
-                null,
-                2,
+                { region: cc ?? "default", prices: results }
               ),
             },
           ],

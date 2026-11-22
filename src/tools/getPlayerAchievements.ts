@@ -62,7 +62,7 @@ export function register(server: McpServer): void {
           content: [
             {
               type: "text",
-              text: JSON.stringify({ ...data.playerstats, ...(resolvedFrom ? { resolved_from: resolvedFrom } : {}) }, null, 2),
+              text: JSON.stringify({ ...data.playerstats, ...(resolvedFrom ? { resolved_from: resolvedFrom } : {}) }),
             },
           ],
         };

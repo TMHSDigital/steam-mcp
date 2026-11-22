@@ -65,9 +65,7 @@ export function register(server: McpServer): void {
                 {
                   vanityurl,
                   steamid: data.response.steamid,
-                },
-                null,
-                2,
+                }
               ),
             },
           ],

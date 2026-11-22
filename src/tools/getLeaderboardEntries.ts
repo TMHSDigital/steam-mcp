@@ -14,6 +14,9 @@ import {
   resolveLeaderboardName,
 } from "../utils/leaderboards.js";
 
+/** Keeps one call from returning thousands of entries into the agent's context. */
+const MAX_ENTRIES_PER_CALL = 500;
+
 const inputSchema = {
   appid: z
     .number()
@@ -38,7 +41,7 @@ const inputSchema = {
     .int()
     .min(0)
     .optional()
-    .describe("End index for entries (default: 100)"),
+    .describe(`End index for entries, inclusive (default: 100). At most ${MAX_ENTRIES_PER_CALL} entries per call; page with rangestart/rangeend.`),
   datarequest: z
     .number()
     .int()
@@ -79,6 +82,18 @@ export function register(server: McpServer): void {
         if (selectorError) {
           return errorResponse(new Error(selectorError));
         }
+        const start = rangestart ?? 0;
+        const end = rangeend ?? 100;
+        if (end < start) {
+          return errorResponse(new Error("rangeend must be greater than or equal to rangestart."));
+        }
+        if (end - start + 1 > MAX_ENTRIES_PER_CALL) {
+          return errorResponse(
+            new Error(
+              `At most ${MAX_ENTRIES_PER_CALL} entries per call (asked for ${end - start + 1}). Page through the board: rangestart ${start}, rangeend ${start + MAX_ENTRIES_PER_CALL - 1}, then continue from ${start + MAX_ENTRIES_PER_CALL}.`,
+            ),
+          );
+        }
         if ((datarequest === 1 || datarequest === 2) && !steamid) {
           return errorResponse(
             new Error(
@@ -98,8 +113,8 @@ export function register(server: McpServer): void {
             key,
             appid,
             leaderboardid: resolved.leaderboardid,
-            rangestart: rangestart ?? 0,
-            rangeend: rangeend ?? 100,
+            rangestart: start,
+            rangeend: end,
             datarequest: datarequest ?? 0,
             steamid,
           },
@@ -129,9 +144,7 @@ export function register(server: McpServer): void {
             {
               type: "text",
               text: JSON.stringify(
-                resolved.resolved_from ? { resolved_from: resolved.resolved_from, ...info } : info,
-                null,
-                2,
+                resolved.resolved_from ? { resolved_from: resolved.resolved_from, ...info } : info
               ),
             },
           ],

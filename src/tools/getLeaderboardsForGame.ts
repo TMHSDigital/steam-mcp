@@ -43,9 +43,7 @@ export function register(server: McpServer): void {
             {
               type: "text",
               text: JSON.stringify(
-                { appid, count: leaderboards.length, leaderboards },
-                null,
-                2,
+                { appid, count: leaderboards.length, leaderboards }
               ),
             },
           ],

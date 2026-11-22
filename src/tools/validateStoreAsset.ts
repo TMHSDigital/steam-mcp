@@ -45,7 +45,7 @@ export function register(server: McpServer): void {
         }
         const result = isDirectory ? validateAchievementIconDir(path) : validateStoreAsset(path, slot);
         return {
-          content: [{ type: "text" as const, text: JSON.stringify(result, null, 2) }],
+          content: [{ type: "text" as const, text: JSON.stringify(result) }],
         };
       } catch (error) {
         return errorResponse(error);

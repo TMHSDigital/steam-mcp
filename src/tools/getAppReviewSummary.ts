@@ -56,9 +56,7 @@ export function register(server: McpServer): void {
                   total_positive: totalPositive,
                   total_negative: s.total_negative ?? 0,
                   positive_percentage: pct,
-                },
-                null,
-                2,
+                }
               ),
             },
           ],

@@ -50,9 +50,7 @@ export function register(server: McpServer): void {
             {
               type: "text",
               text: JSON.stringify(
-                { appid, achievements },
-                null,
-                2,
+                { appid, achievements }
               ),
             },
           ],

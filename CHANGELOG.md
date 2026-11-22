@@ -60,6 +60,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `steam_getOwnedGames` returns `game_count`, `total_playtime_minutes`, and the top 50 games by playtime. New `sort` (`playtime`, `recent`, `name`), `limit`, and `appids` inputs.
   - `steam_getSchemaForGame` returns up to 100 achievements without icon URLs, plus `achievement_count`. New `limit`, `include_icons`, and `include_stats` inputs.
   - These three tools emit compact JSON.
+- Every read tool and both SDK guides now return compact JSON instead of 2-space pretty-printed JSON, about 20% less agent context on large results such as reviews and Workshop queries. Dry-run plans and the small write-tool results stay pretty. `steam_getLeaderboardEntries` returns at most 500 entries per call (`rangeend` is inclusive), and the error says which range to request next. (#89)
 - **Requires Node.js 22 or later.** Node 20 reached end of life on 2026-04-30. CI tests Node 22 and 24. (#56)
 - Release pipeline: the publish job uses Node 24's bundled npm instead of an unpinned `npm@latest`, and all release-path actions are pinned by commit SHA. (#56)
 - `@modelcontextprotocol/sdk` now requires `^1.32.0`, the version line CI tests. The old `^1.12.1` floor predates the SDK's zod v4 support, so a host with an older SDK in its tree could resolve one that cannot handle these schemas. The lockfile refresh moves hono to 4.13.20 and @hono/node-server to 2.1.11, so `npm audit` reports 0 vulnerabilities. vitest is now 5.1.1. (#83)

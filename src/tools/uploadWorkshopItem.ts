@@ -200,7 +200,7 @@ export function register(server: McpServer): void {
 
       return {
         content: [
-          { type: "text" as const, text: JSON.stringify(guide, null, 2) },
+          { type: "text" as const, text: JSON.stringify(guide) },
         ],
       };
     },

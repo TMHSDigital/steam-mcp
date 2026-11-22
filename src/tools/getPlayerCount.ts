@@ -52,9 +52,7 @@ export function register(server: McpServer): void {
                 {
                   appid,
                   player_count: data.response.player_count,
-                },
-                null,
-                2,
+                }
               ),
             },
           ],

@@ -42,13 +42,13 @@ const CASES: Record<string, Case> = {
   steam_searchApps: {
     args: { query: "portal" },
     fixture: { total: 1, items: [{ type: "app", name: "Portal 2", id: 620 }] },
-    expect: ['"name": "Portal 2"'],
+    expect: ['"name":"Portal 2"'],
     host: "store.steampowered.com",
   },
   steam_getPlayerCount: {
     args: { appid: 440 },
     fixture: { response: { player_count: 82269, result: 1 } },
-    expect: ['"player_count": 82269'],
+    expect: ['"player_count":82269'],
     host: "api.steampowered.com",
   },
   steam_getAchievementStats: {
@@ -61,7 +61,7 @@ const CASES: Record<string, Case> = {
   steam_getPlayerSummary: {
     args: { steamid: STEAMID },
     fixture: { response: { players: [{ steamid: STEAMID, personaname: "Rabscuttle" }] } },
-    expect: ['"personaname": "Rabscuttle"'],
+    expect: ['"personaname":"Rabscuttle"'],
     needsKey: true,
     errorFixture: { response: { players: [] } },
   },
@@ -75,20 +75,20 @@ const CASES: Record<string, Case> = {
   steam_getWorkshopItem: {
     args: { publishedfileid: "814498849" },
     fixture: { response: { publishedfiledetails: [{ result: 1, publishedfileid: "814498849", title: "A map", description: "desc" }] } },
-    expect: ['"title": "A map"', "_warning"],
+    expect: ['"title":"A map"', "_warning"],
     errorFixture: { response: { publishedfiledetails: [{ result: 9 }] } },
   },
   steam_queryWorkshop: {
     args: { appid: 4000 },
     fixture: { response: { total: 1, publishedfiledetails: [{ publishedfileid: "1", title: "Item" }] } },
-    expect: ['"total": 1', "_warning"],
+    expect: ['"total":1', "_warning"],
     needsKey: true,
     errorFixture: {},
   },
   steam_getLeaderboardEntries: {
     args: { appid: 480, leaderboardid: 1 },
     fixture: { leaderboardEntryInformation: { appID: 480, leaderboardID: 1, totalLeaderBoardEntryCount: 1, leaderboardEntries: [] } },
-    expect: ['"totalLeaderBoardEntryCount": 1'],
+    expect: ['"totalLeaderBoardEntryCount":1'],
     host: "partner.steam-api.com",
     needsKey: true,
     errorFixture: {},
@@ -96,7 +96,7 @@ const CASES: Record<string, Case> = {
   steam_resolveVanityURL: {
     args: { vanityurl: "gabelogannewell" },
     fixture: { response: { success: 1, steamid: "76561197960287930" } },
-    expect: ['"steamid": "76561197960287930"'],
+    expect: ['"steamid":"76561197960287930"'],
     needsKey: true,
     errorFixture: { response: { success: 42, message: "No match" } },
   },
@@ -138,26 +138,26 @@ const CASES: Record<string, Case> = {
   steam_getReviews: {
     args: { appid: 440 },
     fixture: { response: { query_summary: { num_reviews: 1 }, reviews: [{ review: "fun" }], cursor: "abc" } },
-    expect: ['"cursor": "abc"', "_warning"],
+    expect: ['"cursor":"abc"', "_warning"],
     host: "api.steampowered.com",
     errorFixture: { response: {} },
   },
   steam_getAppReviewSummary: {
     args: { appid: 440 },
     fixture: { response: { query_summary: { num_reviews: 1, review_score: 8, review_score_desc: "Very Positive", total_positive: 9, total_negative: 1, total_reviews: 10 } } },
-    expect: ['"positive_percentage": 90'],
+    expect: ['"positive_percentage":90'],
     errorFixture: { response: {} },
   },
   steam_getPriceOverview: {
     args: { appids: [570940] },
     fixture: { "570940": { success: true, data: { price_overview: { currency: "USD", final: 1999, final_formatted: "$19.99" } } } },
-    expect: ['"final_formatted": "$19.99"'],
+    expect: ['"final_formatted":"$19.99"'],
     host: "store.steampowered.com",
   },
   steam_getRegionalPricing: {
     args: { appid: 570940, countries: ["US"] },
     fixture: { "570940": { success: true, data: { price_overview: { currency: "USD", final: 1999, final_formatted: "$19.99" } } } },
-    expect: ['"final_formatted": "$19.99"'],
+    expect: ['"final_formatted":"$19.99"'],
     host: "store.steampowered.com",
   },
   steam_getSchemaForGame: {
@@ -170,26 +170,26 @@ const CASES: Record<string, Case> = {
   steam_getNewsForApp: {
     args: { appid: 440 },
     fixture: { appnews: { appid: 440, newsitems: [{ gid: "1", title: "Update" }], count: 1 } },
-    expect: ['"title": "Update"', "_warning"],
+    expect: ['"title":"Update"', "_warning"],
     host: "api.steampowered.com",
   },
   steam_getLeaderboardsForGame: {
     args: { appid: 480 },
     fixture: { response: { leaderboards: [{ id: 1, name: "Feet Traveled" }] } },
-    expect: ['"name": "Feet Traveled"'],
+    expect: ['"name":"Feet Traveled"'],
     host: "partner.steam-api.com",
     needsKey: true,
   },
   steam_getPlayerAchievements: {
     args: { steamid: STEAMID, appid: 440 },
     fixture: { playerstats: { steamID: STEAMID, gameName: "Team Fortress 2", success: true, achievements: [] } },
-    expect: ['"gameName": "Team Fortress 2"'],
+    expect: ['"gameName":"Team Fortress 2"'],
     needsKey: true,
     errorFixture: { playerstats: { success: false } },
   },
   steam_validateStoreAsset: {
     args: { path: pngPath, slot: "mainCapsule" },
-    expect: ['"ok": false', "PARSE"],
+    expect: ['"ok":false', "PARSE"],
     noFetch: true,
   },
   steam_getGlobalStatsForGame: {
@@ -319,6 +319,14 @@ describe.each(Object.entries(CASES))("%s handler", (name, c) => {
     const text = result.content.map((p) => p.text).join("\n");
     for (const needle of c.expect) {
       expect(text).toContain(needle);
+    }
+    // Results go into the agent's context: anything but a small dry-run
+    // plan or write result must be compact JSON (#89).
+    const isWritePlan = c.expect.includes('"dry_run": true') || tool.annotations?.readOnlyHint === false;
+    if (!isWritePlan) {
+      for (const part of result.content) {
+        expect(part.text).not.toMatch(/\{\n\s+"/);
+      }
     }
     if (c.noFetch) {
       expect(fetchMock).not.toHaveBeenCalled();

@@ -169,3 +169,33 @@ describe("steam_getLeaderboardEntries errors (#86)", () => {
     expect(new URL(fetchMock.mock.calls[0][0] as string).searchParams.get("key")).toBe("abc");
   });
 });
+
+describe("steam_getLeaderboardEntries range cap (#89)", () => {
+  it("refuses more than 500 entries per call and says how to page", async () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+
+    const result = await captureHandler(registerEntries)({ appid: 480, leaderboardid: 1, rangestart: 0, rangeend: 5000 });
+    expect(result.isError).toBe(true);
+    expect(result.content[0].text).toContain("At most 500 entries");
+    expect(result.content[0].text).toContain("rangeend 499");
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("allows exactly 500 entries", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ leaderboardEntryInformation: { leaderboardID: 1 } })),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    const result = await captureHandler(registerEntries)({ appid: 480, leaderboardid: 1, rangestart: 100, rangeend: 599 });
+    expect(result.isError).toBeUndefined();
+    expect(new URL(fetchMock.mock.calls[0][0] as string).searchParams.get("rangeend")).toBe("599");
+  });
+
+  it("rejects rangeend below rangestart", async () => {
+    vi.stubGlobal("fetch", vi.fn());
+    const result = await captureHandler(registerEntries)({ appid: 480, leaderboardid: 1, rangestart: 10, rangeend: 5 });
+    expect(result.isError).toBe(true);
+  });
+});

@@ -49,7 +49,7 @@ export function register(server: McpServer): void {
 
         return {
           content: [
-            { type: "text", text: JSON.stringify({ ...players[0], ...(resolvedFrom ? { resolved_from: resolvedFrom } : {}) }, null, 2) },
+            { type: "text", text: JSON.stringify({ ...players[0], ...(resolvedFrom ? { resolved_from: resolvedFrom } : {}) }) },
           ],
         };
       } catch (error) {
