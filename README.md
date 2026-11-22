@@ -35,6 +35,8 @@ Query Steam store data, player statistics, achievements, reviews, pricing, works
 
 Requires Node.js 22 or later. No clone or build needed: add this to your MCP client's config and restart it.
 
+> **Docs track `main`.** This README describes the code on `main`, which can be ahead of the version on npm (the npm badge above shows the latest release). Features listed under `[Unreleased]` in the [CHANGELOG](CHANGELOG.md) are not in the npm package yet, including some tools, `--transport http`, and toolsets that keep write tools off by default. To use them before the next release, run from a local clone (see "Run from a local clone instead" under Client setup).
+
 ```json
 {
   "mcpServers": {
