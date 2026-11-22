@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { registeredTools } from "./harness.js";
+import { registeredTools, schemaOf } from "./harness.js";
 
 const tools = registeredTools();
 const sales = tools.get("steam_getSalesSummary")!.handler;
@@ -80,5 +80,24 @@ describe("steam_getSalesSummary", () => {
     const result = await sales({ start_date: "2026-10-01" });
     expect(result.isError).toBe(true);
     expect(result.content[0].text).toContain("STEAM_API_KEY");
+  });
+});
+
+describe("steam_getSalesSummary date validation (#82)", () => {
+  const schema = schemaOf(tools.get("steam_getSalesSummary")!);
+
+  it.each(["2024-02-30", "2024-13-01", "2023-02-29", "2024-04-31", "2024-00-10"])(
+    "rejects the impossible date %s",
+    (d) => {
+      for (const args of [{ start_date: d }, { start_date: "2024-01-01", end_date: d }]) {
+        const parsed = schema.safeParse(args);
+        expect(parsed.success).toBe(false);
+        expect(parsed.error?.issues[0].message).toBe("not a valid date");
+      }
+    },
+  );
+
+  it.each(["2024-02-29", "2026-12-31", "2026-01-01"])("accepts the real date %s", (d) => {
+    expect(schema.safeParse({ start_date: d }).success).toBe(true);
   });
 });

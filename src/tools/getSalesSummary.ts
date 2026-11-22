@@ -19,9 +19,16 @@ export function financialKey(): string {
 const MAX_DAYS = 31;
 const MAX_PAGES_PER_DATE = 50;
 
+function isRealDate(d: string): boolean {
+  const parsed = new Date(`${d}T00:00:00Z`);
+  return !Number.isNaN(parsed.getTime()) && parsed.toISOString().slice(0, 10) === d;
+}
+
 const date = z
   .string()
   .regex(/^\d{4}-\d{2}-\d{2}$/, "Use YYYY-MM-DD")
+  // The regex allows 2024-02-30, which Date silently rolls over to 03-01.
+  .refine(isRealDate, "not a valid date")
   .describe("Date in YYYY-MM-DD, Pacific Time (Steam's financial day)");
 
 const inputSchema = {

@@ -48,6 +48,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `steam_validateStoreAsset` accepts a correctly sized `libraryHero` PNG that is palette-indexed, grayscale, 16-bit, or interlaced (for example after pngquant). Such files used to fail with a `PARSE` error. Only the hero heuristics need decoded pixels, so they are skipped with a `HERO_HEURISTICS_SKIPPED` warning. (#78)
 - `steam_validateStoreAssetDir` recognizes screenshots named after a scene, such as `screenshot_main_menu.png` or `ss_hero_fight.png`. The slot word in the name used to win, so these were checked as `mainCapsule` or `libraryHero` and failed. A name starting with `ss` now counts as a screenshot only when a digit or separator follows. (#77)
 - `steam_getAppDetails` and `steam_compareApps` no longer fail when store HTML contains a numeric entity above U+10FFFF (such as `&#x110000;`). `stripHtml` leaves out-of-range entities as they are instead of throwing a `RangeError`. (#81)
+- `steam_getSalesSummary` rejects impossible dates such as `2024-02-30` or `2024-13-01` with "not a valid date". It used to roll `2024-02-30` over to March 1 and sum that day, or report a misleading "end_date is before start_date". (#82)
 
 ### Changed
 
