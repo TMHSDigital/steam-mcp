@@ -22,6 +22,8 @@ function randomRequestId(): string {
   return (randomBytes(8).readBigUInt64BE() >> 1n || 1n).toString();
 }
 
+const UINT64_MAX = 18446744073709551615n;
+
 const inputSchema = {
   appid: z
     .number()
@@ -59,9 +61,11 @@ const inputSchema = {
   requestid: z
     .string()
     .regex(/^\d{1,20}$/, "Must be a numeric uint64 request ID")
+    // Guarded: zod can run this even after the regex fails, and BigInt throws on non-digits.
+    .refine((v) => !/^\d+$/.test(v) || BigInt(v) <= UINT64_MAX, "Must be at most 18446744073709551615 (uint64)")
     .optional()
     .describe(
-      "Idempotency key. Steam executes a given requestid at most once. A dry run generates one; pass that same value to the live call so a retry cannot double-grant.",
+      "Idempotency key. Steam executes a given requestid at most once. A dry run generates one; the live call (dry_run: false) requires it, so pass the dry run's value and a retry cannot double-grant.",
     ),
   ...confirmSchema,
 };
@@ -81,6 +85,16 @@ export function register(server: McpServer): void {
         const dryRun = dry_run !== false;
         const blocked = refuseIfUnconfirmed(dryRun, confirm);
         if (blocked) return refusal(blocked);
+
+        // A live call that generated its own requestid would make a retried
+        // call a second, separate grant. Require the dry run's value.
+        if (!dryRun && requestid === undefined) {
+          return errorResponse(
+            new Error(
+              "requestid is required when dry_run is false. Pass the requestid from the dry run so a retry cannot grant the item twice. No request was sent.",
+            ),
+          );
+        }
 
         // AddItem has no quantity field; each copy is its own itemdefid[n].
         // https://partner.steamgames.com/doc/webapi/IInventoryService#AddItem

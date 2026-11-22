@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import type { z } from "zod";
 import { register as registerGrantInventoryItem } from "../grantInventoryItem.js";
 import { register as registerSetAchievement } from "../setAchievement.js";
 import { register as registerClearAchievement } from "../clearAchievement.js";
@@ -46,7 +47,7 @@ const tools = [
   {
     name: "steam_grantInventoryItem",
     register: registerGrantInventoryItem,
-    args: { appid: 480, steamid: STEAMID, itemdefid: 100 },
+    args: { appid: 480, steamid: STEAMID, itemdefid: 100, requestid: "42" },
     liveBody: { response: { item_json: "[]" } },
   },
   {
@@ -238,6 +239,36 @@ describe("steam_grantInventoryItem AddItem body", () => {
       "itemdefid[1]": "100",
       "itemdefid[2]": "100",
     });
+  });
+
+  it("refuses a live call without the dry run's requestid, before any network I/O (#92)", async () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+
+    const result = await captureHandler(registerGrantInventoryItem)({
+      appid: 480,
+      steamid: STEAMID,
+      itemdefid: 100,
+      dry_run: false,
+      confirm: true,
+    });
+    expect(result.isError).toBe(true);
+    expect(result.content[0].text).toContain("requestid is required");
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("rejects a requestid above the uint64 maximum (#92)", async () => {
+    let shape: Record<string, z.ZodType> = {};
+    registerGrantInventoryItem({
+      registerTool: (_n: string, config: { inputSchema: Record<string, z.ZodType> }) => {
+        shape = config.inputSchema;
+      },
+    } as unknown as McpServer);
+    const requestid = shape.requestid;
+    expect(requestid.safeParse("18446744073709551615").success).toBe(true);
+    expect(requestid.safeParse("18446744073709551616").success).toBe(false);
+    expect(requestid.safeParse("99999999999999999999").success).toBe(false);
+    expect(requestid.safeParse("12ab").success).toBe(false);
   });
 
   it("generates a requestid in the dry-run plan", async () => {
