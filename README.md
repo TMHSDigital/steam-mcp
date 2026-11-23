@@ -373,6 +373,8 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for how to add new tools and submit PRs.
 
 Partner-admin tools (`steam_partnerLogin`, `steam_uploadStoreImage`, `steam_uploadTrailer`) are not registered by this package's default bin and are not in the npm tarball. They live in `src/partner/` for local use only (`STEAM_PARTNER_ADMIN=1` plus a cookie-jar path or Chromium profile dir outside the repo). `steam_uploadTrailer` is plan-only: live trailer upload is not implemented and returns `[NOT_IMPLEMENTED]`. There is no Publish tool.
 
+**Use the Partner-admin tools at your own risk.** Valve publishes no API for store image upload. These tools post to the Steamworks partner site's own form fields with your logged-in session. Valve can change those fields without notice, and automated use of the partner site may not be allowed by the Steamworks terms you agreed to. Read those terms before you use them, check every upload on the partner site, and use the manual upload in Steamworks if you are unsure. `steam_validateStoreAsset` and `steam_validateStoreAssetDir` check your images without any of this.
+
 </details>
 
 ## Related

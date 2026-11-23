@@ -2,6 +2,10 @@
 /**
  * Gated Partner-admin MCP process. Not the default @tmhs/steam-mcp bin.
  * Run locally: STEAM_PARTNER_ADMIN=1 npx tsx src/partner/index.ts
+ *
+ * Use at your own risk. It drives the Steamworks partner site's unofficial
+ * form fields with the user's session; Valve publishes no API for this, and
+ * automated use may fall outside the Steamworks terms. See the README.
  */
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
@@ -28,6 +32,10 @@ if (!cookies && !profile) {
     "Set STEAM_PARTNER_COOKIES (cookie-jar path) or STEAM_PARTNER_PROFILE_DIR (Chromium profile outside the repo).",
   );
 }
+
+console.error(
+  "[steam-mcp-partner] Use at your own risk: these tools post to unofficial Steamworks partner site forms, which Valve can change and its terms may not allow. Check every upload on the partner site.",
+);
 
 const server = new McpServer({
   name: "steam-mcp-partner",
