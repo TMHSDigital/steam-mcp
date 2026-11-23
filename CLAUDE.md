@@ -62,7 +62,7 @@ npm run dev       # tsx watch for development
 npm run site      # regenerate the GitHub Pages HTML in docs/ (commit it)
 ```
 
-The site (https://tmhsdigital.github.io/steam-mcp/) is deployed by `.github/workflows/pages.yml` on pushes to `main` that touch `docs/`. Tool names, counts, and key badges come from the registrations; a tool's key badge is read from its description ("No API key required", "Requires STEAM_API_KEY", "publisher key", "Financial API Group key"), so a new tool must say which key it needs. `site/build.test.ts` fails when `docs/` is stale: run `npm run site` after changing tools, prompts, resources, or site copy.
+The site (https://tmhsdigital.github.io/steam-mcp/) is deployed by `.github/workflows/pages.yml` on pushes to `main` that touch `docs/`. Tool names, counts, and key badges come from the registrations; a tool's key badge is read from its description ("No API key required", "Requires STEAM_API_KEY", "publisher key", "Financial API Group key"), so a new tool must say which key it needs. `site/build.test.ts` fails when `docs/` is stale: run `npm run site` after changing tools, prompts, resources, or site copy. The social image `docs/assets/og.png` is drawn by hand; the same test checks that the six tools it shows still exist with the same key.
 
 ## How to test
 
