@@ -5,37 +5,62 @@
 <h1 align="center">Steam MCP Server</h1>
 
 <p align="center">
-  <em>Live Steam API tools for AI-powered IDEs - companion server to <a href="https://github.com/TMHSDigital/Steam-Cursor-Plugin">Steam Developer Tools</a>.</em>
+  <em>Live Steam data for your coding agent: store pages, player counts, reviews, regional prices, achievements, Workshop, leaderboards, and sales, as MCP tools.</em>
 </p>
 
 <p align="center">
   <a href="https://www.npmjs.com/package/@tmhs/steam-mcp"><img src="https://img.shields.io/npm/v/@tmhs/steam-mcp" alt="npm version"></a>
-  <a href="LICENSE"><img src="https://img.shields.io/npm/l/@tmhs/steam-mcp" alt="license"></a>
-  <a href="https://www.npmjs.com/package/@tmhs/steam-mcp"><img src="https://img.shields.io/npm/dw/@tmhs/steam-mcp" alt="npm downloads"></a>
-  <a href="https://github.com/TMHSDigital/Steam-MCP/stargazers"><img src="https://img.shields.io/github/stars/TMHSDigital/Steam-MCP" alt="GitHub stars"></a>
-  <a href="https://github.com/TMHSDigital/Steam-MCP/commits/main"><img src="https://img.shields.io/github/last-commit/TMHSDigital/Steam-MCP" alt="last commit"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-CC_BY--ND_4.0-lightgrey" alt="license: CC BY-ND 4.0"></a>
   <a href="https://github.com/TMHSDigital/Steam-MCP/actions/workflows/ci.yml"><img src="https://github.com/TMHSDigital/Steam-MCP/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <a href="https://github.com/TMHSDigital/Steam-MCP#available-tools---39-total"><img src="https://img.shields.io/badge/MCP_tools-39-blue" alt="MCP tools"></a>
 </p>
 
-<p align="center">
-  <a href="package.json"><img src="https://img.shields.io/node/v/@tmhs/steam-mcp" alt="node"></a>
-  <a href="https://github.com/TMHSDigital/Steam-MCP#available-tools---39-total"><img src="https://img.shields.io/badge/MCP_tools-39-blue" alt="MCP tools"></a>
-  <img src="https://img.shields.io/badge/Steam_Web_API-powered-1b2838" alt="Steam Web API">
-</p>
+<p align="center"><a href="https://tmhsdigital.github.io/steam-mcp/">Website</a> - <a href="https://tmhsdigital.github.io/steam-mcp/tools.html">Tool reference</a> - <a href="CHANGELOG.md">Changelog</a></p>
 
 ---
 
 <p align="center"><strong>39 MCP tools</strong> - 32 read - 5 write - 2 SDK guides</p>
 
-Query Steam store data, player statistics, achievements, reviews, pricing, workshop items, leaderboards, inventory, and player profiles - all as structured MCP tools callable from Cursor's AI agent.
+Works with Cursor, Claude Code, Claude Desktop, VS Code, Windsurf, and any other MCP client. It is also the live-data half of the [Steam Developer Tools](https://github.com/TMHSDigital/Steam-Cursor-Plugin) Cursor plugin.
 
-> **No API key required** for most features. Store lookups, player counts, global achievement stats, news, reviews, and app searches all work out of the box.
+> **No API key required** for most features. Store lookups, player counts, global achievement stats, news, reviews, Deck status, and app searches all work out of the box.
+
+A real exchange (numbers as Steam reported them on 22 November 2026):
+
+```text
+You:   How many people are playing Team Fortress 2 right now, and how is it reviewed?
+
+Agent: steam_getPlayerCount       {"appid":440}  ->  {"appid":440,"player_count":102022}
+       steam_getAppReviewSummary  {"appid":440}  ->  {"review_score_desc":"Very Positive",
+                                                       "total_reviews":1258222,"positive_percentage":91}
+
+Agent: 102,022 people are in TF2 right now. Reviews are Very Positive: 91% of 1,258,222.
+```
+
+## What you can ask
+
+**Before launch**
+- "Check every image in ./marketing against Steam's store art sizes and tell me which slots are missing." (`steam_validateStoreAssetDir`)
+- "Check my library hero against Valve's guidelines: no baked-in logo, no visible seam." (`steam_validateStoreAsset`)
+- "Compare the price of my top three competitors in the US, Germany, Brazil, and Turkey." (`steam_compareApps`, `steam_getRegionalPricing`)
+
+**After launch**
+- "Which of my achievements have under 5% unlocks?" (`steam_getAchievementStats`)
+- "Summarize this week's negative reviews and group them by theme." (`steam_getReviews`)
+- "What's trending in my game's Workshop?" (`steam_queryWorkshop`)
+
+**Publisher and business** (publisher or Financial API key)
+- "Total units and revenue by country for the last 7 days." (`steam_getSalesSummary`)
+- "Show the top 20 on the speedrun leaderboard." (`steam_getLeaderboardEntries`)
+- "Which branches and builds are live right now?" (`steam_getAppBetas`, `steam_getAppBuilds`)
+
+Most clients also show the server's [prompts](#prompts) (`launch-readiness`, `review-digest`, `regional-price-audit`, and more) as slash commands.
 
 ## Quick start
 
 Requires Node.js 22 or later. No clone or build needed: add this to your MCP client's config and restart it.
 
-> **Docs track `main`.** This README describes the code on `main`, which can be ahead of the version on npm (the npm badge above shows the latest release). Features listed under `[Unreleased]` in the [CHANGELOG](CHANGELOG.md) are not in the npm package yet, including some tools, `--transport http`, and toolsets that keep write tools off by default. To use them before the next release, run from a local clone (see "Run from a local clone instead" under Client setup).
+> **Docs track `main`.** Anything under `[Unreleased]` in the [CHANGELOG](CHANGELOG.md) is not on npm yet. To use it before the next release, run from a local clone (see "Run from a local clone instead" under Client setup).
 
 ```json
 {
