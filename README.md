@@ -149,11 +149,13 @@ Every setting is an environment variable. Put it in the `env` block of your clie
 Set `STEAM_MCP_DEBUG=1` in the server's `env` block. The server then writes one line per Steam request to stderr (stdout is the MCP channel), and also sends it to clients that show MCP server logs:
 
 ```
-[steam-mcp] v0.9.1 started: 26 tools, STEAM_API_KEY set
+[steam-mcp] vX.Y.Z started: toolsets store,community,publisher,sdk,assets (N tools), STEAM_API_KEY set
 [steam-mcp] GET api.steampowered.com/ISteamUserStats/GetNumberOfCurrentPlayers/v1/ ?appid -> 200 in 381ms (attempt 1)
 [steam-mcp] GET store.steampowered.com/api/appdetails ?appids -> 429 in 95ms (attempt 1)
 [steam-mcp] GET store.steampowered.com/api/appdetails rate limited, retrying in 1000ms
 ```
+
+The first line gives the running version, the loaded toolsets with their tool count, and whether `STEAM_API_KEY` is set.
 
 Only query parameter names are logged, never values, so the API key cannot appear in a log. Logs are safe to paste into an issue.
 
