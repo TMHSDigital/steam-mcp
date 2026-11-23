@@ -3,7 +3,7 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 
 // User-invokable workflows (slash commands in most clients). Each prompt tells
 // the agent which tools to chain and what to report, so users do not need to
-// know the 26 tools.
+// know every tool.
 
 const appid = z.string().regex(/^\d+$/, "Numeric Steam appid").describe("Steam appid, e.g. 440");
 

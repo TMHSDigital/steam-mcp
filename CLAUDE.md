@@ -50,7 +50,7 @@ docs/                    GitHub Pages site (generated HTML + hand-written styles
 - `errorResponse()` formats errors as MCP-compatible `{ isError: true }` responses.
 - Tools that need an API key call `requireApiKey()` which reads `STEAM_API_KEY` from env and throws `MissingApiKeyError` with setup instructions if missing.
 - Any tool that performs a live mutation must use the shared confirm gate in `src/utils/confirm.ts`: spread `confirmSchema`, call `refuseIfUnconfirmed` before any network I/O, run the dry-run branch before `requireApiKey()`, and never send unless `dry_run: false` and `confirm: true`.
-- No-auth tools (getAppDetails, searchApps, getPlayerCount, getAchievementStats, getWorkshopItem, getReviews, getPriceOverview, getAppReviewSummary, getRegionalPricing, getNewsForApp, validateStoreAsset) work without any configuration.
+- Tools that work without any configuration: the network tools whose description says "No API key required" (getAppDetails, searchApps, getPlayerCount, getAchievementStats, getPriceOverview, getRegionalPricing, getReviews, getAppReviewSummary, getNewsForApp, getDeckCompatibility, getFeatured, compareApps, getWorkshopItem, and getGlobalStatsForGame when `stat_names` is given), plus the local tools (validateStoreAsset, validateStoreAssetDir, and the createLobby/uploadWorkshopItem SDK guides). The generated tool reference (`docs/tools.html`) shows each tool's key and is drift-tested.
 
 ## How to build and run
 
