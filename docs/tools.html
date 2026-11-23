@@ -1,0 +1,661 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tool reference: all 39 Steam MCP tools</title>
+<meta name="description" content="Every Steam MCP Server tool with its inputs, the API key it needs, and whether it reads, writes, or runs locally.">
+<link rel="preload" href="fonts/archivo-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="styles.css">
+<script src="site.js" defer></script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="wrap top">
+  <a class="brand" href="./"><span class="mark"><img src="assets/logo-128.png" alt="" width="22" height="22"></span>Steam MCP Server</a>
+  <nav aria-label="Site">
+    <a href="tools.html" aria-current="page">Tools</a>
+    <a href="./#setup">Setup</a>
+    <a href="./#writes">Write safety</a>
+    <a href="./#config">Configuration</a>
+    <a href="https://github.com/TMHSDigital/steam-mcp">GitHub</a>
+  </nav>
+</header>
+<div class="wrap reference">
+  <nav class="toc" aria-label="Tools">
+    <ul>
+      <li><a class="set" href="#set-store">store</a>
+        <ul>
+          <li><a class="k-none" href="#steam_getAppDetails">getAppDetails</a></li>
+          <li><a class="k-none" href="#steam_searchApps">searchApps</a></li>
+          <li><a class="k-none" href="#steam_getPlayerCount">getPlayerCount</a></li>
+          <li><a class="k-none" href="#steam_getAchievementStats">getAchievementStats</a></li>
+          <li><a class="k-none" href="#steam_getPriceOverview">getPriceOverview</a></li>
+          <li><a class="k-none" href="#steam_getRegionalPricing">getRegionalPricing</a></li>
+          <li><a class="k-none" href="#steam_getReviews">getReviews</a></li>
+          <li><a class="k-none" href="#steam_getAppReviewSummary">getAppReviewSummary</a></li>
+          <li><a class="k-none" href="#steam_getNewsForApp">getNewsForApp</a></li>
+          <li><a class="k-none" href="#steam_getDeckCompatibility">getDeckCompatibility</a></li>
+          <li><a class="k-none" href="#steam_getFeatured">getFeatured</a></li>
+          <li><a class="k-none" href="#steam_compareApps">compareApps</a></li>
+        </ul>
+      </li>
+      <li><a class="set" href="#set-community">community</a>
+        <ul>
+          <li><a class="k-key" href="#steam_getPlayerSummary">getPlayerSummary</a></li>
+          <li><a class="k-key" href="#steam_getOwnedGames">getOwnedGames</a></li>
+          <li><a class="k-key" href="#steam_getPlayerAchievements">getPlayerAchievements</a></li>
+          <li><a class="k-key" href="#steam_resolveVanityURL">resolveVanityURL</a></li>
+          <li><a class="k-none" href="#steam_getWorkshopItem">getWorkshopItem</a></li>
+          <li><a class="k-key" href="#steam_queryWorkshop">queryWorkshop</a></li>
+          <li><a class="k-key" href="#steam_getUserStatsForGame">getUserStatsForGame</a></li>
+          <li><a class="k-key" href="#steam_getPlayerBans">getPlayerBans</a></li>
+        </ul>
+      </li>
+      <li><a class="set" href="#set-publisher">publisher</a>
+        <ul>
+          <li><a class="k-publisher" href="#steam_getLeaderboardsForGame">getLeaderboardsForGame</a></li>
+          <li><a class="k-publisher" href="#steam_getLeaderboardEntries">getLeaderboardEntries</a></li>
+          <li><a class="k-key" href="#steam_getSchemaForGame">getSchemaForGame</a></li>
+          <li><a class="k-none" href="#steam_getGlobalStatsForGame">getGlobalStatsForGame</a></li>
+          <li><a class="k-publisher" href="#steam_getAppBetas">getAppBetas</a></li>
+          <li><a class="k-publisher" href="#steam_getAppBuilds">getAppBuilds</a></li>
+          <li><a class="k-publisher" href="#steam_checkAppOwnership">checkAppOwnership</a></li>
+          <li><a class="k-publisher" href="#steam_getInventory">getInventory</a></li>
+          <li><a class="k-financial" href="#steam_getSalesSummary">getSalesSummary</a></li>
+          <li><a class="k-financial" href="#steam_getChangedSalesDates">getChangedSalesDates</a></li>
+        </ul>
+      </li>
+      <li><a class="set" href="#set-assets">assets</a>
+        <ul>
+          <li><a class="k-local" href="#steam_validateStoreAsset">validateStoreAsset</a></li>
+          <li><a class="k-local" href="#steam_validateStoreAssetDir">validateStoreAssetDir</a></li>
+        </ul>
+      </li>
+      <li><a class="set" href="#set-sdk">sdk</a>
+        <ul>
+          <li><a class="k-local" href="#steam_createLobby">createLobby</a></li>
+          <li><a class="k-local" href="#steam_uploadWorkshopItem">uploadWorkshopItem</a></li>
+        </ul>
+      </li>
+      <li><a class="set" href="#set-mutations">mutations</a>
+        <ul>
+          <li><a class="k-publisher" href="#steam_updateWorkshopItem">updateWorkshopItem</a></li>
+          <li><a class="k-publisher" href="#steam_setAchievement">setAchievement</a></li>
+          <li><a class="k-publisher" href="#steam_clearAchievement">clearAchievement</a></li>
+          <li><a class="k-publisher" href="#steam_uploadLeaderboardScore">uploadLeaderboardScore</a></li>
+          <li><a class="k-publisher" href="#steam_grantInventoryItem">grantInventoryItem</a></li>
+        </ul>
+      </li>
+    </ul>
+  </nav>
+  <main id="main">
+    <h1 class="page-title">Tool reference</h1>
+    <p class="lede">All 39 tools, generated from the server's own registrations: the description your agent reads, the inputs it can pass, and the key the tool needs. Tool names in the server are prefixed <code>steam_</code>.</p>
+    <ul class="legend">
+      <li><span class="sw k-none" aria-hidden="true"></span>No key</li>
+      <li><span class="sw k-local" aria-hidden="true"></span>Local, no network</li>
+      <li><span class="sw k-key" aria-hidden="true"></span>Steam Web API key</li>
+      <li><span class="sw k-publisher" aria-hidden="true"></span>Publisher key</li>
+      <li><span class="sw k-financial" aria-hidden="true"></span>Financial API key</li>
+    </ul>
+    <section class="group" id="set-store" aria-labelledby="h-store">
+      <h2 id="h-store"><code>store</code> <span class="n">12 tools, on by default</span></h2>
+      <p class="lede">Store pages, search, player counts, prices, reviews, news, Deck status, featured lists.</p>
+      <article class="tool k-none" id="steam_getAppDetails">
+        <h3>Get App Details</h3>
+        <p class="meta"><code>steam_getAppDetails</code><span class="badge"><span class="sw k-none" aria-hidden="true"></span>No key</span><span class="badge">Read only</span></p>
+        <p class="desc">Get Steam store data for an app. Returns a compact summary by default (price, release date, genres, platforms, metacritic, short description). Pass detail: &quot;full&quot; or a fields list for descriptions, requirements, screenshots, DLC, and the rest. No API key required.</p>
+        <table class="params">
+          <caption>Inputs</caption>
+          <tbody>
+          <tr><th scope="row"><code>appid</code> <span class="req">required</span></th><td>Steam application ID (e.g. 440 for Team Fortress 2)</td></tr>
+          <tr><th scope="row"><code>cc</code></th><td>Two-letter country code for pricing (e.g. US, GB, DE)</td></tr>
+          <tr><th scope="row"><code>l</code></th><td>Language code for descriptions (e.g. english, german)</td></tr>
+          <tr><th scope="row"><code>detail</code></th><td>summary (default): name, type, price, release date, genres, categories, platforms, metacritic, recommendations, and the short description, about 2 KB. full: every store field, about 30 KB.</td></tr>
+          <tr><th scope="row"><code>fields</code></th><td>Return only these raw store fields (e.g. [&quot;pc_requirements&quot;, &quot;dlc&quot;, &quot;screenshots&quot;]). Overrides detail.</td></tr>
+          <tr><th scope="row"><code>include_html</code></th><td>Keep store HTML in description and requirements fields (default: false, which strips tags and truncates long text to 2000 chars).</td></tr>
+          </tbody>
+        </table>
+      </article>
+      <article class="tool k-none" id="steam_searchApps">
+        <h3>Search Apps</h3>
+        <p class="meta"><code>steam_searchApps</code><span class="badge"><span class="sw k-none" aria-hidden="true"></span>No key</span><span class="badge">Read only</span></p>
+        <p class="desc">Search the Steam store for games and apps by name or keyword. Returns app IDs, names, icons, and price info. No API key required.</p>
+        <table class="params">
+          <caption>Inputs</caption>
+          <tbody>
+          <tr><th scope="row"><code>query</code> <span class="req">required</span></th><td>Search query for games or apps (e.g. 'Hades', 'Counter-Strike')</td></tr>
+          <tr><th scope="row"><code>cc</code></th><td>Two-letter country code for pricing (e.g. US, GB)</td></tr>
+          <tr><th scope="row"><code>l</code></th><td>Language code (e.g. english, german). Defaults to english.</td></tr>
+          </tbody>
+        </table>
+      </article>
+      <article class="tool k-none" id="steam_getPlayerCount">
+        <h3>Get Player Count</h3>
+        <p class="meta"><code>steam_getPlayerCount</code><span class="badge"><span class="sw k-none" aria-hidden="true"></span>No key</span><span class="badge">Read only</span></p>
+        <p class="desc">Get the current number of concurrent players for a Steam app. No API key required.</p>
+        <table class="params">
+          <caption>Inputs</caption>
+          <tbody>
+          <tr><th scope="row"><code>appid</code> <span class="req">required</span></th><td>Steam application ID (e.g. 730 for Counter-Strike 2)</td></tr>
+          </tbody>
+        </table>
+      </article>
+      <article class="tool k-none" id="steam_getAchievementStats">
+        <h3>Get Achievement Stats</h3>
+        <p class="meta"><code>steam_getAchievementStats</code><span class="badge"><span class="sw k-none" aria-hidden="true"></span>No key</span><span class="badge">Read only</span></p>
+        <p class="desc">Get global achievement unlock percentages for a Steam app. Shows how many players have unlocked each achievement. No API key required.</p>
+        <table class="params">
+          <caption>Inputs</caption>
+          <tbody>
+          <tr><th scope="row"><code>appid</code> <span class="req">required</span></th><td>Steam application ID to get achievement stats for</td></tr>
+          </tbody>
+        </table>
+      </article>
+      <article class="tool k-none" id="steam_getPriceOverview">
+        <h3>Get Price Overview</h3>
+        <p class="meta"><code>steam_getPriceOverview</code><span class="badge"><span class="sw k-none" aria-hidden="true"></span>No key</span><span class="badge">Read only</span></p>
+        <p class="desc">Batch price check for multiple Steam apps in a specific region. Returns formatted price data including base price, discount, and final price. No API key required.</p>
+        <table class="params">
+          <caption>Inputs</caption>
+          <tbody>
+          <tr><th scope="row"><code>appids</code> <span class="req">required</span></th><td>Array of Steam application IDs to check prices for (max 50)</td></tr>
+          <tr><th scope="row"><code>cc</code></th><td>Two-letter country code for pricing (e.g. US, GB, DE). Defaults to server region.</td></tr>
+          </tbody>
+        </table>
+      </article>
+      <article class="tool k-none" id="steam_getRegionalPricing">
+        <h3>Get Regional Pricing</h3>
+        <p class="meta"><code>steam_getRegionalPricing</code><span class="badge"><span class="sw k-none" aria-hidden="true"></span>No key</span><span class="badge">Read only</span></p>
+        <p class="desc">Get pricing for a Steam app across multiple regions/countries. Returns price, currency, and discount info for each region. No API key required.</p>
+        <table class="params">
+          <caption>Inputs</caption>
+          <tbody>
+          <tr><th scope="row"><code>appid</code> <span class="req">required</span></th><td>Steam application ID</td></tr>
+          <tr><th scope="row"><code>countries</code></th><td>Two-letter country codes to check (default: US, GB, DE, BR, RU, CN, JP, AU, IN, TR). Max 20.</td></tr>
+          </tbody>
+        </table>
+      </article>
+      <article class="tool k-none" id="steam_getReviews">
+        <h3>Get Reviews</h3>
+        <p class="meta"><code>steam_getReviews</code><span class="badge"><span class="sw k-none" aria-hidden="true"></span>No key</span><span class="badge">Read only</span></p>
+        <p class="desc">Fetch user reviews for a Steam app with filters for language, sentiment, purchase type, and pagination. Uses IUserReviewsService/GetAppReviews. No API key required.</p>
+        <table class="params">
+          <caption>Inputs</caption>
+          <tbody>
+          <tr><th scope="row"><code>appid</code> <span class="req">required</span></th><td>Steam application ID</td></tr>
+          <tr><th scope="row"><code>filter</code></th><td>Sort order: all (most helpful), recent (newest), updated (recently updated), or funny (default: all). Use recent or updated when paging through every review with cursor.</td></tr>
+          <tr><th scope="row"><code>language</code></th><td>Steam API language code, or a comma-separated list (e.g. english, german, all). Default: english.</td></tr>
+          <tr><th scope="row"><code>review_type</code></th><td>Filter by review sentiment (default: all)</td></tr>
+          <tr><th scope="row"><code>purchase_type</code></th><td>Filter by purchase type (default: steam)</td></tr>
+          <tr><th scope="row"><code>num_per_page</code></th><td>Number of reviews to return (default: 20, max: 100)</td></tr>
+          <tr><th scope="row"><code>cursor</code></th><td>Pagination cursor from a previous response</td></tr>
+          </tbody>
+        </table>
+      </article>
+      <article class="tool k-none" id="steam_getAppReviewSummary">
+        <h3>Get App Review Summary</h3>
+        <p class="meta"><code>steam_getAppReviewSummary</code><span class="badge"><span class="sw k-none" aria-hidden="true"></span>No key</span><span class="badge">Read only</span></p>
+        <p class="desc">Get all-time review summary statistics for a Steam app across all languages and purchase types: total positive/negative counts, review score, and score description. No individual reviews returned. No API key required.</p>
+        <table class="params">
+          <caption>Inputs</caption>
+          <tbody>
+          <tr><th scope="row"><code>appid</code> <span class="req">required</span></th><td>Steam application ID</td></tr>
+          </tbody>
+        </table>
+      </article>
+      <article class="tool k-none" id="steam_getNewsForApp">
+        <h3>Get News For App</h3>
+        <p class="meta"><code>steam_getNewsForApp</code><span class="badge"><span class="sw k-none" aria-hidden="true"></span>No key</span><span class="badge">Read only</span></p>
+        <p class="desc">Get recent news articles for a Steam app. Returns titles, URLs, contents, dates, and authors. No API key required.</p>
+        <table class="params">
+          <caption>Inputs</caption>
+          <tbody>
+          <tr><th scope="row"><code>appid</code> <span class="req">required</span></th><td>Steam application ID to get news for</td></tr>
+          <tr><th scope="row"><code>count</code></th><td>Number of news items to return (1-20, default 5)</td></tr>
+          <tr><th scope="row"><code>maxlength</code></th><td>Maximum length of each news item's contents in characters (default 500, 0 for full text)</td></tr>
+          </tbody>
+        </table>
+      </article>
+      <article class="tool k-none" id="steam_getDeckCompatibility">
+        <h3>Get Deck Compatibility</h3>
+        <p class="meta"><code>steam_getDeckCompatibility</code><span class="badge"><span class="sw k-none" aria-hidden="true"></span>No key</span><span class="badge">Read only</span></p>
+        <p class="desc">Get the Steam Deck compatibility category (verified, playable, unsupported, unknown) and each test result in plain language, for up to 20 apps. Uses the store's unofficial Deck report endpoint. No API key required.</p>
+        <table class="params">
+          <caption>Inputs</caption>
+          <tbody>
+          <tr><th scope="row"><code>appids</code> <span class="req">required</span></th><td>Steam appids to check (1-20)</td></tr>
+          </tbody>
+        </table>
+      </article>
+      <article class="tool k-none" id="steam_getFeatured">
+        <h3>Get Featured</h3>
+        <p class="meta"><code>steam_getFeatured</code><span class="badge"><span class="sw k-none" aria-hidden="true"></span>No key</span><span class="badge">Read only</span></p>
+        <p class="desc">Get the Steam store's current top sellers, new releases, specials, and coming-soon lists for a region. Prices are in the currency's smallest unit (cents). No API key required.</p>
+        <table class="params">
+          <caption>Inputs</caption>
+          <tbody>
+          <tr><th scope="row"><code>categories</code></th><td>Which lists to return (default: all four)</td></tr>
+          <tr><th scope="row"><code>cc</code></th><td>Two-letter country code for prices and regional lists (default: US)</td></tr>
+          <tr><th scope="row"><code>limit</code></th><td>Items per list (default: 10)</td></tr>
+          </tbody>
+        </table>
+      </article>
+      <article class="tool k-none" id="steam_compareApps">
+        <h3>Compare Apps</h3>
+        <p class="meta"><code>steam_compareApps</code><span class="badge"><span class="sw k-none" aria-hidden="true"></span>No key</span><span class="badge">Read only</span></p>
+        <p class="desc">Compare 2-10 Steam apps in one compact table: price, discount, release date, genres, metacritic, review score and count, current players, and language count. No API key required.</p>
+        <table class="params">
+          <caption>Inputs</caption>
+          <tbody>
+          <tr><th scope="row"><code>appids</code> <span class="req">required</span></th><td>Steam appids to compare (2-10)</td></tr>
+          <tr><th scope="row"><code>cc</code></th><td>Two-letter country code for prices (default: US)</td></tr>
+          </tbody>
+        </table>
+      </article>
+    </section>
+    <section class="group" id="set-community" aria-labelledby="h-community">
+      <h2 id="h-community"><code>community</code> <span class="n">8 tools, on by default</span></h2>
+      <p class="lede">Profiles, libraries, player achievements and stats, Workshop, bans.</p>
+      <article class="tool k-key" id="steam_getPlayerSummary">
+        <h3>Get Player Summary</h3>
+        <p class="meta"><code>steam_getPlayerSummary</code><span class="badge"><span class="sw k-key" aria-hidden="true"></span>Steam Web API key</span><span class="badge">Read only</span></p>
+        <p class="desc">Get a player's Steam profile including display name, avatar, online status, and profile visibility. Requires STEAM_API_KEY.</p>
+        <table class="params">
+          <caption>Inputs</caption>
+          <tbody>
+          <tr><th scope="row"><code>steamid</code> <span class="req">required</span></th><td>The player: a 17-digit Steam64 ID, a profile URL (steamcommunity.com/profiles/... or /id/...), a vanity name, or a SteamID2/SteamID3 (STEAM_0:1:123, [U:1:246])</td></tr>
+          </tbody>
+        </table>
+      </article>
+      <article class="tool k-key" id="steam_getOwnedGames">
+        <h3>Get Owned Games</h3>
+        <p class="meta"><code>steam_getOwnedGames</code><span class="badge"><span class="sw k-key" aria-hidden="true"></span>Steam Web API key</span><span class="badge">Read only</span></p>
+        <p class="desc">Get a player's game library with playtime data. Returns the library size and total playtime, plus the top 50 games by playtime by default (change with sort and limit, or filter with appids). Requires STEAM_API_KEY.</p>
+        <table class="params">
+          <caption>Inputs</caption>
+          <tbody>
+          <tr><th scope="row"><code>steamid</code> <span class="req">required</span></th><td>The player: a 17-digit Steam64 ID, a profile URL (steamcommunity.com/profiles/... or /id/...), a vanity name, or a SteamID2/SteamID3 (STEAM_0:1:123, [U:1:246])</td></tr>
+          <tr><th scope="row"><code>include_played_free_games</code></th><td>Include free-to-play games in results (default: true)</td></tr>
+          <tr><th scope="row"><code>include_appinfo</code></th><td>Include game name and icon info (default: true)</td></tr>
+          <tr><th scope="row"><code>sort</code></th><td>Order games by total playtime (default), playtime in the last two weeks, or name</td></tr>
+          <tr><th scope="row"><code>limit</code></th><td>Maximum games to return after sorting (default: 50). game_count always reports the full library.</td></tr>
+          <tr><th scope="row"><code>appids</code></th><td>Only return these apps, e.g. to check whether the player owns them</td></tr>
+          </tbody>
+        </table>
+      </article>
+      <article class="tool k-key" id="steam_getPlayerAchievements">
+        <h3>Get Player Achievements</h3>
+        <p class="meta"><code>steam_getPlayerAchievements</code><span class="badge"><span class="sw k-key" aria-hidden="true"></span>Steam Web API key</span><span class="badge">Read only</span></p>
+        <p class="desc">Get a specific player's achievement unlock status and timestamps for a Steam app. The player's profile must be public. Requires STEAM_API_KEY.</p>
+        <table class="params">
+          <caption>Inputs</caption>
+          <tbody>
+          <tr><th scope="row"><code>steamid</code> <span class="req">required</span></th><td>The player: a 17-digit Steam64 ID, a profile URL (steamcommunity.com/profiles/... or /id/...), a vanity name, or a SteamID2/SteamID3 (STEAM_0:1:123, [U:1:246])</td></tr>
+          <tr><th scope="row"><code>appid</code> <span class="req">required</span></th><td>Steam application ID to get achievements for</td></tr>
+          </tbody>
+        </table>
+      </article>
+      <article class="tool k-key" id="steam_resolveVanityURL">
+        <h3>Resolve Vanity URL</h3>
+        <p class="meta"><code>steam_resolveVanityURL</code><span class="badge"><span class="sw k-key" aria-hidden="true"></span>Steam Web API key</span><span class="badge">Read only</span></p>
+        <p class="desc">Convert a Steam vanity URL (custom profile name) to a 64-bit Steam ID. Requires STEAM_API_KEY.</p>
+        <table class="params">
+          <caption>Inputs</caption>
+          <tbody>
+          <tr><th scope="row"><code>vanityurl</code> <span class="req">required</span></th><td>The vanity URL part of a Steam profile (e.g. 'gabelogannewell' from steamcommunity.com/id/gabelogannewell)</td></tr>
+          <tr><th scope="row"><code>url_type</code></th><td>Type of vanity URL: 1 = individual profile (default), 2 = group, 3 = official game group</td></tr>
+          </tbody>
+        </table>
+      </article>
+      <article class="tool k-none" id="steam_getWorkshopItem">
+        <h3>Get Workshop Item</h3>
+        <p class="meta"><code>steam_getWorkshopItem</code><span class="badge"><span class="sw k-none" aria-hidden="true"></span>No key</span><span class="badge">Read only</span></p>
+        <p class="desc">Get details for a Steam Workshop item including title, description, tags, preview images, and subscriber count. No API key required.</p>
+        <table class="params">
+          <caption>Inputs</caption>
+          <tbody>
+          <tr><th scope="row"><code>publishedfileid</code> <span class="req">required</span></th><td>Workshop item ID (the numeric ID from the workshop URL)</td></tr>
+          </tbody>
+        </table>
+      </article>
+      <article class="tool k-key" id="steam_queryWorkshop">
+        <h3>Query Workshop</h3>
+        <p class="meta"><code>steam_queryWorkshop</code><span class="badge"><span class="sw k-key" aria-hidden="true"></span>Steam Web API key</span><span class="badge">Read only</span></p>
+        <p class="desc">Search and browse Steam Workshop items for a given app. Filter by text, tags, and sort order. Requires STEAM_API_KEY.</p>
+        <table class="params">
+          <caption>Inputs</caption>
+          <tbody>
+          <tr><th scope="row"><code>appid</code> <span class="req">required</span></th><td>App ID to search workshop items for (e.g. 440 for TF2)</td></tr>
+          <tr><th scope="row"><code>search_text</code></th><td>Text to search for in item titles and descriptions</td></tr>
+          <tr><th scope="row"><code>cursor</code></th><td>Pagination cursor. Use '*' for the first request, then pass the cursor from previous results.</td></tr>
+          <tr><th scope="row"><code>numperpage</code></th><td>Number of results per page (1-100, default 10)</td></tr>
+          <tr><th scope="row"><code>sort</code></th><td>Sort order: vote (top rated), date (newest), trend (most popular over `days`), text_search (relevance to search_text), subscriptions (most subscribed), playtime (most total playtime), updated (recently updated). Default: text_search when search_text is set, otherwise date.</td></tr>
+          <tr><th scope="row"><code>days</code></th><td>Trend window in days (1-7). Only used with sort: trend.</td></tr>
+          <tr><th scope="row"><code>requiredtags</code></th><td>Tags to filter on, e.g. [&quot;Map&quot;, &quot;Weapon&quot;]. See match_all_tags.</td></tr>
+          <tr><th scope="row"><code>match_all_tags</code></th><td>If true (default), items must have every tag in requiredtags. If false, any one tag matches.</td></tr>
+          <tr><th scope="row"><code>excludedtags</code></th><td>Tags that items must NOT have</td></tr>
+          <tr><th scope="row"><code>return_tags</code></th><td>Include each item's tags in the results (default: true)</td></tr>
+          <tr><th scope="row"><code>return_previews</code></th><td>Include preview image and video details (default: false)</td></tr>
+          </tbody>
+        </table>
+      </article>
+      <article class="tool k-key" id="steam_getUserStatsForGame">
+        <h3>Get User Stats For Game</h3>
+        <p class="meta"><code>steam_getUserStatsForGame</code><span class="badge"><span class="sw k-key" aria-hidden="true"></span>Steam Web API key</span><span class="badge">Read only</span></p>
+        <p class="desc">Get a player's stat values and unlocked achievements for an app, for debugging stats alongside the achievement tools. The player's game details must be public. Requires STEAM_API_KEY.</p>
+        <table class="params">
+          <caption>Inputs</caption>
+          <tbody>
+          <tr><th scope="row"><code>steamid</code> <span class="req">required</span></th><td>The player: a 17-digit Steam64 ID, a profile URL (steamcommunity.com/profiles/... or /id/...), a vanity name, or a SteamID2/SteamID3 (STEAM_0:1:123, [U:1:246])</td></tr>
+          <tr><th scope="row"><code>appid</code> <span class="req">required</span></th><td>Steam application ID</td></tr>
+          </tbody>
+        </table>
+      </article>
+      <article class="tool k-key" id="steam_getPlayerBans">
+        <h3>Get Player Bans</h3>
+        <p class="meta"><code>steam_getPlayerBans</code><span class="badge"><span class="sw k-key" aria-hidden="true"></span>Steam Web API key</span><span class="badge">Read only</span></p>
+        <p class="desc">Get VAC, game, community, and economy ban status for up to 100 players, for moderation and support triage. Requires STEAM_API_KEY.</p>
+        <table class="params">
+          <caption>Inputs</caption>
+          <tbody>
+          <tr><th scope="row"><code>steamids</code> <span class="req">required</span></th><td>Players to check (1-100): Steam64 IDs, profile URLs, vanity names, or SteamID2/3</td></tr>
+          </tbody>
+        </table>
+      </article>
+    </section>
+    <section class="group" id="set-publisher" aria-labelledby="h-publisher">
+      <h2 id="h-publisher"><code>publisher</code> <span class="n">10 tools, on by default</span></h2>
+      <p class="lede">Leaderboards, achievement schemas, global stats, betas, builds, ownership, inventory, sales.</p>
+      <article class="tool k-publisher" id="steam_getLeaderboardsForGame">
+        <h3>Get Leaderboards For Game</h3>
+        <p class="meta"><code>steam_getLeaderboardsForGame</code><span class="badge"><span class="sw k-publisher" aria-hidden="true"></span>Publisher key</span><span class="badge">Read only</span></p>
+        <p class="desc">List all leaderboards for a Steam app with their numeric IDs, names, and sort methods. steam_getLeaderboardEntries and steam_uploadLeaderboardScore accept either the leaderboardid or the leaderboard_name; use this tool to see which leaderboards exist. Requires a Steam Publisher API key (STEAM_API_KEY) for an app you own, with the server IP allowlisted. A regular user key gets HTTP 403.</p>
+        <table class="params">
+          <caption>Inputs</caption>
+          <tbody>
+          <tr><th scope="row"><code>appid</code> <span class="req">required</span></th><td>Steam application ID to list leaderboards for</td></tr>
+          </tbody>
+        </table>
+      </article>
+      <article class="tool k-publisher" id="steam_getLeaderboardEntries">
+        <h3>Get Leaderboard Entries</h3>
+        <p class="meta"><code>steam_getLeaderboardEntries</code><span class="badge"><span class="sw k-publisher" aria-hidden="true"></span>Publisher key</span><span class="badge">Read only</span></p>
+        <p class="desc">Get leaderboard scores and rankings for a Steam app. Pass the numeric leaderboardid or the leaderboard_name (resolved through GetLeaderboardsForGame; the output then includes resolved_from). Uses the partner API (partner.steam-api.com) which requires a publisher API key with server IP allowlisted in Steamworks. Supports global, around-user, and friends-only views.</p>
+        <table class="params">
+          <caption>Inputs</caption>
+          <tbody>
+          <tr><th scope="row"><code>appid</code> <span class="req">required</span></th><td>Steam application ID</td></tr>
+          <tr><th scope="row"><code>leaderboardid</code></th><td>Numeric leaderboard ID (Steamworks dashboard &gt; Leaderboards, or steam_getLeaderboardsForGame). Pass this or leaderboard_name.</td></tr>
+          <tr><th scope="row"><code>leaderboard_name</code></th><td>Leaderboard name (API name or display name) as listed by steam_getLeaderboardsForGame. Use instead of leaderboardid; it is resolved to the numeric ID.</td></tr>
+          <tr><th scope="row"><code>rangestart</code></th><td>Start index for entries (default: 0)</td></tr>
+          <tr><th scope="row"><code>rangeend</code></th><td>End index for entries, inclusive (default: 100). At most 500 entries per call; page with rangestart/rangeend.</td></tr>
+          <tr><th scope="row"><code>datarequest</code></th><td>Request type: 0 = Global, 1 = Around user, 2 = Friends (default: 0)</td></tr>
+          <tr><th scope="row"><code>steamid</code></th><td>Steam ID required for AroundUser (1) and Friends (2) requests</td></tr>
+          </tbody>
+        </table>
+      </article>
+      <article class="tool k-key" id="steam_getSchemaForGame">
+        <h3>Get Schema For Game</h3>
+        <p class="meta"><code>steam_getSchemaForGame</code><span class="badge"><span class="sw k-key" aria-hidden="true"></span>Steam Web API key</span><span class="badge">Read only</span></p>
+        <p class="desc">Get the achievement and stat schema for a Steam app: achievement internal names, display names, descriptions, and hidden flags, plus stat definitions. Useful for mapping internal ACH_ names to human-readable names. Returns up to 100 achievements without icon URLs by default (see limit, include_icons, include_stats). Requires STEAM_API_KEY.</p>
+        <table class="params">
+          <caption>Inputs</caption>
+          <tbody>
+          <tr><th scope="row"><code>appid</code> <span class="req">required</span></th><td>Steam application ID to get the achievement/stat schema for</td></tr>
+          <tr><th scope="row"><code>limit</code></th><td>Maximum achievements to return (default: 100). achievement_count always reports the total.</td></tr>
+          <tr><th scope="row"><code>include_stats</code></th><td>Include stat definitions (default: true)</td></tr>
+          <tr><th scope="row"><code>include_icons</code></th><td>Include achievement icon URLs (default: false)</td></tr>
+          </tbody>
+        </table>
+      </article>
+      <article class="tool k-none" id="steam_getGlobalStatsForGame">
+        <h3>Get Global Stats For Game</h3>
+        <p class="meta"><code>steam_getGlobalStatsForGame</code><span class="badge"><span class="sw k-none" aria-hidden="true"></span>No key</span><span class="badge">Read only</span></p>
+        <p class="desc">Get all-player totals for a game's aggregated stats (for example total kills or distance traveled), optionally with daily history. Only stats flagged as aggregated in Steamworks return data. No API key required when stat_names is given.</p>
+        <table class="params">
+          <caption>Inputs</caption>
+          <tbody>
+          <tr><th scope="row"><code>appid</code> <span class="req">required</span></th><td>Steam application ID</td></tr>
+          <tr><th scope="row"><code>stat_names</code></th><td>Stat API names to total. Only stats flagged as aggregated in Steamworks work. If omitted and STEAM_API_KEY is set, all stats from the app's schema are requested.</td></tr>
+          <tr><th scope="row"><code>history_days</code></th><td>Also return a daily total for each of the last N days (1-60)</td></tr>
+          </tbody>
+        </table>
+      </article>
+      <article class="tool k-publisher" id="steam_getAppBetas">
+        <h3>Get App Betas</h3>
+        <p class="meta"><code>steam_getAppBetas</code><span class="badge"><span class="sw k-publisher" aria-hidden="true"></span>Publisher key</span><span class="badge">Read only</span></p>
+        <p class="desc">List an app's beta branches: which build each points at, whether it is password-protected, and descriptions. Requires the publisher key that owns the app, with the server IP allowlisted.</p>
+        <table class="params">
+          <caption>Inputs</caption>
+          <tbody>
+          <tr><th scope="row"><code>appid</code> <span class="req">required</span></th><td>Your app's ID</td></tr>
+          </tbody>
+        </table>
+      </article>
+      <article class="tool k-publisher" id="steam_getAppBuilds">
+        <h3>Get App Builds</h3>
+        <p class="meta"><code>steam_getAppBuilds</code><span class="badge"><span class="sw k-publisher" aria-hidden="true"></span>Publisher key</span><span class="badge">Read only</span></p>
+        <p class="desc">Get an app's recent build history: build IDs, descriptions, and upload times. Requires the publisher key that owns the app, with the server IP allowlisted.</p>
+        <table class="params">
+          <caption>Inputs</caption>
+          <tbody>
+          <tr><th scope="row"><code>appid</code> <span class="req">required</span></th><td>Your app's ID</td></tr>
+          <tr><th scope="row"><code>count</code></th><td>Number of recent builds to return (default: 10)</td></tr>
+          </tbody>
+        </table>
+      </article>
+      <article class="tool k-publisher" id="steam_checkAppOwnership">
+        <h3>Check App Ownership</h3>
+        <p class="meta"><code>steam_checkAppOwnership</code><span class="badge"><span class="sw k-publisher" aria-hidden="true"></span>Publisher key</span><span class="badge">Read only</span></p>
+        <p class="desc">Check whether a player owns your app, and how: permanent license or not (Family Sharing, free weekend), acquisition and expiry time, and the true owner when shared. Requires the publisher key that owns the app, with the server IP allowlisted.</p>
+        <table class="params">
+          <caption>Inputs</caption>
+          <tbody>
+          <tr><th scope="row"><code>steamid</code> <span class="req">required</span></th><td>The player: a 17-digit Steam64 ID, a profile URL (steamcommunity.com/profiles/... or /id/...), a vanity name, or a SteamID2/SteamID3 (STEAM_0:1:123, [U:1:246])</td></tr>
+          <tr><th scope="row"><code>appid</code> <span class="req">required</span></th><td>Your app's ID</td></tr>
+          </tbody>
+        </table>
+      </article>
+      <article class="tool k-publisher" id="steam_getInventory">
+        <h3>Get Inventory</h3>
+        <p class="meta"><code>steam_getInventory</code><span class="badge"><span class="sw k-publisher" aria-hidden="true"></span>Publisher key</span><span class="badge">Read only</span></p>
+        <p class="desc">Read a player's Steam Inventory items for your app, for example to confirm a steam_grantInventoryItem landed. Requires a publisher key with Economy permissions, with the server IP allowlisted.</p>
+        <table class="params">
+          <caption>Inputs</caption>
+          <tbody>
+          <tr><th scope="row"><code>steamid</code> <span class="req">required</span></th><td>The player: a 17-digit Steam64 ID, a profile URL (steamcommunity.com/profiles/... or /id/...), a vanity name, or a SteamID2/SteamID3 (STEAM_0:1:123, [U:1:246])</td></tr>
+          <tr><th scope="row"><code>appid</code> <span class="req">required</span></th><td>Your app's ID</td></tr>
+          </tbody>
+        </table>
+      </article>
+      <article class="tool k-financial" id="steam_getSalesSummary">
+        <h3>Get Sales Summary</h3>
+        <p class="meta"><code>steam_getSalesSummary</code><span class="badge"><span class="sw k-financial" aria-hidden="true"></span>Financial API key</span><span class="badge">Read only</span></p>
+        <p class="desc">Summarize your Steam sales for a date range (up to 31 days): units sold, returned, and activated, and gross and net revenue in USD, grouped by country, day, app, package, or platform. Reads IPartnerFinancialsService with a Financial API Group key (STEAM_FINANCIAL_API_KEY, or STEAM_API_KEY), server IP allowlisted.</p>
+        <table class="params">
+          <caption>Inputs</caption>
+          <tbody>
+          <tr><th scope="row"><code>start_date</code> <span class="req">required</span></th><td>Date in YYYY-MM-DD, Pacific Time (Steam's financial day)</td></tr>
+          <tr><th scope="row"><code>end_date</code></th><td>Last date, inclusive (default: start_date). At most 31 days after start_date.</td></tr>
+          <tr><th scope="row"><code>appid</code></th><td>Only count sales of this app (matches appid or primary_appid)</td></tr>
+          <tr><th scope="row"><code>group_by</code></th><td>How to group the totals (default: country)</td></tr>
+          <tr><th scope="row"><code>top</code></th><td>Return the top N groups by net revenue (default: 25)</td></tr>
+          <tr><th scope="row"><code>format</code></th><td>json (default) or csv for spreadsheets</td></tr>
+          </tbody>
+        </table>
+      </article>
+      <article class="tool k-financial" id="steam_getChangedSalesDates">
+        <h3>Get Changed Sales Dates</h3>
+        <p class="meta"><code>steam_getChangedSalesDates</code><span class="badge"><span class="sw k-financial" aria-hidden="true"></span>Financial API key</span><span class="badge">Read only</span></p>
+        <p class="desc">List the dates whose Steam sales data changed since a highwatermark, for incremental syncing. Pass the returned result_highwatermark next time. Dates are Pacific Time. Needs a Financial API Group key (STEAM_FINANCIAL_API_KEY, or STEAM_API_KEY).</p>
+        <table class="params">
+          <caption>Inputs</caption>
+          <tbody>
+          <tr><th scope="row"><code>highwatermark</code></th><td>result_highwatermark from your last call (default: 0, which returns every date with sales)</td></tr>
+          </tbody>
+        </table>
+      </article>
+    </section>
+    <section class="group" id="set-assets" aria-labelledby="h-assets">
+      <h2 id="h-assets"><code>assets</code> <span class="n">2 tools, on by default</span></h2>
+      <p class="lede">Check capsule, hero, logo, and icon art against Valve's sizes before you upload.</p>
+      <article class="tool k-local" id="steam_validateStoreAsset">
+        <h3>Validate Store Asset</h3>
+        <p class="meta"><code>steam_validateStoreAsset</code><span class="badge"><span class="sw k-local" aria-hidden="true"></span>Local, no network</span><span class="badge">Reads local files</span></p>
+        <p class="desc">Validate a local store, library, achievement, community, or event image against Valve's pixel sizes, format rules, and library-hero heuristics. Pass a directory with slot achievementIcon to check a whole achievement icon set, including missing achieved/unachieved pairs. No API key required.</p>
+        <table class="params">
+          <caption>Inputs</caption>
+          <tbody>
+          <tr><th scope="row"><code>path</code> <span class="req">required</span></th><td>Local path to a PNG or JPEG. For slot achievementIcon, may also be a directory: every image is checked and each &lt;name&gt;_achieved needs a &lt;name&gt;_unachieved.</td></tr>
+          <tr><th scope="row"><code>slot</code> <span class="req">required</span></th><td>Asset slot: store capsules (headerCapsule, smallCapsule, mainCapsule, verticalCapsule), library (libraryCapsule, libraryHero, libraryLogo, libraryHeader), screenshot, pageBackground, achievementIcon (256x256 JPG), communityIcon (184x184 JPG), eventCover (800x450), eventHeader (1920x622)</td></tr>
+          </tbody>
+        </table>
+      </article>
+      <article class="tool k-local" id="steam_validateStoreAssetDir">
+        <h3>Validate Store Asset Folder</h3>
+        <p class="meta"><code>steam_validateStoreAssetDir</code><span class="badge"><span class="sw k-local" aria-hidden="true"></span>Local, no network</span><span class="badge">Reads local files</span></p>
+        <p class="desc">Audit a folder of store art before launch. Infers each image's slot from its file name (hero, logo, header, small, main, vertical, library, screenshot, ...) or its exact size, validates it, and lists missing required slots (headerCapsule, smallCapsule, mainCapsule, verticalCapsule, libraryCapsule, libraryHero, libraryLogo) and whether there are at least 5 valid screenshots. No API key required.</p>
+        <table class="params">
+          <caption>Inputs</caption>
+          <tbody>
+          <tr><th scope="row"><code>dir</code> <span class="req">required</span></th><td>Local folder containing the store and library images</td></tr>
+          </tbody>
+        </table>
+      </article>
+    </section>
+    <section class="group" id="set-sdk" aria-labelledby="h-sdk">
+      <h2 id="h-sdk"><code>sdk</code> <span class="n">2 tools, on by default</span></h2>
+      <p class="lede">C++, C#, and GDScript for lobbies and Workshop uploads, which need the Steamworks SDK.</p>
+      <article class="tool k-local" id="steam_createLobby">
+        <h3>Create Lobby (SDK Guide)</h3>
+        <p class="meta"><code>steam_createLobby</code><span class="badge"><span class="sw k-local" aria-hidden="true"></span>Local, no network</span><span class="badge">Code guide, no network</span></p>
+        <p class="desc">Get code examples and documentation for creating Steam multiplayer lobbies. Lobby creation is a client-side SDK operation (ISteamMatchmaking) and cannot be done via HTTP API. This tool returns ready-to-use code for C++, C#, and GDScript.</p>
+        <table class="params">
+          <caption>Inputs</caption>
+          <tbody>
+          <tr><th scope="row"><code>type</code> <span class="req">required</span></th><td>Lobby visibility type</td></tr>
+          <tr><th scope="row"><code>max_members</code> <span class="req">required</span></th><td>Maximum number of players in the lobby</td></tr>
+          <tr><th scope="row"><code>metadata</code></th><td>Key-value pairs for lobby metadata (e.g. map name, game mode)</td></tr>
+          </tbody>
+        </table>
+      </article>
+      <article class="tool k-local" id="steam_uploadWorkshopItem">
+        <h3>Upload Workshop Item (SDK Guide)</h3>
+        <p class="meta"><code>steam_uploadWorkshopItem</code><span class="badge"><span class="sw k-local" aria-hidden="true"></span>Local, no network</span><span class="badge">Code guide, no network</span></p>
+        <p class="desc">Get code examples and documentation for uploading new Steam Workshop items. Workshop uploads require the Steamworks SDK (ISteamUGC) running in a client or dedicated tool — there is no HTTP upload endpoint. This tool returns ready-to-use code for C++, C#, and GDScript.</p>
+        <table class="params">
+          <caption>Inputs</caption>
+          <tbody>
+          <tr><th scope="row"><code>appid</code> <span class="req">required</span></th><td>Steam application ID that the Workshop item belongs to</td></tr>
+          <tr><th scope="row"><code>title</code> <span class="req">required</span></th><td>Title for the Workshop item</td></tr>
+          <tr><th scope="row"><code>description</code></th><td>Description for the Workshop item</td></tr>
+          <tr><th scope="row"><code>content_path</code></th><td>Local folder path containing the item content</td></tr>
+          <tr><th scope="row"><code>preview_path</code></th><td>Local path to a preview image (JPG/PNG, &lt;1MB)</td></tr>
+          <tr><th scope="row"><code>tags</code></th><td>Tags for discoverability</td></tr>
+          <tr><th scope="row"><code>visibility</code></th><td>Item visibility (default: public)</td></tr>
+          </tbody>
+        </table>
+      </article>
+    </section>
+    <section class="group" id="set-mutations" aria-labelledby="h-mutations">
+      <h2 id="h-mutations"><code>mutations</code> <span class="n">5 tools, off by default</span></h2>
+      <p class="lede">Set or clear achievements, upload scores, grant items, edit Workshop metadata.</p>
+      <article class="tool k-publisher" id="steam_updateWorkshopItem">
+        <h3>Update Workshop Item</h3>
+        <p class="meta"><code>steam_updateWorkshopItem</code><span class="badge"><span class="sw k-publisher" aria-hidden="true"></span>Publisher key</span><span class="badge">Live write, confirm-gated</span></p>
+        <p class="desc">MUTATES LIVE WORKSHOP ITEM METADATA. Default dry_run=true; requires confirm=true to send. Update metadata for an existing Steam Workshop item (title, description, visibility, tags) via the partner API. Does not change the store page listing. Requires a publisher API key with server IP allowlisted. File content updates require the SDK.</p>
+        <table class="params">
+          <caption>Inputs</caption>
+          <tbody>
+          <tr><th scope="row"><code>publishedfileid</code> <span class="req">required</span></th><td>Workshop item's published file ID</td></tr>
+          <tr><th scope="row"><code>appid</code> <span class="req">required</span></th><td>Steam application ID</td></tr>
+          <tr><th scope="row"><code>title</code></th><td>New title for the item</td></tr>
+          <tr><th scope="row"><code>file_description</code></th><td>New description for the item</td></tr>
+          <tr><th scope="row"><code>visibility</code></th><td>Visibility: 0=Public, 1=FriendsOnly, 2=Private, 3=Unlisted</td></tr>
+          <tr><th scope="row"><code>tags</code></th><td>Replace the item's tags with this list</td></tr>
+          <tr><th scope="row"><code>dry_run</code></th><td>If true (default), return the planned request without contacting Steam</td></tr>
+          <tr><th scope="row"><code>confirm</code></th><td>Required true when dry_run is false. Refuses otherwise.</td></tr>
+          </tbody>
+        </table>
+      </article>
+      <article class="tool k-publisher" id="steam_setAchievement">
+        <h3>Set Achievement</h3>
+        <p class="meta"><code>steam_setAchievement</code><span class="badge"><span class="sw k-publisher" aria-hidden="true"></span>Publisher key</span><span class="badge">Live write, confirm-gated</span></p>
+        <p class="desc">MUTATES LIVE ACHIEVEMENT STATE. Default dry_run=true; requires confirm=true to send. Set (unlock) one achievement, or several at once with achievements, for a player via the partner API. The dry run lists every change. Intended for dev/test use. Requires a publisher API key with server IP allowlisted in Steamworks partner settings.</p>
+        <table class="params">
+          <caption>Inputs</caption>
+          <tbody>
+          <tr><th scope="row"><code>steamid</code> <span class="req">required</span></th><td>64-bit Steam ID of the player</td></tr>
+          <tr><th scope="row"><code>appid</code> <span class="req">required</span></th><td>Steam application ID</td></tr>
+          <tr><th scope="row"><code>achievement</code></th><td>Achievement API name (e.g. ACH_BEAT_LEVEL_1). Must match a name configured in Steamworks. Pass this or achievements.</td></tr>
+          <tr><th scope="row"><code>achievements</code></th><td>Several achievement API names changed in one dry run and one confirmed call (1-100). Pass this or achievement.</td></tr>
+          <tr><th scope="row"><code>dry_run</code></th><td>If true (default), return the planned request without contacting Steam</td></tr>
+          <tr><th scope="row"><code>confirm</code></th><td>Required true when dry_run is false. Refuses otherwise.</td></tr>
+          </tbody>
+        </table>
+      </article>
+      <article class="tool k-publisher" id="steam_clearAchievement">
+        <h3>Clear Achievement</h3>
+        <p class="meta"><code>steam_clearAchievement</code><span class="badge"><span class="sw k-publisher" aria-hidden="true"></span>Publisher key</span><span class="badge">Live write, confirm-gated</span></p>
+        <p class="desc">MUTATES LIVE ACHIEVEMENT STATE. Default dry_run=true; requires confirm=true to send. Clear (re-lock) one achievement, or several at once with achievements, for a player via the partner API. The dry run lists every change. Intended for dev/test use. Requires a publisher API key with server IP allowlisted in Steamworks partner settings.</p>
+        <table class="params">
+          <caption>Inputs</caption>
+          <tbody>
+          <tr><th scope="row"><code>steamid</code> <span class="req">required</span></th><td>64-bit Steam ID of the player</td></tr>
+          <tr><th scope="row"><code>appid</code> <span class="req">required</span></th><td>Steam application ID</td></tr>
+          <tr><th scope="row"><code>achievement</code></th><td>Achievement API name (e.g. ACH_BEAT_LEVEL_1). Must match a name configured in Steamworks. Pass this or achievements.</td></tr>
+          <tr><th scope="row"><code>achievements</code></th><td>Several achievement API names changed in one dry run and one confirmed call (1-100). Pass this or achievement.</td></tr>
+          <tr><th scope="row"><code>dry_run</code></th><td>If true (default), return the planned request without contacting Steam</td></tr>
+          <tr><th scope="row"><code>confirm</code></th><td>Required true when dry_run is false. Refuses otherwise.</td></tr>
+          </tbody>
+        </table>
+      </article>
+      <article class="tool k-publisher" id="steam_uploadLeaderboardScore">
+        <h3>Upload Leaderboard Score</h3>
+        <p class="meta"><code>steam_uploadLeaderboardScore</code><span class="badge"><span class="sw k-publisher" aria-hidden="true"></span>Publisher key</span><span class="badge">Live write, confirm-gated</span></p>
+        <p class="desc">MUTATES LIVE LEADERBOARD ENTRY. Default dry_run=true; requires confirm=true to send. Upload a score to a Steam leaderboard via the partner API. A dry run accepts leaderboard_name and shows the resolved leaderboardid; the live call takes only the numeric leaderboardid, so the board you confirmed is the board that is written. Requires a publisher API key with server IP allowlisted in Steamworks partner settings.</p>
+        <table class="params">
+          <caption>Inputs</caption>
+          <tbody>
+          <tr><th scope="row"><code>appid</code> <span class="req">required</span></th><td>Steam application ID</td></tr>
+          <tr><th scope="row"><code>leaderboardid</code></th><td>Numeric leaderboard ID. Required for the live call (dry_run: false).</td></tr>
+          <tr><th scope="row"><code>leaderboard_name</code></th><td>Leaderboard name, dry run only: it is resolved to the numeric ID and shown in the plan. Pass that leaderboardid to the live call.</td></tr>
+          <tr><th scope="row"><code>steamid</code> <span class="req">required</span></th><td>64-bit Steam ID of the player</td></tr>
+          <tr><th scope="row"><code>score</code> <span class="req">required</span></th><td>Score to upload (interpretation depends on leaderboard sort method)</td></tr>
+          <tr><th scope="row"><code>scoremethod</code></th><td>KeepBest only updates if better than existing; ForceUpdate always overwrites (default: KeepBest)</td></tr>
+          <tr><th scope="row"><code>dry_run</code></th><td>If true (default), return the planned request without contacting Steam</td></tr>
+          <tr><th scope="row"><code>confirm</code></th><td>Required true when dry_run is false. Refuses otherwise.</td></tr>
+          </tbody>
+        </table>
+      </article>
+      <article class="tool k-publisher" id="steam_grantInventoryItem">
+        <h3>Grant Inventory Item</h3>
+        <p class="meta"><code>steam_grantInventoryItem</code><span class="badge"><span class="sw k-publisher" aria-hidden="true"></span>Publisher key</span><span class="badge">Live write, confirm-gated</span></p>
+        <p class="desc">MUTATES LIVE INVENTORY. Default dry_run=true; requires confirm=true to send. Grant an inventory item to a player via the partner API. Intended for dev/test or server-side rewards. Requires a publisher API key with server IP allowlisted in Steamworks partner settings.</p>
+        <table class="params">
+          <caption>Inputs</caption>
+          <tbody>
+          <tr><th scope="row"><code>appid</code> <span class="req">required</span></th><td>Steam application ID</td></tr>
+          <tr><th scope="row"><code>steamid</code> <span class="req">required</span></th><td>64-bit Steam ID of the player to grant the item to</td></tr>
+          <tr><th scope="row"><code>itemdefid</code> <span class="req">required</span></th><td>Item definition ID from your Steamworks item schema</td></tr>
+          <tr><th scope="row"><code>quantity</code></th><td>Number of copies to grant (default: 1, max: 100). Sent as repeated itemdefid[n] parameters.</td></tr>
+          <tr><th scope="row"><code>notify</code></th><td>Whether to notify the player of the grant (default: true)</td></tr>
+          <tr><th scope="row"><code>itempropsjson</code></th><td>Optional JSON string of dynamic item properties to set on the granted items</td></tr>
+          <tr><th scope="row"><code>requestid</code></th><td>Idempotency key. Steam executes a given requestid at most once. A dry run generates one; the live call (dry_run: false) requires it, so pass the dry run's value and a retry cannot double-grant.</td></tr>
+          <tr><th scope="row"><code>dry_run</code></th><td>If true (default), return the planned request without contacting Steam</td></tr>
+          <tr><th scope="row"><code>confirm</code></th><td>Required true when dry_run is false. Refuses otherwise.</td></tr>
+          </tbody>
+        </table>
+      </article>
+    </section>
+  </main>
+</div>
+<footer class="wrap foot">
+  <p>Steam MCP Server 0.9.0. License <a href="https://github.com/TMHSDigital/steam-mcp/blob/main/LICENSE">CC BY-NC-ND 4.0</a>. Built by <a href="https://github.com/TMHSDigital">TMHSDigital</a>.</p>
+  <p>Not affiliated with Valve. Steam and Steamworks are trademarks of Valve Corporation.</p>
+  <p><a href="https://github.com/TMHSDigital/steam-mcp">GitHub</a> <a href="https://www.npmjs.com/package/@tmhs/steam-mcp">npm</a> <a href="https://github.com/TMHSDigital/steam-mcp/blob/main/CHANGELOG.md">Changelog</a> <a href="https://github.com/TMHSDigital/steam-mcp/issues">Issues</a></p>
+</footer>
+</body>
+</html>

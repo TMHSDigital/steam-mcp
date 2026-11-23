@@ -162,6 +162,45 @@ figcaption { font-size: 14px; color: var(--dim); }
 .defs span { display: block; color: var(--dim); font-size: 15px; margin-top: 2px; }
 .companion p { margin-top: 12px; max-width: 72ch; color: var(--dim); }
 
+/* tool reference */
+.reference { display: grid; grid-template-columns: 230px minmax(0, 1fr); gap: 48px; padding-top: 24px; }
+.toc { position: sticky; top: 0; align-self: start; max-height: 100vh; overflow-y: auto; padding: 16px 0 32px; font-size: 14px; }
+.toc ul { list-style: none; padding: 0; }
+.toc > ul > li + li { margin-top: 14px; }
+.toc .set { color: var(--ink); font-weight: 600; text-decoration: none; }
+.toc li li a { display: block; padding: 2px 0 2px 10px; margin-top: 2px; border-left: 2px solid var(--k); color: var(--dim); text-decoration: none; font: 400 12.5px/1.5 var(--mono); }
+.toc li li a:hover { color: var(--ink); }
+.page-title { font-size: 52px; }
+.reference .legend { margin-top: 20px; }
+.group { padding-top: 48px; }
+.group h2 code { font-size: 0.8em; color: var(--ink); }
+.group h2 .n { font-size: 17px; font-weight: 400; font-stretch: 100%; color: var(--dim); margin-left: 8px; }
+.tool { margin-top: 24px; padding: 20px 22px; background: var(--deep); border: 1px solid var(--rule); border-left: 3px solid var(--k); border-radius: 0 4px 4px 0; scroll-margin-top: 16px; }
+.tool:target { border-color: var(--k); }
+.tool .meta { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; margin-top: 6px; font-size: 14px; color: var(--dim); }
+.tool .meta code { color: var(--blue); font-size: 13px; }
+.badge .sw { margin-right: 6px; }
+.tool .desc { margin-top: 12px; max-width: 80ch; }
+.params { margin-top: 14px; font-size: 14px; }
+.params caption { text-align: left; color: var(--dim); font-size: 13px; padding-bottom: 4px; }
+.params th { width: 1%; padding-right: 20px; }
+.params th code { color: var(--ink); }
+.params td { color: #c3d0db; }
+.req { display: block; font-size: 12px; color: var(--warn); font-weight: 400; }
+.noparams { margin-top: 12px; font-size: 14px; color: var(--dim); }
+
+@media (max-width: 900px) {
+  .reference { grid-template-columns: minmax(0, 1fr); gap: 0; }
+  .page-title { font-size: 40px; }
+  .tool { padding: 16px; }
+  .params th { white-space: normal; overflow-wrap: anywhere; }
+  .toc { position: static; max-height: none; padding: 0 0 8px; }
+  .toc > ul { display: flex; flex-wrap: wrap; gap: 8px 18px; }
+  .toc > ul > li + li { margin-top: 0; }
+  .toc ul ul { display: none; }
+  .toc .set { color: var(--blue); font-weight: 500; }
+}
+
 @media (max-width: 1200px) {
   .map { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; }
 }
@@ -171,7 +210,7 @@ figcaption { font-size: 14px; color: var(--dim); }
 @media (max-width: 640px) {
   body { font-size: 16px; }
   .top { flex-wrap: wrap; gap: 10px 18px; }
-  .top nav { width: 100%; gap: 18px; overflow-x: auto; }
+  .top nav { width: 100%; flex-wrap: wrap; gap: 6px 18px; }
   h1 { font-size: 44px; }
   h2 { font-size: 28px; }
   .hero { padding-top: 24px; }

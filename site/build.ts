@@ -35,6 +35,12 @@ const KEY_ORDER: KeyNeed[] = ["none", "local", "key", "publisher", "financial"];
 
 export type ToolKind = "read" | "write" | "guide";
 
+export interface SiteParam {
+  name: string;
+  required: boolean;
+  description: string;
+}
+
 export interface SiteTool {
   name: string;
   title: string;
@@ -42,6 +48,12 @@ export interface SiteTool {
   toolset: ToolsetName;
   key: KeyNeed;
   kind: ToolKind;
+  params: SiteParam[];
+}
+
+interface ZodLike {
+  description?: string;
+  safeParse(value: unknown): { success: boolean };
 }
 
 /**
@@ -84,6 +96,11 @@ export function collectTools(): SiteTool[] {
             toolset,
             key: keyNeed(toolset, name, description),
             kind,
+            params: Object.entries((config.inputSchema ?? {}) as Record<string, ZodLike>).map(([p, schema]) => ({
+              name: p,
+              required: !schema.safeParse(undefined).success,
+              description: schema.description ?? "",
+            })),
           });
         },
       } as unknown as McpServer);
@@ -466,10 +483,104 @@ ${footer()}
 `;
 }
 
+// ---------------------------------------------------------------- tools
+
+const KIND_LABELS: Record<ToolKind, string> = {
+  read: "Read only",
+  write: "Live write, confirm-gated",
+  guide: "Code guide, no network",
+};
+
+function kindLabel(t: SiteTool): string {
+  if (t.kind === "read" && t.toolset === "assets") return "Reads local files";
+  return KIND_LABELS[t.kind];
+}
+
+function renderTools(tools: SiteTool[]): string {
+  const total = tools.length;
+  const toc = TOOLSET_ORDER.map((set) => {
+    const items = tools
+      .filter((t) => t.toolset === set)
+      .map((t) => `<li><a class="k-${t.key}" href="#${t.name}">${esc(short(t.name))}</a></li>`)
+      .join("\n          ");
+    return `<li><a class="set" href="#set-${set}">${set}</a>
+        <ul>
+          ${items}
+        </ul>
+      </li>`;
+  }).join("\n      ");
+
+  const legend = KEY_ORDER.map(
+    (k) => `<li><span class="sw k-${k}" aria-hidden="true"></span>${KEY_LABELS[k]}</li>`,
+  ).join("\n      ");
+
+  const groups = TOOLSET_ORDER.map((set) => {
+    const inSet = tools.filter((t) => t.toolset === set);
+    const on = DEFAULT_TOOLSETS.includes(set);
+    const entries = inSet
+      .map((t) => {
+        const params = t.params.length
+          ? `<table class="params">
+          <caption>Inputs</caption>
+          <tbody>
+          ${t.params
+            .map(
+              (p) =>
+                `<tr><th scope="row"><code>${esc(p.name)}</code>${p.required ? ' <span class="req">required</span>' : ""}</th><td>${esc(p.description)}</td></tr>`,
+            )
+            .join("\n          ")}
+          </tbody>
+        </table>`
+          : `<p class="noparams">No inputs.</p>`;
+        return `<article class="tool k-${t.key}" id="${t.name}">
+        <h3>${esc(t.title)}</h3>
+        <p class="meta"><code>${esc(t.name)}</code><span class="badge"><span class="sw k-${t.key}" aria-hidden="true"></span>${KEY_LABELS[t.key]}</span><span class="badge">${kindLabel(t)}</span></p>
+        <p class="desc">${esc(t.description)}</p>
+        ${params}
+      </article>`;
+      })
+      .join("\n      ");
+    return `<section class="group" id="set-${set}" aria-labelledby="h-${set}">
+      <h2 id="h-${set}"><code>${set}</code> <span class="n">${inSet.length} tools, ${on ? "on by default" : "off by default"}</span></h2>
+      <p class="lede">${TOOLSET_BLURBS[set]}</p>
+      ${entries}
+    </section>`;
+  }).join("\n    ");
+
+  return `${pageHead({
+    title: `Tool reference: all ${total} Steam MCP tools`,
+    description: `Every Steam MCP Server tool with its inputs, the API key it needs, and whether it reads, writes, or runs locally.`,
+    path: "tools.html",
+  })}
+<body>
+<a class="skip" href="#main">Skip to content</a>
+${nav("tools")}
+<div class="wrap reference">
+  <nav class="toc" aria-label="Tools">
+    <ul>
+      ${toc}
+    </ul>
+  </nav>
+  <main id="main">
+    <h1 class="page-title">Tool reference</h1>
+    <p class="lede">All ${total} tools, generated from the server's own registrations: the description your agent reads, the inputs it can pass, and the key the tool needs. Tool names in the server are prefixed <code>steam_</code>.</p>
+    <ul class="legend">
+      ${legend}
+    </ul>
+    ${groups}
+  </main>
+</div>
+${footer()}
+</body>
+</html>
+`;
+}
+
 /** Every generated file in docs/, keyed by its path relative to docs/. */
 export function renderSite(): Record<string, string> {
   const tools = collectTools();
   return {
     "index.html": renderHome(tools),
+    "tools.html": renderTools(tools),
   };
 }
