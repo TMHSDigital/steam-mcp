@@ -162,6 +162,8 @@ figcaption { font-size: 14px; color: var(--dim); }
 .defs span { display: block; color: var(--dim); font-size: 15px; margin-top: 2px; }
 .companion p { margin-top: 12px; max-width: 72ch; color: var(--dim); }
 
+.notfound { padding-top: 64px; padding-bottom: 96px; }
+
 /* tool reference */
 .reference { display: grid; grid-template-columns: 230px minmax(0, 1fr); gap: 48px; padding-top: 24px; }
 .toc { position: sticky; top: 0; align-self: start; max-height: 100vh; overflow-y: auto; padding: 16px 0 32px; font-size: 14px; }

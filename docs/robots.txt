@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://tmhsdigital.github.io/steam-mcp/sitemap.xml

@@ -164,7 +164,25 @@ const TOOLSET_BLURBS: Record<ToolsetName, string> = {
 
 const TOOLSET_ORDER: ToolsetName[] = ["store", "community", "publisher", "assets", "sdk", "mutations"];
 
-function pageHead(opts: { title: string; description: string; path: string }): string {
+/** Site path prefix on GitHub Pages, for pages served at arbitrary URLs (404). */
+const BASE_PATH = new URL(SITE_URL).pathname;
+
+function pageHead(opts: { title: string; description: string; path: string; notFound?: boolean }): string {
+  const url = SITE_URL + opts.path;
+  const indexing = opts.notFound
+    ? `<base href="${BASE_PATH}">
+<meta name="robots" content="noindex">`
+    : `<link rel="canonical" href="${url}">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Steam MCP Server">
+<meta property="og:title" content="${esc(opts.title)}">
+<meta property="og:description" content="${esc(opts.description)}">
+<meta property="og:url" content="${url}">
+<meta property="og:image" content="${SITE_URL}assets/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Steam MCP Server: live Steam data for your coding agent">
+<meta name="twitter:card" content="summary_large_image">`;
   return `<!doctype html>
 <html lang="en">
 <head>
@@ -172,6 +190,10 @@ function pageHead(opts: { title: string; description: string; path: string }): s
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>${esc(opts.title)}</title>
 <meta name="description" content="${esc(opts.description)}">
+${indexing}
+<meta name="theme-color" content="#1b2838">
+<link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
+<link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
 <link rel="preload" href="fonts/archivo-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="styles.css">
 <script src="site.js" defer></script>
@@ -576,11 +598,54 @@ ${footer()}
 `;
 }
 
+// ---------------------------------------------------------------- basics
+
+function render404(): string {
+  return `${pageHead({
+    title: "Page not found: Steam MCP Server",
+    description: "This page does not exist on the Steam MCP Server site.",
+    path: "404.html",
+    notFound: true,
+  })}
+<body>
+${nav("other")}
+<main id="main" class="wrap notfound">
+  <h1>No page here</h1>
+  <p class="lede">The address may be mistyped, or the page moved. The site has two pages: the <a href="./">overview and setup</a>, and the <a href="tools.html">tool reference</a>.</p>
+</main>
+${footer()}
+</body>
+</html>
+`;
+}
+
+const PAGES = ["", "tools.html"];
+
+function renderSitemap(): string {
+  const urls = PAGES.map((p) => `  <url><loc>${SITE_URL}${p}</loc></url>`).join("\n");
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+${urls}
+</urlset>
+`;
+}
+
+function renderRobots(): string {
+  return `User-agent: *
+Allow: /
+
+Sitemap: ${SITE_URL}sitemap.xml
+`;
+}
+
 /** Every generated file in docs/, keyed by its path relative to docs/. */
 export function renderSite(): Record<string, string> {
   const tools = collectTools();
   return {
     "index.html": renderHome(tools),
     "tools.html": renderTools(tools),
+    "404.html": render404(),
+    "sitemap.xml": renderSitemap(),
+    "robots.txt": renderRobots(),
   };
 }
