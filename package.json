@@ -25,7 +25,7 @@
     "typecheck": "tsc -p tsconfig.test.json"
   },
   "author": "TMHSDigital",
-  "license": "CC-BY-NC-ND-4.0",
+  "license": "CC-BY-ND-4.0",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/TMHSDigital/Steam-MCP.git"

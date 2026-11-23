@@ -27,7 +27,7 @@ jobs:
           docker build \
             --label "org.opencontainers.image.source=https://github.com/${GITHUB_REPOSITORY}" \
             --label "org.opencontainers.image.description=Steam MCP Server, Streamable HTTP transport" \
-            --label "org.opencontainers.image.licenses=CC-BY-NC-ND-4.0" \
+            --label "org.opencontainers.image.licenses=CC-BY-ND-4.0" \
             --label "org.opencontainers.image.version=$version" \
             -t "$image:$version" -t "$image:latest" .
 

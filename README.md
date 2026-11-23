@@ -381,7 +381,12 @@ Partner-admin tools (`steam_partnerLogin`, `steam_uploadStoreImage`, `steam_uplo
 
 ## License
 
-CC BY-NC-ND 4.0 - see [LICENSE](LICENSE) for details.
+CC BY-ND 4.0. See [LICENSE](LICENSE).
+
+- **You can** install and run the server for any purpose, including at a studio and for commercial games, and share unmodified copies with credit.
+- **You can't** distribute modified versions or forks of the server.
+
+Versions 0.9.0 and earlier were released under CC BY-NC-ND 4.0, which did not allow commercial use. Steam and Steamworks are trademarks of Valve Corporation; this project is not affiliated with Valve.
 
 ---
 

@@ -217,7 +217,7 @@ function nav(current: "home" | "tools" | "other"): string {
 
 function footer(): string {
   return `<footer class="wrap foot">
-  <p>Steam MCP Server ${esc(pkg.version)}. License <a href="${REPO_URL}/blob/main/LICENSE">CC BY-NC-ND 4.0</a>. Built by <a href="https://github.com/TMHSDigital">TMHSDigital</a>.</p>
+  <p>Steam MCP Server ${esc(pkg.version)}. License <a href="${REPO_URL}/blob/main/LICENSE">CC BY-ND 4.0</a>. Built by <a href="https://github.com/TMHSDigital">TMHSDigital</a>.</p>
   <p>Not affiliated with Valve. Steam and Steamworks are trademarks of Valve Corporation.</p>
   <p><a href="${REPO_URL}">GitHub</a> <a href="${NPM_URL}">npm</a> <a href="${REPO_URL}/blob/main/CHANGELOG.md">Changelog</a> <a href="${REPO_URL}/issues">Issues</a></p>
 </footer>`;

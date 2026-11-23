@@ -59,6 +59,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **License is now CC BY-ND 4.0** (was CC BY-NC-ND 4.0). You can use the server for commercial work, including at a studio and for commercial games. Distributing modified versions is still not allowed. Versions 0.9.0 and earlier stay under CC BY-NC-ND 4.0. (#40)
 - README has a Configuration table covering every environment variable, including `STEAM_MCP_TRANSPORT`, `HOST`/`PORT`, and the Partner-admin settings. `.env.example` lists all of them with defaults, and notes that the server does not load `.env` (but `docker run --env-file` does). (#90)
 - README onboarding starts with a one-snippet npx quick start and adds setup for Claude Desktop, Claude Code, VS Code, and Windsurf, plus a troubleshooting table. Removed the `.env` instructions: the server never loaded `.env`. (#39)
 - Large outputs are capped by default to save agent context (#35):
