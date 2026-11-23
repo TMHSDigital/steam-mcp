@@ -285,7 +285,7 @@ const CLIENTS: { id: string; label: string; code: string; note: string }[] = [
     id: "http",
     label: "HTTP",
     code: "npx -y @tmhs/steam-mcp --transport http --port 3000\n# serves http://127.0.0.1:3000/mcp, GET /healthz returns {\"ok\":true}",
-    note: "Stateless Streamable HTTP for hosted or team setups. Binds to 127.0.0.1 unless you pass <code>--host</code>, refuses Host headers outside <code>STEAM_MCP_ALLOWED_HOSTS</code>, never takes a key from clients, and keeps write tools off unless <code>STEAM_MCP_HTTP_ALLOW_WRITES=1</code>. A <code>Dockerfile</code> is in the repo.",
+    note: "Stateless Streamable HTTP for hosted or team setups. Binds to 127.0.0.1 unless you pass <code>--host</code>, refuses Host headers outside <code>STEAM_MCP_ALLOWED_HOSTS</code>, never takes a key from clients, and keeps write tools off unless <code>STEAM_MCP_HTTP_ALLOW_WRITES=1</code>. Each release also publishes a Docker image, <code>ghcr.io/tmhsdigital/steam-mcp</code>.",
   },
 ];
 

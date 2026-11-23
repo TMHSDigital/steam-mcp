@@ -86,8 +86,10 @@ claude mcp add steam -e STEAM_API_KEY=your_key_here -- npx -y @tmhs/steam-mcp
 
 ```bash
 npx -y @tmhs/steam-mcp --transport http --port 3000      # http://127.0.0.1:3000/mcp
-docker build -t steam-mcp . && docker run -p 3000:3000 -e STEAM_API_KEY=... -e STEAM_MCP_ALLOWED_HOSTS=localhost steam-mcp
+docker run -p 3000:3000 -e STEAM_API_KEY=... -e STEAM_MCP_ALLOWED_HOSTS=localhost ghcr.io/tmhsdigital/steam-mcp
 ```
+
+Each release publishes the image to GitHub Container Registry as `ghcr.io/tmhsdigital/steam-mcp:<version>` and `:latest`. To build it yourself from a clone: `docker build -t steam-mcp .`.
 
 HTTP mode is stateless and binds to `127.0.0.1` unless you pass `--host`. Requests whose `Host` header is not in `STEAM_MCP_ALLOWED_HOSTS` (default `localhost,127.0.0.1,[::1]`) are refused. The API key only ever comes from the server's environment, never from a client. Live-mutation tools stay off in HTTP mode unless you also set `STEAM_MCP_HTTP_ALLOW_WRITES=1`. `GET /healthz` returns `{"ok":true}`.
 
