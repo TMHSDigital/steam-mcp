@@ -1,0 +1,322 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Steam MCP Server: 39 Steam tools for your coding agent</title>
+<meta name="description" content="MCP server with 39 Steam Web API tools for Cursor, Claude Code, VS Code, and other MCP clients: store data, player counts, reviews, pricing, achievements, Workshop, leaderboards, and sales. 18 work without an API key.">
+<link rel="preload" href="fonts/archivo-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="styles.css">
+<script src="site.js" defer></script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="wrap top">
+  <a class="brand" href="./"><span class="mark"><img src="assets/logo-128.png" alt="" width="22" height="22"></span>Steam MCP Server</a>
+  <nav aria-label="Site">
+    <a href="tools.html">Tools</a>
+    <a href="./#setup">Setup</a>
+    <a href="./#writes">Write safety</a>
+    <a href="./#config">Configuration</a>
+    <a href="https://github.com/TMHSDigital/steam-mcp">GitHub</a>
+  </nav>
+</header>
+<main id="main">
+  <section class="wrap hero">
+    <h1>39 Steam tools for your coding agent</h1>
+    <p class="lede">Store data, player counts, reviews, regional prices, achievements, Workshop, leaderboards, and sales, as MCP tools for Cursor, Claude Code, VS Code, and any other MCP client. 18 of them work with no API key. Each tool below is colored by the key it needs.</p>
+    <div class="cta">
+      <div class="npx"><div class="code"><pre><code>npx -y @tmhs/steam-mcp</code></pre><button type="button" class="copy" data-copy hidden aria-label="Copy install command">Copy</button></div></div>
+      <a class="btn" href="#setup">Set it up</a>
+    </div>
+    <ul class="legend" aria-label="Key each tool needs">
+      <li><span class="sw k-none" aria-hidden="true"></span>No key: 14</li>
+      <li><span class="sw k-local" aria-hidden="true"></span>Local, no network: 4</li>
+      <li><span class="sw k-key" aria-hidden="true"></span>Steam Web API key: 8</li>
+      <li><span class="sw k-publisher" aria-hidden="true"></span>Publisher key: 11</li>
+      <li><span class="sw k-financial" aria-hidden="true"></span>Financial API key: 2</li>
+    </ul>
+    <div class="map">
+    <div class="col">
+      <h3><span>store</span><span class="n">12</span></h3>
+      <ul>
+        <li><a class="chip k-none" href="tools.html#steam_getAppDetails" title="No key">getAppDetails</a></li>
+        <li><a class="chip k-none" href="tools.html#steam_searchApps" title="No key">searchApps</a></li>
+        <li><a class="chip k-none" href="tools.html#steam_getPlayerCount" title="No key">getPlayerCount</a></li>
+        <li><a class="chip k-none" href="tools.html#steam_getAchievementStats" title="No key">getAchievementStats</a></li>
+        <li><a class="chip k-none" href="tools.html#steam_getPriceOverview" title="No key">getPriceOverview</a></li>
+        <li><a class="chip k-none" href="tools.html#steam_getRegionalPricing" title="No key">getRegionalPricing</a></li>
+        <li><a class="chip k-none" href="tools.html#steam_getReviews" title="No key">getReviews</a></li>
+        <li><a class="chip k-none" href="tools.html#steam_getAppReviewSummary" title="No key">getAppReviewSummary</a></li>
+        <li><a class="chip k-none" href="tools.html#steam_getNewsForApp" title="No key">getNewsForApp</a></li>
+        <li><a class="chip k-none" href="tools.html#steam_getDeckCompatibility" title="No key">getDeckCompatibility</a></li>
+        <li><a class="chip k-none" href="tools.html#steam_getFeatured" title="No key">getFeatured</a></li>
+        <li><a class="chip k-none" href="tools.html#steam_compareApps" title="No key">compareApps</a></li>
+      </ul>
+    </div>
+    <div class="col">
+      <h3><span>community</span><span class="n">8</span></h3>
+      <ul>
+        <li><a class="chip k-key" href="tools.html#steam_getPlayerSummary" title="Steam Web API key">getPlayerSummary</a></li>
+        <li><a class="chip k-key" href="tools.html#steam_getOwnedGames" title="Steam Web API key">getOwnedGames</a></li>
+        <li><a class="chip k-key" href="tools.html#steam_getPlayerAchievements" title="Steam Web API key">getPlayerAchievements</a></li>
+        <li><a class="chip k-key" href="tools.html#steam_resolveVanityURL" title="Steam Web API key">resolveVanityURL</a></li>
+        <li><a class="chip k-none" href="tools.html#steam_getWorkshopItem" title="No key">getWorkshopItem</a></li>
+        <li><a class="chip k-key" href="tools.html#steam_queryWorkshop" title="Steam Web API key">queryWorkshop</a></li>
+        <li><a class="chip k-key" href="tools.html#steam_getUserStatsForGame" title="Steam Web API key">getUserStatsForGame</a></li>
+        <li><a class="chip k-key" href="tools.html#steam_getPlayerBans" title="Steam Web API key">getPlayerBans</a></li>
+      </ul>
+    </div>
+    <div class="col">
+      <h3><span>publisher</span><span class="n">10</span></h3>
+      <ul>
+        <li><a class="chip k-publisher" href="tools.html#steam_getLeaderboardsForGame" title="Publisher key">getLeaderboardsForGame</a></li>
+        <li><a class="chip k-publisher" href="tools.html#steam_getLeaderboardEntries" title="Publisher key">getLeaderboardEntries</a></li>
+        <li><a class="chip k-key" href="tools.html#steam_getSchemaForGame" title="Steam Web API key">getSchemaForGame</a></li>
+        <li><a class="chip k-none" href="tools.html#steam_getGlobalStatsForGame" title="No key">getGlobalStatsForGame</a></li>
+        <li><a class="chip k-publisher" href="tools.html#steam_getAppBetas" title="Publisher key">getAppBetas</a></li>
+        <li><a class="chip k-publisher" href="tools.html#steam_getAppBuilds" title="Publisher key">getAppBuilds</a></li>
+        <li><a class="chip k-publisher" href="tools.html#steam_checkAppOwnership" title="Publisher key">checkAppOwnership</a></li>
+        <li><a class="chip k-publisher" href="tools.html#steam_getInventory" title="Publisher key">getInventory</a></li>
+        <li><a class="chip k-financial" href="tools.html#steam_getSalesSummary" title="Financial API key">getSalesSummary</a></li>
+        <li><a class="chip k-financial" href="tools.html#steam_getChangedSalesDates" title="Financial API key">getChangedSalesDates</a></li>
+      </ul>
+    </div>
+    <div class="col">
+      <h3><span>assets</span><span class="n">2</span></h3>
+      <ul>
+        <li><a class="chip k-local" href="tools.html#steam_validateStoreAsset" title="Local, no network">validateStoreAsset</a></li>
+        <li><a class="chip k-local" href="tools.html#steam_validateStoreAssetDir" title="Local, no network">validateStoreAssetDir</a></li>
+      </ul>
+    </div>
+    <div class="col">
+      <h3><span>sdk</span><span class="n">2</span></h3>
+      <ul>
+        <li><a class="chip k-local" href="tools.html#steam_createLobby" title="Local, no network">createLobby</a></li>
+        <li><a class="chip k-local" href="tools.html#steam_uploadWorkshopItem" title="Local, no network">uploadWorkshopItem</a></li>
+      </ul>
+    </div>
+    <div class="col off">
+      <h3><span>mutations</span><span class="n">5</span></h3>
+      <ul>
+        <li><a class="chip k-publisher" href="tools.html#steam_updateWorkshopItem" title="Publisher key">updateWorkshopItem</a></li>
+        <li><a class="chip k-publisher" href="tools.html#steam_setAchievement" title="Publisher key">setAchievement</a></li>
+        <li><a class="chip k-publisher" href="tools.html#steam_clearAchievement" title="Publisher key">clearAchievement</a></li>
+        <li><a class="chip k-publisher" href="tools.html#steam_uploadLeaderboardScore" title="Publisher key">uploadLeaderboardScore</a></li>
+        <li><a class="chip k-publisher" href="tools.html#steam_grantInventoryItem" title="Publisher key">grantInventoryItem</a></li>
+      </ul>
+      <p class="offnote">Off by default. Each call is a dry run until you confirm.</p>
+    </div>
+    </div>
+    <p class="tracks">This site follows the <code>main</code> branch. The npm release can be behind it: anything under Unreleased in the <a href="https://github.com/TMHSDigital/steam-mcp/blob/main/CHANGELOG.md">changelog</a> is not on npm yet. To run <code>main</code>, build from a <a href="https://github.com/TMHSDigital/steam-mcp#client-setup">local clone</a>.</p>
+  </section>
+
+  <section class="wrap band example" aria-labelledby="example-h">
+    <div class="copy-col">
+      <h2 id="example-h">Ask in plain language</h2>
+      <p>The agent picks the tools, calls them, and answers from what Steam returns. This exchange used two keyless tools; the numbers are what Steam reported on 22 November 2026.</p>
+      <p><a href="tools.html">See every tool and what it needs</a></p>
+    </div>
+    <ol class="transcript">
+      <li><span class="who">You ask</span><p class="q">How many people are playing Team Fortress 2 right now, and how is it reviewed?</p></li>
+      <li class="call"><span class="who">The agent calls</span><pre><code><a href="tools.html#steam_getPlayerCount">steam_getPlayerCount</a> {"appid":440}
+<a href="tools.html#steam_getAppReviewSummary">steam_getAppReviewSummary</a> {"appid":440}</code></pre></li>
+      <li class="call"><span class="who">Steam returns</span><pre><code>{"appid":440,"player_count":102022}
+{"appid":440,"review_score_desc":"Very Positive",
+ "total_reviews":1258222,"positive_percentage":91}</code></pre></li>
+      <li><span class="who">The agent answers</span><p><strong>102,022</strong> people are in TF2 right now. Reviews are Very Positive: 91% of 1,258,222.</p></li>
+    </ol>
+  </section>
+
+  <section class="wrap band" id="setup" aria-labelledby="setup-h">
+    <h2 id="setup-h">Add it to your MCP client</h2>
+    <p class="lede">Requires Node.js 22 or later. Nothing to clone or build: your client starts the server with <code>npx</code>.</p>
+    <div class="tabs" data-tabs>
+      <div class="tablist" role="tablist" aria-label="MCP client" hidden>
+        <button type="button" role="tab" id="tab-cursor" aria-controls="panel-cursor" aria-selected="true">Cursor</button>
+        <button type="button" role="tab" id="tab-claude-code" aria-controls="panel-claude-code" aria-selected="false" tabindex="-1">Claude Code</button>
+        <button type="button" role="tab" id="tab-claude-desktop" aria-controls="panel-claude-desktop" aria-selected="false" tabindex="-1">Claude Desktop</button>
+        <button type="button" role="tab" id="tab-vscode" aria-controls="panel-vscode" aria-selected="false" tabindex="-1">VS Code</button>
+        <button type="button" role="tab" id="tab-windsurf" aria-controls="panel-windsurf" aria-selected="false" tabindex="-1">Windsurf</button>
+        <button type="button" role="tab" id="tab-http" aria-controls="panel-http" aria-selected="false" tabindex="-1">HTTP</button>
+      </div>
+      <div class="panel" role="tabpanel" id="panel-cursor" aria-labelledby="tab-cursor">
+        <h3 class="panel-title">Cursor</h3>
+        <div class="code"><pre><code>{
+  &quot;mcpServers&quot;: {
+    &quot;steam&quot;: {
+      &quot;command&quot;: &quot;npx&quot;,
+      &quot;args&quot;: [&quot;-y&quot;, &quot;@tmhs/steam-mcp&quot;],
+      &quot;env&quot;: { &quot;STEAM_API_KEY&quot;: &quot;your_key_here&quot; }
+    }
+  }
+}</code></pre><button type="button" class="copy" data-copy hidden aria-label="Copy Cursor setup">Copy</button></div>
+        <p>Save as <code>.cursor/mcp.json</code> in a project, or <code>~/.cursor/mcp.json</code> for all projects. Pair it with the <a href="https://tmhsdigital.github.io/Steam-Cursor-Plugin/">Steam Developer Tools</a> plugin for skills that use these tools.</p>
+      </div>
+      <div class="panel" role="tabpanel" id="panel-claude-code" aria-labelledby="tab-claude-code">
+        <h3 class="panel-title">Claude Code</h3>
+        <div class="code"><pre><code>claude mcp add steam -e STEAM_API_KEY=your_key_here -- npx -y @tmhs/steam-mcp</code></pre><button type="button" class="copy" data-copy hidden aria-label="Copy Claude Code setup">Copy</button></div>
+        <p>Run once in a terminal. Leave out <code>-e STEAM_API_KEY=...</code> to start with the keyless tools only.</p>
+      </div>
+      <div class="panel" role="tabpanel" id="panel-claude-desktop" aria-labelledby="tab-claude-desktop">
+        <h3 class="panel-title">Claude Desktop</h3>
+        <div class="code"><pre><code>{
+  &quot;mcpServers&quot;: {
+    &quot;steam&quot;: {
+      &quot;command&quot;: &quot;npx&quot;,
+      &quot;args&quot;: [&quot;-y&quot;, &quot;@tmhs/steam-mcp&quot;],
+      &quot;env&quot;: { &quot;STEAM_API_KEY&quot;: &quot;your_key_here&quot; }
+    }
+  }
+}</code></pre><button type="button" class="copy" data-copy hidden aria-label="Copy Claude Desktop setup">Copy</button></div>
+        <p>Add to <code>claude_desktop_config.json</code> (Settings, Developer, Edit Config), then restart Claude Desktop.</p>
+      </div>
+      <div class="panel" role="tabpanel" id="panel-vscode" aria-labelledby="tab-vscode">
+        <h3 class="panel-title">VS Code</h3>
+        <div class="code"><pre><code>{
+  &quot;servers&quot;: {
+    &quot;steam&quot;: {
+      &quot;type&quot;: &quot;stdio&quot;,
+      &quot;command&quot;: &quot;npx&quot;,
+      &quot;args&quot;: [&quot;-y&quot;, &quot;@tmhs/steam-mcp&quot;],
+      &quot;env&quot;: { &quot;STEAM_API_KEY&quot;: &quot;your_key_here&quot; }
+    }
+  }
+}</code></pre><button type="button" class="copy" data-copy hidden aria-label="Copy VS Code setup">Copy</button></div>
+        <p>Save as <code>.vscode/mcp.json</code>. VS Code uses a <code>servers</code> key, not <code>mcpServers</code>.</p>
+      </div>
+      <div class="panel" role="tabpanel" id="panel-windsurf" aria-labelledby="tab-windsurf">
+        <h3 class="panel-title">Windsurf</h3>
+        <div class="code"><pre><code>{
+  &quot;mcpServers&quot;: {
+    &quot;steam&quot;: {
+      &quot;command&quot;: &quot;npx&quot;,
+      &quot;args&quot;: [&quot;-y&quot;, &quot;@tmhs/steam-mcp&quot;],
+      &quot;env&quot;: { &quot;STEAM_API_KEY&quot;: &quot;your_key_here&quot; }
+    }
+  }
+}</code></pre><button type="button" class="copy" data-copy hidden aria-label="Copy Windsurf setup">Copy</button></div>
+        <p>Add to <code>~/.codeium/windsurf/mcp_config.json</code>.</p>
+      </div>
+      <div class="panel" role="tabpanel" id="panel-http" aria-labelledby="tab-http">
+        <h3 class="panel-title">HTTP</h3>
+        <div class="code"><pre><code>npx -y @tmhs/steam-mcp --transport http --port 3000
+# serves http://127.0.0.1:3000/mcp, GET /healthz returns {&quot;ok&quot;:true}</code></pre><button type="button" class="copy" data-copy hidden aria-label="Copy HTTP setup">Copy</button></div>
+        <p>Stateless Streamable HTTP for hosted or team setups. Binds to 127.0.0.1 unless you pass <code>--host</code>, refuses Host headers outside <code>STEAM_MCP_ALLOWED_HOSTS</code>, never takes a key from clients, and keeps write tools off unless <code>STEAM_MCP_HTTP_ALLOW_WRITES=1</code>. A <code>Dockerfile</code> is in the repo.</p>
+      </div>
+    </div>
+    <div class="keys">
+      <h3>Which key do you need?</h3>
+      <ul>
+        <li><span class="sw k-none" aria-hidden="true"></span><strong>None</strong> for store lookups, search, player counts, prices, reviews, news, Deck status, and art checks. Leave <code>STEAM_API_KEY</code> out.</li>
+        <li><span class="sw k-key" aria-hidden="true"></span><strong>A free Steam Web API key</strong> from <a href="https://steamcommunity.com/dev/apikey">steamcommunity.com/dev/apikey</a> for profiles, libraries, player achievements, Workshop search, and bans.</li>
+        <li><span class="sw k-publisher" aria-hidden="true"></span><strong>A publisher key</strong> from Steamworks, with the server's IP allowlisted, for leaderboards, betas, builds, ownership, inventory, and every write tool.</li>
+        <li><span class="sw k-financial" aria-hidden="true"></span><strong>A Financial API Group key</strong> for sales reports. Set it as <code>STEAM_FINANCIAL_API_KEY</code>.</li>
+      </ul>
+      <p>The server reads keys from its own environment only. It does not load a <code>.env</code> file.</p>
+    </div>
+  </section>
+
+  <section class="wrap band" id="toolsets" aria-labelledby="toolsets-h">
+    <h2 id="toolsets-h">Load only the toolsets you use</h2>
+    <p class="lede">Fewer tools means less for the agent to read on every turn. Set <code>STEAM_MCP_TOOLSETS</code> to a comma-separated list. The <code>steam://server-info</code> resource tells the agent which toolsets are off, so it can explain a missing tool.</p>
+    <div class="table">
+      <table>
+        <thead><tr><th scope="col">Toolset</th><th scope="col">Tools</th><th scope="col">Covers</th><th scope="col">Default</th></tr></thead>
+        <tbody>
+        <tr><th scope="row"><code>store</code></th><td>12</td><td>Store pages, search, player counts, prices, reviews, news, Deck status, featured lists.</td><td>On</td></tr>
+        <tr><th scope="row"><code>community</code></th><td>8</td><td>Profiles, libraries, player achievements and stats, Workshop, bans.</td><td>On</td></tr>
+        <tr><th scope="row"><code>publisher</code></th><td>10</td><td>Leaderboards, achievement schemas, global stats, betas, builds, ownership, inventory, sales.</td><td>On</td></tr>
+        <tr><th scope="row"><code>assets</code></th><td>2</td><td>Check capsule, hero, logo, and icon art against Valve's sizes before you upload.</td><td>On</td></tr>
+        <tr><th scope="row"><code>sdk</code></th><td>2</td><td>C++, C#, and GDScript for lobbies and Workshop uploads, which need the Steamworks SDK.</td><td>On</td></tr>
+        <tr><th scope="row"><code>mutations</code></th><td>5</td><td>Set or clear achievements, upload scores, grant items, edit Workshop metadata.</td><td><strong class="warn">Off</strong></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="code"><pre><code>&quot;env&quot;: { &quot;STEAM_API_KEY&quot;: &quot;your_key_here&quot;, &quot;STEAM_MCP_TOOLSETS&quot;: &quot;store,publisher,mutations&quot; }</code></pre><button type="button" class="copy" data-copy hidden aria-label="Copy toolset example">Copy</button></div>
+  </section>
+
+  <section class="wrap band" id="writes" aria-labelledby="writes-h">
+    <h2 id="writes-h">Write tools do nothing until you confirm</h2>
+    <p class="lede">The 5 tools that change live Steam data are off by default. When you turn them on, every call is a dry run that returns a plan and sends nothing. A live call needs both <code>dry_run: false</code> and <code>confirm: true</code>; without <code>confirm</code> it is refused with <code>[CONFIRM_REQUIRED]</code>.</p>
+    <div class="pair">
+      <figure>
+        <figcaption>Refused: nothing is sent</figcaption>
+        <div class="code"><pre><code>{
+  &quot;appid&quot;: 480,
+  &quot;steamid&quot;: &quot;76561197960435530&quot;,
+  &quot;achievement&quot;: &quot;ACH_WIN_ONE_GAME&quot;,
+  &quot;dry_run&quot;: false
+}</code></pre><button type="button" class="copy" data-copy hidden aria-label="Copy refused call">Copy</button></div>
+      </figure>
+      <figure>
+        <figcaption>Sent to the Partner API</figcaption>
+        <div class="code"><pre><code>{
+  &quot;appid&quot;: 480,
+  &quot;steamid&quot;: &quot;76561197960435530&quot;,
+  &quot;achievement&quot;: &quot;ACH_WIN_ONE_GAME&quot;,
+  &quot;dry_run&quot;: false,
+  &quot;confirm&quot;: true
+}</code></pre><button type="button" class="copy" data-copy hidden aria-label="Copy confirmed call">Copy</button></div>
+      </figure>
+    </div>
+    <p>Write tools take a literal Steam64 ID, never a vanity name, so a lookup mistake cannot redirect a change. Reviews, Workshop text, and news come back labeled as third-party content, for the agent to summarize rather than follow. See <a href="https://github.com/TMHSDigital/steam-mcp/blob/main/SECURITY.md">SECURITY.md</a> to report a vulnerability.</p>
+  </section>
+
+  <section class="wrap band two" aria-labelledby="prompts-h">
+    <div>
+      <h2 id="prompts-h">Prompts</h2>
+      <p>Ready-made workflows that most clients show as slash commands. Each one tells the agent which tools to chain and what to report.</p>
+      <ul class="defs">
+        <li><code>competitor-snapshot</code><span>Compare several Steam games: price, reviews, live players, and recent news.</span></li>
+        <li><code>achievement-health</code><span>Find achievements that look unobtainable, trivial, or badly described.</span></li>
+        <li><code>review-digest</code><span>Summarize recent Steam reviews into themes, with quotes and counts.</span></li>
+        <li><code>regional-price-audit</code><span>Check an app's regional prices for outliers before a sale or price change.</span></li>
+        <li><code>launch-readiness</code><span>Pass/fail checklist for a store page: local art folder plus the live store listing.</span></li>
+        <li><code>workshop-health</code><span>See what is trending, what is top-rated, and whether top items are going stale.</span></li>
+      </ul>
+    </div>
+    <div>
+      <h2>Resources</h2>
+      <p>Reference data the agent can read instead of guessing.</p>
+      <ul class="defs">
+        <li><code>steam://specs/store-assets</code><span>Pixel sizes, formats, and alpha rules for every slot steam_validateStoreAsset checks.</span></li>
+        <li><code>steam://enums/eresult</code><span>What common EResult numbers in Steam errors and X-eresult headers mean.</span></li>
+        <li><code>steam://enums/ugc-query-type</code><span>steam_queryWorkshop sort names and the EPublishedFileQueryType values they map to.</span></li>
+        <li><code>steam://enums/review-filters</code><span>steam_getReviews filter, review_type, and purchase_type names and their GetAppReviews enum values.</span></li>
+        <li><code>steam://app/{appid}/summary</code><span>Compact store summary for an app (the same as steam_getAppDetails' default output).</span></li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="wrap band" id="config" aria-labelledby="config-h">
+    <h2 id="config-h">Configuration</h2>
+    <p class="lede">Every setting is an environment variable in your client's <code>env</code> block. These are the common ones; the <a href="https://github.com/TMHSDigital/steam-mcp#configuration">README</a> and <a href="https://github.com/TMHSDigital/steam-mcp/blob/main/.env.example"><code>.env.example</code></a> list every setting, including HTTP host and port.</p>
+    <div class="table">
+      <table>
+        <thead><tr><th scope="col">Variable</th><th scope="col">Default</th><th scope="col">What it does</th></tr></thead>
+        <tbody>
+        <tr><th scope="row"><code>STEAM_API_KEY</code></th><td>unset</td><td>Steam Web API key. Leaderboard, partner, and write tools need a publisher key with the server's IP allowlisted.</td></tr>
+        <tr><th scope="row"><code>STEAM_FINANCIAL_API_KEY</code></th><td>STEAM_API_KEY</td><td>Financial API Group key for the two sales tools.</td></tr>
+        <tr><th scope="row"><code>STEAM_MCP_TOOLSETS</code></th><td>all but mutations</td><td>Comma-separated toolsets to load, or <code>all</code>.</td></tr>
+        <tr><th scope="row"><code>STEAM_MCP_READ_ONLY</code></th><td>unset</td><td><code>1</code> removes <code>mutations</code> even if it is listed.</td></tr>
+        <tr><th scope="row"><code>STEAM_MCP_CACHE_TTL</code></th><td>per endpoint</td><td><code>0</code> turns off the in-memory cache. Any other number of seconds replaces every TTL.</td></tr>
+        <tr><th scope="row"><code>STEAM_MCP_DEBUG</code></th><td>unset</td><td><code>1</code> logs each Steam request (host, path, query keys, status, latency) to stderr. Never logs values.</td></tr>
+        <tr><th scope="row"><code>STEAM_MCP_TRANSPORT</code></th><td>stdio</td><td><code>stdio</code> or <code>http</code>, same as <code>--transport</code>.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="wrap band companion" aria-labelledby="companion-h">
+    <h2 id="companion-h">Use it with Steam Developer Tools</h2>
+    <p>This server is the live-data half of <a href="https://tmhsdigital.github.io/Steam-Cursor-Plugin/">Steam Developer Tools</a>, a Cursor plugin with 30 skills and 9 rules for Steamworks development. The skills call these tools to check real store pages, stats, and leaderboards while you build.</p>
+  </section>
+</main>
+<footer class="wrap foot">
+  <p>Steam MCP Server 0.9.0. License <a href="https://github.com/TMHSDigital/steam-mcp/blob/main/LICENSE">CC BY-NC-ND 4.0</a>. Built by <a href="https://github.com/TMHSDigital">TMHSDigital</a>.</p>
+  <p>Not affiliated with Valve. Steam and Steamworks are trademarks of Valve Corporation.</p>
+  <p><a href="https://github.com/TMHSDigital/steam-mcp">GitHub</a> <a href="https://www.npmjs.com/package/@tmhs/steam-mcp">npm</a> <a href="https://github.com/TMHSDigital/steam-mcp/blob/main/CHANGELOG.md">Changelog</a> <a href="https://github.com/TMHSDigital/steam-mcp/issues">Issues</a></p>
+</footer>
+</body>
+</html>

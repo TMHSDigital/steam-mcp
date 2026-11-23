@@ -20,6 +20,7 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "contract": "node scripts/contract-check.mjs",
+    "site": "tsx site/write.ts",
     "prepublishOnly": "npm run build",
     "typecheck": "tsc -p tsconfig.test.json"
   },

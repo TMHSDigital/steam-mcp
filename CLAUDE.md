@@ -36,6 +36,10 @@ src/
     annotations.ts       MCP tool annotation presets (READ_ONLY, LOCAL_ONLY, LIVE_WRITE)
     reviews.ts           IUserReviewsService/GetAppReviews client and enum mapping
     errors.ts            Custom error classes (rate limit, missing key, unavailable)
+site/
+  build.ts               Renders the GitHub Pages HTML from the real registrations
+  write.ts               `npm run site` writes it to docs/
+docs/                    GitHub Pages site (generated HTML + hand-written styles.css, site.js, fonts, assets)
 ```
 
 **Key patterns:**
@@ -55,7 +59,10 @@ npm install
 npm run build     # tsc - outputs to dist/
 npm start         # node dist/index.js (stdio transport)
 npm run dev       # tsx watch for development
+npm run site      # regenerate the GitHub Pages HTML in docs/ (commit it)
 ```
+
+The site (https://tmhsdigital.github.io/steam-mcp/) is deployed by `.github/workflows/pages.yml` on pushes to `main` that touch `docs/`. Tool names, counts, and key badges come from the registrations; a tool's key badge is read from its description ("No API key required", "Requires STEAM_API_KEY", "publisher key", "Financial API Group key"), so a new tool must say which key it needs. `site/build.test.ts` fails when `docs/` is stale: run `npm run site` after changing tools, prompts, resources, or site copy.
 
 ## How to test
 
