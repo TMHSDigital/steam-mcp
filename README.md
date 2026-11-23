@@ -381,6 +381,10 @@ Partner-admin tools (`steam_partnerLogin`, `steam_uploadStoreImage`, `steam_uplo
 
 - [Steam Developer Tools](https://github.com/TMHSDigital/Steam-Cursor-Plugin) - Cursor IDE plugin with 30 skills and 9 rules for Steam/Steamworks development
 
+## Support the project
+
+If the server saves you or your studio time, you can fund its development through [GitHub Sponsors](https://github.com/sponsors/TMHSDigital). Bug reports and feature requests go in [Issues](https://github.com/TMHSDigital/steam-mcp/issues).
+
 ## License
 
 CC BY-ND 4.0. See [LICENSE](LICENSE).
