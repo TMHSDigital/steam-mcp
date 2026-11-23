@@ -1,5 +1,6 @@
-import { existsSync, readFileSync, statSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { basename } from "node:path";
+import { MAX_FILE_BYTES, readLocalFile, requireKind } from "../storeAssets/safePath.js";
 import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { errorResponse } from "../utils/steam-api.js";
@@ -122,7 +123,7 @@ export function registerUploadStoreImage(server: McpServer): void {
 
         let bytes = 0;
         try {
-          bytes = statSync(path).size;
+          bytes = requireKind(path, "file").size;
         } catch (error) {
           return errorResponse(error);
         }
@@ -159,7 +160,7 @@ export function registerUploadStoreImage(server: McpServer): void {
 
         jar = parseCookieJar(readFileSync(cookies, "utf8"));
         const cookieHeader = cookieHeaderFor(jar, new URL(url).hostname);
-        const buf = readFileSync(path);
+        const buf = readLocalFile(path, MAX_FILE_BYTES);
         const body = new FormData();
         body.append(formKey, new File([buf], basename(path)));
 
@@ -256,10 +257,12 @@ export function registerUploadTrailer(server: McpServer): void {
         };
       }
 
-      if (!existsSync(path)) {
-        return errorResponse(new Error(`Trailer file not found: ${path}`));
+      let bytes: number;
+      try {
+        bytes = requireKind(path, "file").size;
+      } catch (error) {
+        return errorResponse(error);
       }
-      const bytes = statSync(path).size;
 
       return {
         content: [

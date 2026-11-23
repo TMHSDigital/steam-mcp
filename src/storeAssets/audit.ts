@@ -1,5 +1,6 @@
-import { readdirSync, readFileSync, statSync } from "node:fs";
+import { readdirSync } from "node:fs";
 import { join } from "node:path";
+import { readLocalFile, requireKind } from "./safePath.js";
 import { SLOT_SPECS, type StoreAssetSlot } from "./slots.js";
 import { parseImage } from "./png.js";
 import { validateStoreAsset, MAX_FILE_BYTES, type StoreAssetValidation } from "./validate.js";
@@ -68,8 +69,7 @@ export function inferSlot(path: string, name: string): { slot?: StoreAssetSlot; 
     if (pattern.test(key)) return { slot, by: "name" };
   }
   try {
-    if (statSync(path).size > MAX_FILE_BYTES) return { by: "none" };
-    const { width, height } = parseImage(readFileSync(path), false);
+    const { width, height } = parseImage(readLocalFile(path, MAX_FILE_BYTES), false);
     const slot = slotBySize(width, height);
     return slot ? { slot, by: "size" } : { by: "none" };
   } catch {
@@ -88,7 +88,7 @@ export interface StoreAssetDirAudit {
 }
 
 export function auditStoreAssetDir(directory: string): StoreAssetDirAudit {
-  const names = readdirSync(directory).filter((n) => IMAGE.test(n)).sort();
+  const names = readdirSync(requireKind(directory, "directory").path).filter((n) => IMAGE.test(n)).sort();
   const files: StoreAssetDirAudit["files"] = [];
   const unrecognized: string[] = [];
 

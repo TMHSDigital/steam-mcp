@@ -30,6 +30,7 @@ src/
     png.ts               PNG/JPEG header parse plus PNG pixel decode
     heroHeuristics.ts    Library-hero ribbon / seam / wordmark checks
     validate.ts          Pure validateStoreAsset(path, slot)
+    safePath.ts          Every local file read goes through here: refuses network/device paths and links, caps size
   utils/
     steam-api.ts         Shared fetch wrapper, URL builders, API key helper, error formatting
     confirm.ts           Shared dry_run/confirm gate for any live mutation

@@ -1,4 +1,4 @@
-import { statSync } from "node:fs";
+import { kindOf } from "../storeAssets/safePath.js";
 import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { errorResponse } from "../utils/steam-api.js";
@@ -32,12 +32,9 @@ export function register(server: McpServer): void {
     },
     async ({ path, slot }) => {
       try {
-        let isDirectory = false;
-        try {
-          isDirectory = statSync(path).isDirectory();
-        } catch {
-          // Missing paths fall through to validateStoreAsset, which reports IO.
-        }
+        // kindOf rejects network and device paths before touching the disk.
+        // Missing paths fall through to validateStoreAsset, which reports IO.
+        const isDirectory = kindOf(path) === "directory";
         if (isDirectory && slot !== "achievementIcon") {
           return errorResponse(
             new Error(`${path} is a directory. Only slot achievementIcon accepts a directory.`),

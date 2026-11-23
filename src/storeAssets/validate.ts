@@ -1,11 +1,11 @@
-import { readFileSync, readdirSync, statSync } from "node:fs";
+import { readdirSync } from "node:fs";
 import { join } from "node:path";
+import { FileTooLargeError, LocalPathError, MAX_FILE_BYTES, readLocalFile, requireKind } from "./safePath.js";
 import { SLOT_SPECS, type StoreAssetSlot } from "./slots.js";
 import { parseImage, UnsupportedPixelFormatError } from "./png.js";
 import { analyzeHero } from "./heroHeuristics.js";
 
-/** Files above this are refused before reading. Steam store images are far smaller. */
-export const MAX_FILE_BYTES = 50 * 1024 * 1024;
+export { MAX_FILE_BYTES };
 
 export type ValidationIssue = {
   code: string;
@@ -38,19 +38,18 @@ export function validateStoreAsset(path: string, slot: StoreAssetSlot): StoreAss
 
   let buf: Buffer;
   try {
-    const bytes = statSync(path).size;
-    if (bytes > MAX_FILE_BYTES) {
+    buf = readLocalFile(path, MAX_FILE_BYTES);
+  } catch (error) {
+    if (error instanceof FileTooLargeError) {
       errors.push({
         code: "FILE_SIZE",
-        message: `File is ${bytes} bytes; store images over ${MAX_FILE_BYTES} bytes are rejected without reading.`,
+        message: `File is ${error.bytes} bytes; store images over ${MAX_FILE_BYTES} bytes are rejected without reading.`,
       });
       return result;
     }
-    buf = readFileSync(path);
-  } catch (error) {
     errors.push({
       code: "IO",
-      message: `Cannot read file: ${error instanceof Error ? error.message : String(error)}`,
+      message: `Cannot read file: ${error instanceof LocalPathError ? error.message : "unexpected error"}`,
     });
     return result;
   }
@@ -202,7 +201,7 @@ const PAIR_SUFFIX = /^(.*)_(achieved|unachieved)$/i;
  * and check that each `<name>_achieved` has a matching `<name>_unachieved`.
  */
 export function validateAchievementIconDir(directory: string): AchievementIconSetValidation {
-  const names = readdirSync(directory).filter((n) => ICON_EXT.test(n)).sort();
+  const names = readdirSync(requireKind(directory, "directory").path).filter((n) => ICON_EXT.test(n)).sort();
   const files = names.map((n) => validateStoreAsset(join(directory, n), "achievementIcon"));
 
   const pairs = new Map<string, Set<string>>();
