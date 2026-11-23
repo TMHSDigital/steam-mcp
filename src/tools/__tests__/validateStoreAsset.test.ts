@@ -115,9 +115,17 @@ describe("validateStoreAsset sizes", () => {
     const path = tmpPng("hero.png", 1920, 620, solid(20, 20, 30));
     const v = validateStoreAsset(path, "libraryHero");
     expect(v.ok).toBe(false);
-    expect(v.errors.some((e) => e.code === "SIZE_HALF" || e.code === "SIZE")).toBe(
-      true,
-    );
+    expect(v.errors.map((e) => e.code)).toEqual(expect.arrayContaining(["SIZE", "SIZE_HALF"]));
+    expect(v.errors.find((e) => e.code === "SIZE_HALF")?.message).toMatch(/auto-generated half-size/);
+  });
+
+  it("flags any exact slot exported at exactly half size", () => {
+    const v = validateStoreAsset(tmpPng("header.png", 460, 215, solid(1, 2, 3)), "headerCapsule");
+    expect(v.errors.map((e) => e.code)).toEqual(expect.arrayContaining(["SIZE", "SIZE_HALF"]));
+    expect(v.errors.find((e) => e.code === "SIZE_HALF")?.message).toMatch(/exactly half the required 920x430/);
+    // Off by one pixel is a plain size error, not a half-size one.
+    const near = validateStoreAsset(tmpPng("header.png", 461, 215, solid(1, 2, 3)), "headerCapsule");
+    expect(near.errors.map((e) => e.code)).toEqual(["SIZE"]);
   });
 
   it("reports IO error for missing file", () => {

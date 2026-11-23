@@ -1,24 +1,15 @@
 import { readdirSync } from "node:fs";
 import { join } from "node:path";
 import { readLocalFile, requireKind } from "./safePath.js";
-import { SLOT_SPECS, type StoreAssetSlot } from "./slots.js";
+import { REQUIRED_SLOTS, SCREENSHOT_RULES, SLOT_SPECS, type StoreAssetSlot } from "./slots.js";
 import { parseImage } from "./png.js";
 import { validateStoreAsset, MAX_FILE_BYTES, type StoreAssetValidation } from "./validate.js";
 
 // Store-page launch readiness: validate every image in a folder and report
 // which required store and library slots are still missing.
 
-export const REQUIRED_SLOTS: StoreAssetSlot[] = [
-  "headerCapsule",
-  "smallCapsule",
-  "mainCapsule",
-  "verticalCapsule",
-  "libraryCapsule",
-  "libraryHero",
-  "libraryLogo",
-];
-
-export const MIN_SCREENSHOTS = 5;
+export { REQUIRED_SLOTS };
+export const MIN_SCREENSHOTS = SCREENSHOT_RULES.minCount;
 
 /** Filename hints, most specific first. Matched against the lowercased name without separators. */
 const NAME_HINTS: Array<[RegExp, StoreAssetSlot]> = [
@@ -56,8 +47,10 @@ function slotBySize(width: number, height: number): StoreAssetSlot | undefined {
   );
   // headerCapsule and libraryHeader share 920x430; prefer the store header.
   if (exact.length) return exact[0][0];
-  if (width >= 1920 && Math.abs(width / height - 16 / 9) < 0.02) return "screenshot";
-  if (width === 1280 || height === 720) return "libraryLogo";
+  const { minWidth, aspect, aspectTolerance } = SCREENSHOT_RULES;
+  if (width >= minWidth && Math.abs(width / height - aspect[0] / aspect[1]) < aspectTolerance) return "screenshot";
+  const logo = SLOT_SPECS.libraryLogo;
+  if (width === logo.width || height === logo.height) return "libraryLogo";
   return undefined;
 }
 

@@ -1,7 +1,7 @@
 import { readdirSync } from "node:fs";
 import { join } from "node:path";
 import { FileTooLargeError, LocalPathError, MAX_FILE_BYTES, readLocalFile, requireKind } from "./safePath.js";
-import { SLOT_SPECS, type StoreAssetSlot } from "./slots.js";
+import { SCREENSHOT_RULES, SLOT_SPECS, type StoreAssetSlot } from "./slots.js";
 import { parseImage, UnsupportedPixelFormatError } from "./png.js";
 import { analyzeHero } from "./heroHeuristics.js";
 
@@ -106,43 +106,46 @@ export function validateStoreAsset(path: string, slot: StoreAssetSlot): StoreAss
     });
   }
 
-  if (spec.kind === "exact" && spec.width && spec.height) {
+  if (spec.kind === "exact") {
     if (image.width !== spec.width || image.height !== spec.height) {
       errors.push({
         code: "SIZE",
         message: `${slot} must be ${spec.width}x${spec.height} (got ${image.width}x${image.height}).`,
       });
     }
-    if (slot === "libraryHero" && image.width === 1920 && image.height === 620) {
+    if (image.width * 2 === spec.width && image.height * 2 === spec.height) {
       errors.push({
         code: "SIZE_HALF",
         message:
-          "libraryHero 1920x620 is Valve's auto-generated half-size. Upload the 3840x1240 PNG.",
+          slot === "libraryHero"
+            ? `libraryHero ${image.width}x${image.height} is Valve's auto-generated half-size. Upload the ${spec.width}x${spec.height} PNG.`
+            : `${slot} ${image.width}x${image.height} is exactly half the required ${spec.width}x${spec.height}. Export at full size.`,
       });
     }
   }
 
   if (spec.kind === "logo") {
-    if (image.width !== 1280 && image.height !== 720) {
+    if (image.width !== spec.width && image.height !== spec.height) {
       errors.push({
         code: "SIZE",
-        message: `libraryLogo must be 1280px wide and/or 720px tall (got ${image.width}x${image.height}).`,
+        message: `${slot} must be ${spec.width}px wide and/or ${spec.height}px tall (got ${image.width}x${image.height}).`,
       });
     }
   }
 
   if (spec.kind === "screenshot") {
-    if (image.width < 1920 || image.height < 1080) {
+    const { minWidth, minHeight, aspect, aspectTolerance } = SCREENSHOT_RULES;
+    if (image.width < minWidth || image.height < minHeight) {
       errors.push({
         code: "SIZE",
-        message: `screenshot must be at least 1920x1080 (got ${image.width}x${image.height}).`,
+        message: `screenshot must be at least ${minWidth}x${minHeight} (got ${image.width}x${image.height}).`,
       });
     }
     const ratio = image.width / image.height;
-    if (Math.abs(ratio - 16 / 9) > 0.02) {
+    if (Math.abs(ratio - aspect[0] / aspect[1]) > aspectTolerance) {
       errors.push({
         code: "ASPECT",
-        message: `screenshot must be 16:9 (got ${image.width}x${image.height}, ratio ${ratio.toFixed(3)}).`,
+        message: `screenshot must be ${aspect[0]}:${aspect[1]} (got ${image.width}x${image.height}, ratio ${ratio.toFixed(3)}).`,
       });
     }
   }

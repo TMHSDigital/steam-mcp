@@ -26,7 +26,8 @@ src/
     validateStoreAsset.ts
     ...
   storeAssets/
-    slots.ts             Valve pixel sizes and unofficial Partner form field names
+    store-specs.json     The only place slot sizes live (verified date + Valve sources); a test fails on copies in code
+    slots.ts             Loads store-specs.json; unofficial Partner form field names
     png.ts               PNG/JPEG header parse plus PNG pixel decode
     heroHeuristics.ts    Library-hero ribbon / seam / wordmark checks
     validate.ts          Pure validateStoreAsset(path, slot)

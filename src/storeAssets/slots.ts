@@ -1,3 +1,5 @@
+import specs from "./store-specs.json" with { type: "json" };
+
 export const STORE_ASSET_SLOTS = [
   "headerCapsule",
   "smallCapsule",
@@ -18,31 +20,54 @@ export const STORE_ASSET_SLOTS = [
 export type StoreAssetSlot = (typeof STORE_ASSET_SLOTS)[number];
 
 export type SlotSpec = {
-  width?: number;
-  height?: number;
-  /** Screenshot: min size + 16:9. Logo: width===1280 OR height===720. */
+  /**
+   * exact: width x height. logo: width wide and/or height tall.
+   * screenshot: at least width x height at the screenshots aspect.
+   */
   kind: "exact" | "screenshot" | "logo";
+  width: number;
+  height: number;
   formats: Array<"png" | "jpeg">;
   requireAlpha?: boolean;
+  required: boolean;
+  rules?: string;
 };
 
-export const SLOT_SPECS: Record<StoreAssetSlot, SlotSpec> = {
-  headerCapsule: { kind: "exact", width: 920, height: 430, formats: ["png", "jpeg"] },
-  smallCapsule: { kind: "exact", width: 462, height: 174, formats: ["png", "jpeg"] },
-  mainCapsule: { kind: "exact", width: 1232, height: 706, formats: ["png", "jpeg"] },
-  verticalCapsule: { kind: "exact", width: 748, height: 896, formats: ["png", "jpeg"] },
-  libraryCapsule: { kind: "exact", width: 600, height: 900, formats: ["png", "jpeg"] },
-  libraryHero: { kind: "exact", width: 3840, height: 1240, formats: ["png"] },
-  libraryLogo: { kind: "logo", formats: ["png"], requireAlpha: true },
-  libraryHeader: { kind: "exact", width: 920, height: 430, formats: ["png", "jpeg"] },
-  screenshot: { kind: "screenshot", formats: ["png", "jpeg"] },
-  pageBackground: { kind: "exact", width: 1438, height: 810, formats: ["png", "jpeg"] },
-  // Each achievement needs an achieved and an unachieved icon.
-  achievementIcon: { kind: "exact", width: 256, height: 256, formats: ["jpeg"] },
-  communityIcon: { kind: "exact", width: 184, height: 184, formats: ["jpeg"] },
-  eventCover: { kind: "exact", width: 800, height: 450, formats: ["png", "jpeg"] },
-  eventHeader: { kind: "exact", width: 1920, height: 622, formats: ["png", "jpeg"] },
+type SpecFile = {
+  verified: string;
+  sources: string[];
+  slots: Array<SlotSpec & { slot: string }>;
+  screenshots: {
+    minWidth: number;
+    minHeight: number;
+    aspect: [number, number];
+    aspectTolerance: number;
+    minCount: number;
+    recommendedCount: number;
+  };
 };
+
+// Every size lives in store-specs.json (the shared Game-Systems store-specs
+// contract). Nothing else in the code base may hard-code a slot size.
+const specFile = specs as unknown as SpecFile;
+
+function loadSlots(): Record<StoreAssetSlot, SlotSpec> {
+  const names = specFile.slots.map((s) => s.slot);
+  const expected: readonly string[] = STORE_ASSET_SLOTS;
+  if (names.length !== expected.length || !expected.every((n) => names.includes(n))) {
+    throw new Error(`store-specs.json slots (${names.join(", ")}) do not match STORE_ASSET_SLOTS.`);
+  }
+  return Object.fromEntries(specFile.slots.map(({ slot, ...spec }) => [slot, spec])) as Record<
+    StoreAssetSlot,
+    SlotSpec
+  >;
+}
+
+export const SLOT_SPECS = loadSlots();
+export const SCREENSHOT_RULES = specFile.screenshots;
+export const SPECS_VERIFIED = specFile.verified;
+export const SPECS_SOURCES = specFile.sources;
+export const REQUIRED_SLOTS = STORE_ASSET_SLOTS.filter((s) => SLOT_SPECS[s].required);
 
 /**
  * Unofficial Partner admin FormData field names. Subject to Valve HTML changes.

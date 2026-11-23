@@ -1,0 +1,58 @@
+{
+  "verified": "2026-11-23",
+  "sources": [
+    "https://partner.steamgames.com/doc/store/assets",
+    "https://partner.steamgames.com/doc/store/assets/standard",
+    "https://partner.steamgames.com/doc/store/assets/libraryassets"
+  ],
+  "notes": "The only place store and library image sizes appear. Re-read every page in sources before changing a number, then update verified. eventHeader (1920x622) comes from the Steamworks event tools, which these pages do not cover.",
+  "slots": [
+    { "slot": "headerCapsule", "kind": "exact", "width": 920, "height": 430, "formats": ["png", "jpeg"], "required": true },
+    { "slot": "smallCapsule", "kind": "exact", "width": 462, "height": 174, "formats": ["png", "jpeg"], "required": true },
+    { "slot": "mainCapsule", "kind": "exact", "width": 1232, "height": 706, "formats": ["png", "jpeg"], "required": true },
+    { "slot": "verticalCapsule", "kind": "exact", "width": 748, "height": 896, "formats": ["png", "jpeg"], "required": true },
+    { "slot": "libraryCapsule", "kind": "exact", "width": 600, "height": 900, "formats": ["png", "jpeg"], "required": true },
+    {
+      "slot": "libraryHero",
+      "kind": "exact",
+      "width": 3840,
+      "height": 1240,
+      "formats": ["png"],
+      "required": true,
+      "rules": "Centred 860x380 safe area, no text. Steam generates the 1920x620 half size."
+    },
+    {
+      "slot": "libraryLogo",
+      "kind": "logo",
+      "width": 1280,
+      "height": 720,
+      "formats": ["png"],
+      "requireAlpha": true,
+      "required": true,
+      "rules": "Either 1280px wide and/or 720px tall. Logotype only, transparent background."
+    },
+    { "slot": "libraryHeader", "kind": "exact", "width": 920, "height": 430, "formats": ["png", "jpeg"], "required": false },
+    { "slot": "screenshot", "kind": "screenshot", "width": 1920, "height": 1080, "formats": ["png", "jpeg"], "required": false },
+    { "slot": "pageBackground", "kind": "exact", "width": 1438, "height": 810, "formats": ["png", "jpeg"], "required": false },
+    {
+      "slot": "achievementIcon",
+      "kind": "exact",
+      "width": 256,
+      "height": 256,
+      "formats": ["jpeg"],
+      "required": false,
+      "rules": "Each achievement needs an achieved and an unachieved icon."
+    },
+    { "slot": "communityIcon", "kind": "exact", "width": 184, "height": 184, "formats": ["jpeg"], "required": false },
+    { "slot": "eventCover", "kind": "exact", "width": 800, "height": 450, "formats": ["png", "jpeg"], "required": false },
+    { "slot": "eventHeader", "kind": "exact", "width": 1920, "height": 622, "formats": ["png", "jpeg"], "required": false }
+  ],
+  "screenshots": {
+    "minWidth": 1920,
+    "minHeight": 1080,
+    "aspect": [16, 9],
+    "aspectTolerance": 0.02,
+    "minCount": 5,
+    "recommendedCount": 10
+  }
+}
