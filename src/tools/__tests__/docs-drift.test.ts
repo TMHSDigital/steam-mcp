@@ -57,3 +57,22 @@ describe("documented tool counts match registrations", () => {
     );
   });
 });
+
+describe("MCP Registry server.json matches package.json", () => {
+  const pkg = JSON.parse(read("package.json"));
+  const server = JSON.parse(read("server.json"));
+
+  it("has the same name and version as the npm package", () => {
+    expect(server.name).toBe(pkg.mcpName);
+    expect(server.version).toBe(pkg.version);
+    expect(server.packages).toEqual([
+      expect.objectContaining({ registryType: "npm", identifier: pkg.name, version: pkg.version }),
+    ]);
+  });
+
+  it("stays within the registry's limits", () => {
+    expect(server.name).toMatch(/^[a-zA-Z0-9.-]+\/[a-zA-Z0-9._-]+$/);
+    expect(server.description.length).toBeLessThanOrEqual(100);
+    expect(server.title.length).toBeLessThanOrEqual(100);
+  });
+});

@@ -121,11 +121,11 @@ npm test
 The version lives only in `package.json`. Both servers read it at runtime from `src/version.ts`.
 
 1. Move the `[Unreleased]` entries in `CHANGELOG.md` under a new version heading with today's date.
-2. `npm version <patch|minor|major> --no-git-tag-version` (updates `package.json` and `package-lock.json`).
+2. `npm version <patch|minor|major> --no-git-tag-version` (updates `package.json` and `package-lock.json`), and set both `version` fields in `server.json` to the same value. `npm test` fails until they match.
 3. If the tool list changed, update the counts in `package.json` `description`, the README badge, summary line, and tool tables, and `CLAUDE.md`. `npm test` fails until they match the registered tools.
 4. If a supported-version boundary moved, update the table in `SECURITY.md`.
 5. `npm run build && npx tsc -p tsconfig.partner.json && npm run typecheck && npm test`
-6. Commit, push, and publish a GitHub release tagged `vX.Y.Z`. The publish workflow ships it to npm.
+6. Commit, push, and publish a GitHub release tagged `vX.Y.Z`. The publish workflow ships it to npm, then lists it in the official MCP Registry from `server.json`. The Docker workflow pushes `ghcr.io/tmhsdigital/steam-mcp`.
 
 ## Developer Certificate of Origin and Inbound License Grant
 

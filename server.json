@@ -1,0 +1,39 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.TMHSDigital/steam-mcp",
+  "title": "Steam MCP Server",
+  "description": "Steam Web API tools: store data, player counts, reviews, prices, Workshop, leaderboards, sales.",
+  "repository": {
+    "url": "https://github.com/TMHSDigital/steam-mcp",
+    "source": "github"
+  },
+  "websiteUrl": "https://tmhsdigital.github.io/steam-mcp/",
+  "version": "0.10.0",
+  "packages": [
+    {
+      "registryType": "npm",
+      "identifier": "@tmhs/steam-mcp",
+      "version": "0.10.0",
+      "transport": { "type": "stdio" },
+      "environmentVariables": [
+        {
+          "name": "STEAM_API_KEY",
+          "description": "Steam Web API key. Optional: the store and asset tools work without one. Publisher tools need a publisher key.",
+          "isRequired": false,
+          "isSecret": true
+        },
+        {
+          "name": "STEAM_FINANCIAL_API_KEY",
+          "description": "Financial API Group key for the sales tools. Falls back to STEAM_API_KEY.",
+          "isRequired": false,
+          "isSecret": true
+        },
+        {
+          "name": "STEAM_MCP_TOOLSETS",
+          "description": "Comma-separated toolsets to load (store, community, publisher, mutations, sdk, assets) or all.",
+          "isRequired": false
+        }
+      ]
+    }
+  ]
+}
