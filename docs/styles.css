@@ -68,7 +68,7 @@ p code, li code, td code, th code { color: #c6dbe9; overflow-wrap: anywhere; }
 /* hero */
 .hero { padding-top: 44px; padding-bottom: 56px; }
 h1 { font-size: 64px; line-height: 1; font-weight: 700; font-stretch: 76%; letter-spacing: -0.01em; max-width: 17ch; }
-.lede { margin-top: 18px; color: var(--dim); max-width: 64ch; }
+.lede { margin-top: 18px; max-width: 64ch; }
 .cta { margin-top: 26px; display: flex; flex-wrap: wrap; gap: 12px; align-items: stretch; }
 .btn { display: inline-flex; align-items: center; background: var(--blue); color: #0d1822; padding: 0 20px; min-height: 44px; border-radius: 4px; font-weight: 600; text-decoration: none; }
 .btn:hover { background: #8fd0f7; color: #0d1822; }
@@ -103,6 +103,14 @@ h2 + p, h2 + .lede { margin-top: 12px; }
 .band > p + p, .band > .lede + .code, .band > .table + .code { margin-top: 16px; }
 h3 { font-size: 19px; font-weight: 600; }
 
+/* reference zone: toolsets, prompts, resources, config, plugin. One rule
+   above the zone, smaller headings and text, tighter spacing. */
+.ref { border-top: 0; padding-top: 28px; padding-bottom: 28px; }
+.ref-first { border-top: 1px solid var(--rule); padding-top: 48px; }
+.ref h2 { font-size: 24px; font-stretch: 90%; }
+.ref .lede, .ref p { font-size: 15px; max-width: 72ch; }
+.ref:last-child { padding-bottom: 48px; }
+
 /* code blocks with copy */
 .code { position: relative; margin-top: 16px; }
 .cta .code, .npx { margin-top: 0; }
@@ -112,7 +120,7 @@ h3 { font-size: 19px; font-weight: 600; }
 
 /* example */
 .example { display: grid; grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr); gap: 56px; align-items: start; }
-.example .copy-col p { margin-top: 12px; color: var(--dim); max-width: 44ch; }
+.example .copy-col p { margin-top: 12px; max-width: 44ch; }
 .transcript { list-style: none; padding: 0; background: var(--deep); border: 1px solid var(--rule); border-radius: 6px; }
 .transcript li { padding: 16px 20px; border-top: 1px solid var(--rule); }
 .transcript li:first-child { border-top: 0; }
@@ -132,7 +140,7 @@ h3 { font-size: 19px; font-weight: 600; }
 .tablist button[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--blue); }
 .panel { padding-top: 4px; }
 .panel + .panel { margin-top: 24px; }
-.panel > p { margin-top: 12px; color: var(--dim); }
+.panel > p { margin-top: 12px; }
 .panel-title { margin-top: 12px; }
 .js .panel + .panel { margin-top: 0; }
 .js .panel-title { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
@@ -154,16 +162,16 @@ tbody th { font-weight: 400; white-space: nowrap; }
 .pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; margin-top: 24px; max-width: 900px; }
 figcaption { font-size: 14px; color: var(--dim); }
 .pair .code { margin-top: 8px; }
-#writes > p:last-child { margin-top: 20px; max-width: 80ch; color: var(--dim); }
+#writes > p:last-child { margin-top: 20px; max-width: 80ch; }
 
 /* prompts and resources */
 .two { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 56px; }
-.two p { color: var(--dim); margin-top: 10px; }
+.two p { margin-top: 10px; }
 .defs { list-style: none; padding: 0; margin-top: 18px; }
 .defs li { padding: 10px 0; border-top: 1px solid var(--rule); }
 .defs code { display: block; color: var(--blue); }
 .defs span { display: block; color: var(--dim); font-size: 15px; margin-top: 2px; }
-.companion p { margin-top: 12px; max-width: 72ch; color: var(--dim); }
+.companion p { margin-top: 12px; max-width: 72ch; }
 
 .notfound { padding-top: 64px; padding-bottom: 96px; }
 
@@ -220,6 +228,8 @@ figcaption { font-size: 14px; color: var(--dim); }
   h2 { font-size: 28px; }
   .hero { padding-top: 24px; }
   .band { padding-top: 40px; padding-bottom: 40px; }
+  .ref { padding-top: 24px; padding-bottom: 24px; }
+  .ref-first { padding-top: 40px; }
   .map { grid-template-columns: 1fr; gap: 18px; }
   .map ul { display: flex; flex-wrap: wrap; gap: 6px; }
   .chip { margin: 0; }

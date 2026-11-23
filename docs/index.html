@@ -234,25 +234,6 @@
     </div>
   </section>
 
-  <section class="wrap band" id="toolsets" aria-labelledby="toolsets-h">
-    <h2 id="toolsets-h">Toolsets</h2>
-    <p class="lede">Load only the toolsets you use. Fewer tools means less for the agent to read on every turn. Set <code>STEAM_MCP_TOOLSETS</code> to a comma-separated list. The <code>steam://server-info</code> resource tells the agent which toolsets are off, so it can explain a missing tool.</p>
-    <div class="table">
-      <table>
-        <thead><tr><th scope="col">Toolset</th><th scope="col">Tools</th><th scope="col">Covers</th><th scope="col">Default</th></tr></thead>
-        <tbody>
-        <tr><th scope="row"><code>store</code></th><td>12</td><td>Store pages, search, player counts, prices, reviews, news, Deck status, featured lists.</td><td>On</td></tr>
-        <tr><th scope="row"><code>community</code></th><td>8</td><td>Profiles, libraries, player achievements and stats, Workshop, bans.</td><td>On</td></tr>
-        <tr><th scope="row"><code>publisher</code></th><td>10</td><td>Leaderboards, achievement schemas, global stats, betas, builds, ownership, inventory, sales.</td><td>On</td></tr>
-        <tr><th scope="row"><code>assets</code></th><td>2</td><td>Check capsule, hero, logo, and icon art against Valve's sizes before you upload.</td><td>On</td></tr>
-        <tr><th scope="row"><code>sdk</code></th><td>2</td><td>C++, C#, and GDScript for lobbies and Workshop uploads, which need the Steamworks SDK.</td><td>On</td></tr>
-        <tr><th scope="row"><code>mutations</code></th><td>5</td><td>Set or clear achievements, upload scores, grant items, edit Workshop metadata.</td><td><strong class="warn">Off</strong></td></tr>
-        </tbody>
-      </table>
-    </div>
-    <div class="code"><pre><code>&quot;env&quot;: { &quot;STEAM_API_KEY&quot;: &quot;your_key_here&quot;, &quot;STEAM_MCP_TOOLSETS&quot;: &quot;store,publisher,mutations&quot; }</code></pre><button type="button" class="copy" data-copy hidden aria-label="Copy toolset example">Copy</button></div>
-  </section>
-
   <section class="wrap band" id="writes" aria-labelledby="writes-h">
     <h2 id="writes-h">Write safety</h2>
     <p class="lede">Write tools do nothing until you confirm. The 5 tools that change live Steam data are off by default. When you turn them on, every call is a dry run that returns a plan and sends nothing. A live call needs both <code>dry_run: false</code> and <code>confirm: true</code>. Without <code>confirm</code> it is refused with <code>[CONFIRM_REQUIRED]</code>.</p>
@@ -280,7 +261,26 @@
     <p>Write tools take a literal Steam64 ID, never a vanity name, so a lookup mistake cannot redirect a change. Reviews, Workshop text, and news come back labeled as third-party content, for the agent to summarize rather than follow. See <a href="https://github.com/TMHSDigital/steam-mcp/blob/main/SECURITY.md">SECURITY.md</a> to report a vulnerability.</p>
   </section>
 
-  <section class="wrap band two" aria-labelledby="prompts-h">
+  <section class="wrap band ref ref-first" id="toolsets" aria-labelledby="toolsets-h">
+    <h2 id="toolsets-h">Toolsets</h2>
+    <p class="lede">Load only the toolsets you use. Fewer tools means less for the agent to read on every turn. Set <code>STEAM_MCP_TOOLSETS</code> to a comma-separated list. The <code>steam://server-info</code> resource tells the agent which toolsets are off, so it can explain a missing tool.</p>
+    <div class="table">
+      <table>
+        <thead><tr><th scope="col">Toolset</th><th scope="col">Tools</th><th scope="col">Covers</th><th scope="col">Default</th></tr></thead>
+        <tbody>
+        <tr><th scope="row"><code>store</code></th><td>12</td><td>Store pages, search, player counts, prices, reviews, news, Deck status, featured lists.</td><td>On</td></tr>
+        <tr><th scope="row"><code>community</code></th><td>8</td><td>Profiles, libraries, player achievements and stats, Workshop, bans.</td><td>On</td></tr>
+        <tr><th scope="row"><code>publisher</code></th><td>10</td><td>Leaderboards, achievement schemas, global stats, betas, builds, ownership, inventory, sales.</td><td>On</td></tr>
+        <tr><th scope="row"><code>assets</code></th><td>2</td><td>Check capsule, hero, logo, and icon art against Valve's sizes before you upload.</td><td>On</td></tr>
+        <tr><th scope="row"><code>sdk</code></th><td>2</td><td>C++, C#, and GDScript for lobbies and Workshop uploads, which need the Steamworks SDK.</td><td>On</td></tr>
+        <tr><th scope="row"><code>mutations</code></th><td>5</td><td>Set or clear achievements, upload scores, grant items, edit Workshop metadata.</td><td><strong class="warn">Off</strong></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="code"><pre><code>&quot;env&quot;: { &quot;STEAM_API_KEY&quot;: &quot;your_key_here&quot;, &quot;STEAM_MCP_TOOLSETS&quot;: &quot;store,publisher,mutations&quot; }</code></pre><button type="button" class="copy" data-copy hidden aria-label="Copy toolset example">Copy</button></div>
+  </section>
+
+  <section class="wrap band ref two" aria-labelledby="prompts-h">
     <div>
       <h2 id="prompts-h">Prompts</h2>
       <p>Ready-made workflows that most clients show as slash commands. Each one tells the agent which tools to chain and what to report.</p>
@@ -306,7 +306,7 @@
     </div>
   </section>
 
-  <section class="wrap band" id="config" aria-labelledby="config-h">
+  <section class="wrap band ref" id="config" aria-labelledby="config-h">
     <h2 id="config-h">Configuration</h2>
     <p class="lede">Every setting is an environment variable in your client's <code>env</code> block. These are the common ones. The <a href="https://github.com/TMHSDigital/steam-mcp#configuration">README</a> and <a href="https://github.com/TMHSDigital/steam-mcp/blob/main/.env.example"><code>.env.example</code></a> list every setting, including HTTP host and port.</p>
     <div class="table">
@@ -325,7 +325,7 @@
     </div>
   </section>
 
-  <section class="wrap band companion" aria-labelledby="companion-h">
+  <section class="wrap band ref companion" aria-labelledby="companion-h">
     <h2 id="companion-h">Steam Developer Tools</h2>
     <p>This server is the live-data half of <a href="https://tmhsdigital.github.io/Steam-Cursor-Plugin/">Steam Developer Tools</a>, a Cursor plugin with 30 skills and 9 rules for Steamworks development. The skills call these tools to check real store pages, stats, and leaderboards while you build.</p>
   </section>

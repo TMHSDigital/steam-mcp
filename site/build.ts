@@ -426,20 +426,6 @@ ${nav("home")}
     </div>
   </section>
 
-  <section class="wrap band" id="toolsets" aria-labelledby="toolsets-h">
-    <h2 id="toolsets-h">Toolsets</h2>
-    <p class="lede">Load only the toolsets you use. Fewer tools means less for the agent to read on every turn. Set <code>STEAM_MCP_TOOLSETS</code> to a comma-separated list. The <code>steam://server-info</code> resource tells the agent which toolsets are off, so it can explain a missing tool.</p>
-    <div class="table">
-      <table>
-        <thead><tr><th scope="col">Toolset</th><th scope="col">Tools</th><th scope="col">Covers</th><th scope="col">Default</th></tr></thead>
-        <tbody>
-        ${toolsetRows}
-        </tbody>
-      </table>
-    </div>
-    ${codeBlock('"env": { "STEAM_API_KEY": "your_key_here", "STEAM_MCP_TOOLSETS": "store,publisher,mutations" }', "toolset example")}
-  </section>
-
   <section class="wrap band" id="writes" aria-labelledby="writes-h">
     <h2 id="writes-h">Write safety</h2>
     <p class="lede">Write tools do nothing until you confirm. The ${writes} tools that change live Steam data are off by default. When you turn them on, every call is a dry run that returns a plan and sends nothing. A live call needs both <code>dry_run: false</code> and <code>confirm: true</code>. Without <code>confirm</code> it is refused with <code>[CONFIRM_REQUIRED]</code>.</p>
@@ -467,7 +453,21 @@ ${nav("home")}
     <p>Write tools take a literal Steam64 ID, never a vanity name, so a lookup mistake cannot redirect a change. Reviews, Workshop text, and news come back labeled as third-party content, for the agent to summarize rather than follow. See <a href="${REPO_URL}/blob/main/SECURITY.md">SECURITY.md</a> to report a vulnerability.</p>
   </section>
 
-  <section class="wrap band two" aria-labelledby="prompts-h">
+  <section class="wrap band ref ref-first" id="toolsets" aria-labelledby="toolsets-h">
+    <h2 id="toolsets-h">Toolsets</h2>
+    <p class="lede">Load only the toolsets you use. Fewer tools means less for the agent to read on every turn. Set <code>STEAM_MCP_TOOLSETS</code> to a comma-separated list. The <code>steam://server-info</code> resource tells the agent which toolsets are off, so it can explain a missing tool.</p>
+    <div class="table">
+      <table>
+        <thead><tr><th scope="col">Toolset</th><th scope="col">Tools</th><th scope="col">Covers</th><th scope="col">Default</th></tr></thead>
+        <tbody>
+        ${toolsetRows}
+        </tbody>
+      </table>
+    </div>
+    ${codeBlock('"env": { "STEAM_API_KEY": "your_key_here", "STEAM_MCP_TOOLSETS": "store,publisher,mutations" }', "toolset example")}
+  </section>
+
+  <section class="wrap band ref two" aria-labelledby="prompts-h">
     <div>
       <h2 id="prompts-h">Prompts</h2>
       <p>Ready-made workflows that most clients show as slash commands. Each one tells the agent which tools to chain and what to report.</p>
@@ -484,7 +484,7 @@ ${nav("home")}
     </div>
   </section>
 
-  <section class="wrap band" id="config" aria-labelledby="config-h">
+  <section class="wrap band ref" id="config" aria-labelledby="config-h">
     <h2 id="config-h">Configuration</h2>
     <p class="lede">Every setting is an environment variable in your client's <code>env</code> block. These are the common ones. The <a href="${REPO_URL}#configuration">README</a> and <a href="${REPO_URL}/blob/main/.env.example"><code>.env.example</code></a> list every setting, including HTTP host and port.</p>
     <div class="table">
@@ -497,7 +497,7 @@ ${nav("home")}
     </div>
   </section>
 
-  <section class="wrap band companion" aria-labelledby="companion-h">
+  <section class="wrap band ref companion" aria-labelledby="companion-h">
     <h2 id="companion-h">Steam Developer Tools</h2>
     <p>This server is the live-data half of <a href="${PLUGIN_SITE}">Steam Developer Tools</a>, a Cursor plugin with 30 skills and 9 rules for Steamworks development. The skills call these tools to check real store pages, stats, and leaderboards while you build.</p>
   </section>
