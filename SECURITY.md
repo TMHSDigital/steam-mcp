@@ -4,7 +4,8 @@
 
 | Version | Supported |
 |---------|-----------|
-| 0.9.x   | Yes |
+| 0.10.x  | Yes |
+| 0.9.x   | No. Upgrade. |
 | < 0.9.0 | No. Upgrade. Write tools in 0.8.0 and earlier send Partner API mutations with no confirmation gate. |
 
 ## Reporting a Vulnerability

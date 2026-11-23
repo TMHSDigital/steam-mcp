@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.10.0] - 2026-11-23
+
+### Breaking changes
+
+- **Write tools are off by default.** The five live-mutation tools are in the `mutations` toolset, which no longer loads unless you set `STEAM_MCP_TOOLSETS=all` (or a list that includes `mutations`). (#61)
+- **Node.js 22 or later is required.** Node 20 is end of life. (#56)
+- `steam_getPriceOverview` and `steam_getRegionalPricing` no longer return `free`. Check `price_overview: null` with `reason: "no_price_listed"` instead. (#33)
+- `steam_queryWorkshop` takes `sort` (`vote`, `date`, `trend`, ...) instead of the integer `query_type`, and `requiredtags` as an array instead of a comma-separated string. (#53)
+- A live `steam_grantInventoryItem` call requires `requestid`. Pass the value the dry run returned. (#92)
+- `steam_getAppDetails` returns a compact summary by default. Pass `detail: "full"` for every field, or `fields` for specific ones. `steam_getOwnedGames` returns the top 50 games by playtime and `steam_getSchemaForGame` up to 100 achievements unless you raise `limit`. (#35)
+- `steam_getLeaderboardsForGame` calls the Partner host and needs a publisher key. (#64)
+
 ### Added
 
 - Five new tools (31 total), all keyless:
@@ -29,6 +41,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Breaking:** a live `steam_grantInventoryItem` call (`dry_run: false`) requires `requestid`. Pass the value the dry run generated. A live call used to make up its own ID when none was given, so a retry could grant the item twice. Values above the uint64 maximum are rejected. (#92)
 - `steam_setAchievement` and `steam_clearAchievement` accept `achievements` (1-100 API names) as an alternative to `achievement`. They change all of them in one `SetUserStatsForGame` call, so resetting a test account takes one dry run and one confirmation. The dry-run plan lists every name. (#91)
 - Structured output: `steam_getPlayerCount`, `steam_getAppReviewSummary`, and `steam_getPriceOverview` declare an `outputSchema` and return `structuredContent` next to the unchanged JSON text block, so clients can read typed fields without re-parsing text. (#93)
+- A documentation site at https://tmhsdigital.github.io/steam-mcp/ with setup for each MCP client and a reference of every tool, its inputs, and the key it needs. It is generated from the registered tools, and a test fails when it is out of date.
 - `STEAM_MCP_DEBUG=1` logs every Steam request to stderr and to MCP logging notifications: method, host and path, query parameter names (never values), status, attempt number, latency, and retry waits. A startup line reports the version, tool count, and whether `STEAM_API_KEY` is set. (#67)
 
 ### Fixed
