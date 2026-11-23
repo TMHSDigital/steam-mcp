@@ -86,12 +86,14 @@ claude mcp add steam -e STEAM_API_KEY=your_key_here -- npx -y @tmhs/steam-mcp
 
 ```bash
 npx -y @tmhs/steam-mcp --transport http --port 3000      # http://127.0.0.1:3000/mcp
-docker run -p 3000:3000 -e STEAM_API_KEY=... -e STEAM_MCP_ALLOWED_HOSTS=localhost ghcr.io/tmhsdigital/steam-mcp
+docker run -p 127.0.0.1:3000:3000 -e STEAM_MCP_HTTP_TOKEN="$(openssl rand -hex 32)" -e STEAM_API_KEY=... -e STEAM_MCP_ALLOWED_HOSTS=localhost ghcr.io/tmhsdigital/steam-mcp
 ```
 
 Each release publishes the image to GitHub Container Registry as `ghcr.io/tmhsdigital/steam-mcp:<version>` and `:latest`. To build it yourself from a clone: `docker build -t steam-mcp .`.
 
-HTTP mode is stateless and binds to `127.0.0.1` unless you pass `--host`. Requests whose `Host` header is not in `STEAM_MCP_ALLOWED_HOSTS` (default `localhost,127.0.0.1,[::1]`) are refused. The API key only ever comes from the server's environment, never from a client. Live-mutation tools stay off in HTTP mode unless you also set `STEAM_MCP_HTTP_ALLOW_WRITES=1`. `GET /healthz` returns `{"ok":true}`.
+HTTP mode is stateless and binds to `127.0.0.1` unless you pass `--host`. To listen on any other address, set `STEAM_MCP_HTTP_TOKEN` (16 characters or more): the server refuses to start without it, and every `/mcp` request must then send `Authorization: Bearer <token>`. The Docker image listens on `0.0.0.0` inside the container, so it always needs a token. Publish the port on `127.0.0.1` unless other machines should reach it.
+
+Requests whose `Host` header (or browser `Origin`) is not in `STEAM_MCP_ALLOWED_HOSTS` (default `localhost,127.0.0.1,[::1]`) are refused. That guards against DNS rebinding; it is not access control. The Steam API key only ever comes from the server's environment, never from a client. Live-mutation tools and the `assets` toolset (local file reads) stay off in HTTP mode unless you set `STEAM_MCP_HTTP_ALLOW_WRITES=1` or `STEAM_MCP_HTTP_ALLOW_ASSETS=1`. `GET /healthz` returns `{"ok":true}` without a token.
 
 <details>
 <summary><strong>Run from a local clone instead</strong></summary>
@@ -128,8 +130,10 @@ Every setting is an environment variable. Put it in the `env` block of your clie
 | `STEAM_MCP_TRANSPORT` | `stdio` | `stdio` or `http`. Same as `--transport`. |
 | `HOST` | `127.0.0.1` | HTTP bind address. Same as `--host`. |
 | `PORT` | `3000` | HTTP port. Same as `--port`. |
-| `STEAM_MCP_ALLOWED_HOSTS` | `localhost,127.0.0.1,[::1]` | HTTP only: `Host` header values to accept. `*` disables the check. |
+| `STEAM_MCP_HTTP_TOKEN` | unset | HTTP only: bearer token every `/mcp` request must send (`Authorization: Bearer ...`), at least 16 characters. Required when `--host` is not a loopback address. |
+| `STEAM_MCP_ALLOWED_HOSTS` | `localhost,127.0.0.1,[::1]` | HTTP only: `Host` (and browser `Origin`) values to accept. A DNS-rebinding guard, not access control. `*` disables the check. |
 | `STEAM_MCP_HTTP_ALLOW_WRITES` | unset | HTTP only: `1` lets the `mutations` toolset load. |
+| `STEAM_MCP_HTTP_ALLOW_ASSETS` | unset | HTTP only: `1` lets the `assets` toolset (local file reads) load. |
 | `STEAM_PARTNER_ADMIN` | unset | Partner-admin process only (`src/partner/index.ts`): must be `1` to start it. Ignored by the default server. |
 | `STEAM_PARTNER_COOKIES` | unset | Partner-admin only: path to a cookie-jar file (never a cookie string). |
 | `STEAM_PARTNER_PROFILE_DIR` | unset | Partner-admin only: Chromium user-data directory outside the repo, for the login helper. |

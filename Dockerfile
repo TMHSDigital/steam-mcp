@@ -1,7 +1,9 @@
-# Streamable HTTP build of steam-mcp. Live-mutation tools stay off unless
-# STEAM_MCP_HTTP_ALLOW_WRITES=1 is set at run time.
+# Streamable HTTP build of steam-mcp. It listens on 0.0.0.0, so it refuses to
+# start without STEAM_MCP_HTTP_TOKEN; clients send Authorization: Bearer <token>.
+# Live-mutation tools and local file reads stay off unless
+# STEAM_MCP_HTTP_ALLOW_WRITES=1 / STEAM_MCP_HTTP_ALLOW_ASSETS=1 are set.
 #   docker build -t steam-mcp .
-#   docker run -p 3000:3000 -e STEAM_API_KEY=... -e STEAM_MCP_ALLOWED_HOSTS=localhost steam-mcp
+#   docker run -p 127.0.0.1:3000:3000 -e STEAM_MCP_HTTP_TOKEN=... -e STEAM_API_KEY=... -e STEAM_MCP_ALLOWED_HOSTS=localhost steam-mcp
 
 FROM node:24-alpine AS build
 WORKDIR /app

@@ -14,7 +14,7 @@ The plugin's skills reference these MCP tools to fetch live data from Steam - pl
 src/
   index.ts              Entry point - parses --transport/--port/--host, selects toolsets, starts stdio or HTTP
   server.ts             createServer(): McpServer with toolsets, prompts, resources, server-info
-  http.ts               Stateless Streamable HTTP server (POST /mcp, GET /healthz, Host allowlist)
+  http.ts               Stateless Streamable HTTP server (POST /mcp, GET /healthz, bearer token, Host/Origin allowlist)
   prompts.ts            MCP prompts (workflow slash commands)
   resources.ts          MCP resources (asset specs, enums, app summary template)
   version.ts            Reads the version from package.json
@@ -103,8 +103,10 @@ No-auth tools can be tested without setting `STEAM_API_KEY`.
 | `STEAM_API_KEY` | For some tools | Steam Web API key from https://steamcommunity.com/dev/apikey |
 | `STEAM_FINANCIAL_API_KEY` | For sales tools | Financial API Group key for IPartnerFinancialsService. Falls back to `STEAM_API_KEY`. |
 | `STEAM_MCP_TRANSPORT` | No | `stdio` (default) or `http`. Same as `--transport`. HTTP also reads `--port`/`PORT` (3000) and `--host`/`HOST` (127.0.0.1). |
-| `STEAM_MCP_ALLOWED_HOSTS` | HTTP only | Comma-separated Host header values to accept (default `localhost,127.0.0.1,[::1]`; `*` disables the check). |
+| `STEAM_MCP_HTTP_TOKEN` | HTTP off loopback | Bearer token (16+ chars) required on `/mcp`. The server refuses a non-loopback `--host` without it. |
+| `STEAM_MCP_ALLOWED_HOSTS` | HTTP only | Comma-separated Host/Origin values to accept (default `localhost,127.0.0.1,[::1]`; `*` disables the check). DNS-rebinding guard, not access control. |
 | `STEAM_MCP_HTTP_ALLOW_WRITES` | HTTP only | `1` lets the `mutations` toolset load in HTTP mode. |
+| `STEAM_MCP_HTTP_ALLOW_ASSETS` | HTTP only | `1` lets the `assets` toolset (local file reads) load in HTTP mode. |
 | `STEAM_MCP_TOOLSETS` | No | Comma-separated toolsets to load (`store`, `community`, `publisher`, `mutations`, `sdk`, `assets`) or `all`. Default: all except `mutations`. |
 | `STEAM_MCP_READ_ONLY` | No | `1` removes the `mutations` toolset even if listed. |
 | `STEAM_MCP_CACHE_TTL` | No | Unset: per-endpoint TTLs for public GETs (30s player count to 1h schema). `0` disables caching. Any other number of seconds replaces every TTL. |

@@ -46,7 +46,7 @@ export function createServer(enabled: readonly ToolsetName[], transport: "stdio"
             api_key: process.env.STEAM_API_KEY ? "set" : "unset",
             how_to_enable:
               transport === "http"
-                ? "Set STEAM_MCP_TOOLSETS on the server. Live-mutation tools also need STEAM_MCP_HTTP_ALLOW_WRITES=1 in HTTP mode."
+                ? "Set STEAM_MCP_TOOLSETS on the server. In HTTP mode, live-mutation tools also need STEAM_MCP_HTTP_ALLOW_WRITES=1 and the assets toolset needs STEAM_MCP_HTTP_ALLOW_ASSETS=1."
                 : "Set STEAM_MCP_TOOLSETS (comma-separated, or all) in the server env. Live-mutation tools are in the mutations toolset.",
           }),
         },

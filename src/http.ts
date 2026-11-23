@@ -1,3 +1,4 @@
+import { createHash, timingSafeEqual } from "node:crypto";
 import { createServer as createHttpServer, type IncomingMessage, type Server } from "node:http";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 
@@ -13,8 +14,44 @@ export interface HttpOptions {
   host: string;
   port: number;
   enabled: readonly ToolsetName[];
-  /** Host header values to accept. Guards a localhost server against DNS rebinding. */
+  /**
+   * Host header values to accept. This guards a localhost server against DNS
+   * rebinding; it is not access control. Browser Origin headers are checked
+   * against the same list.
+   */
   allowedHosts: string[];
+  /** Bearer token every /mcp request must carry. Required on a non-loopback host. */
+  token?: string;
+}
+
+export const MIN_TOKEN_LENGTH = 16;
+
+/** True for addresses only this machine can reach. */
+export function isLoopbackHost(host: string): boolean {
+  const h = host.trim().toLowerCase().replace(/^\[|\]$/g, "");
+  return h === "localhost" || h === "::1" || /^127(\.\d{1,3}){3}$/.test(h);
+}
+
+/**
+ * Why the server must not start with these options, or undefined if it may.
+ * A server other machines can reach must authenticate its clients.
+ */
+export function httpStartupProblem(host: string, token: string | undefined): string | undefined {
+  if (token !== undefined && token.length < MIN_TOKEN_LENGTH) {
+    return `STEAM_MCP_HTTP_TOKEN must be at least ${MIN_TOKEN_LENGTH} characters.`;
+  }
+  if (!token && !isLoopbackHost(host)) {
+    return `Refusing to listen on ${host} without STEAM_MCP_HTTP_TOKEN. Other machines could call every loaded tool with this server's Steam keys. Set a token, or bind to 127.0.0.1.`;
+  }
+  return undefined;
+}
+
+const digest = (value: string) => createHash("sha256").update(value).digest();
+
+function tokenMatches(header: string | undefined, token: string): boolean {
+  const match = /^Bearer\s+(.+)$/i.exec(header ?? "");
+  // Hash both sides so the comparison is constant-time whatever the lengths.
+  return !!match && timingSafeEqual(digest(match[1].trim()), digest(token));
 }
 
 const MAX_BODY_BYTES = 1024 * 1024;
@@ -54,7 +91,20 @@ function hostAllowed(header: string | undefined, allowed: string[]): boolean {
   return allowed.includes(host);
 }
 
+/** Requests from a web page carry Origin; MCP clients outside a browser usually do not. */
+function originAllowed(origin: string | undefined, allowed: string[]): boolean {
+  if (origin === undefined) return true;
+  try {
+    return hostAllowed(new URL(origin).host, allowed);
+  } catch {
+    return false;
+  }
+}
+
 export function startHttpServer(options: HttpOptions): Promise<Server> {
+  const problem = httpStartupProblem(options.host, options.token);
+  if (problem) return Promise.reject(new Error(problem));
+
   const http = createHttpServer(async (req, res) => {
     const json = (status: number, body: unknown) => {
       res.writeHead(status, { "Content-Type": "application/json" }).end(JSON.stringify(body));
@@ -72,6 +122,15 @@ export function startHttpServer(options: HttpOptions): Promise<Server> {
     }
     if (path !== "/mcp") {
       json(404, { error: "Not found. The MCP endpoint is /mcp." });
+      return;
+    }
+    if (!originAllowed(req.headers.origin, options.allowedHosts)) {
+      json(403, { error: "Origin not allowed. Set STEAM_MCP_ALLOWED_HOSTS to accept it." });
+      return;
+    }
+    if (options.token && !tokenMatches(req.headers.authorization, options.token)) {
+      res.writeHead(401, { "Content-Type": "application/json", "WWW-Authenticate": "Bearer" });
+      res.end(JSON.stringify({ error: "Missing or wrong bearer token." }));
       return;
     }
     if (req.method !== "POST") {

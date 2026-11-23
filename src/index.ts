@@ -42,10 +42,18 @@ async function main(): Promise<void> {
   if (transport === "http") {
     // A network-reachable server must not mutate live Steam state unless the
     // operator opts in separately from the toolset list.
-    const allowWrites = ["1", "true", "yes"].includes(process.env.STEAM_MCP_HTTP_ALLOW_WRITES?.toLowerCase() ?? "");
-    const enabled = allowWrites ? selection.enabled : selection.enabled.filter((n) => n !== "mutations");
+    // The same applies to the assets toolset, which reads local files.
+    const optIn = (name: string) => ["1", "true", "yes"].includes(process.env[name]?.toLowerCase() ?? "");
+    const allowWrites = optIn("STEAM_MCP_HTTP_ALLOW_WRITES");
+    const allowAssets = optIn("STEAM_MCP_HTTP_ALLOW_ASSETS");
+    const enabled = selection.enabled.filter(
+      (n) => (n !== "mutations" || allowWrites) && (n !== "assets" || allowAssets),
+    );
     if (!allowWrites && selection.enabled.includes("mutations")) {
       console.error("[steam-mcp] HTTP mode: mutations toolset disabled. Set STEAM_MCP_HTTP_ALLOW_WRITES=1 to enable it.");
+    }
+    if (!allowAssets && selection.enabled.includes("assets")) {
+      console.error("[steam-mcp] HTTP mode: assets toolset (local file reads) disabled. Set STEAM_MCP_HTTP_ALLOW_ASSETS=1 to enable it.");
     }
     const host = args.host ?? process.env.HOST ?? "127.0.0.1";
     const port = Number(args.port ?? process.env.PORT ?? 3000);
@@ -53,8 +61,15 @@ async function main(): Promise<void> {
       .split(",")
       .map((h) => h.trim().toLowerCase())
       .filter(Boolean);
-    await startHttpServer({ host, port, enabled, allowedHosts });
-    console.error(`[steam-mcp] v${VERSION} listening on http://${host}:${port}/mcp (toolsets ${enabled.join(",")}, ${keyState})`);
+    const token = process.env.STEAM_MCP_HTTP_TOKEN?.trim() || undefined;
+    try {
+      await startHttpServer({ host, port, enabled, allowedHosts, token });
+    } catch (error) {
+      console.error(`[steam-mcp] ${error instanceof Error ? error.message : String(error)}`);
+      process.exit(1);
+    }
+    const auth = token ? "bearer token required" : "no client auth, loopback only";
+    console.error(`[steam-mcp] v${VERSION} listening on http://${host}:${port}/mcp (toolsets ${enabled.join(",")}, ${keyState}, ${auth})`);
     return;
   }
 

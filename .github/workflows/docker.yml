@@ -33,9 +33,12 @@ jobs:
 
       - name: Smoke test
         run: |
-          docker run -d --name steam-mcp -p 3000:3000 -e STEAM_MCP_ALLOWED_HOSTS=127.0.0.1 "$IMAGE:$VERSION"
+          docker run -d --name steam-mcp -p 3000:3000 -e STEAM_MCP_ALLOWED_HOSTS=127.0.0.1 \
+            -e STEAM_MCP_HTTP_TOKEN=ci-smoke-token-0123456789 "$IMAGE:$VERSION"
           for i in $(seq 1 20); do curl -fs http://127.0.0.1:3000/healthz && break; sleep 1; done
-          curl -fs http://127.0.0.1:3000/mcp \
+          # Without the bearer token the image must refuse MCP requests.
+          test "$(curl -s -o /dev/null -w '%{http_code}' -X POST http://127.0.0.1:3000/mcp)" = 401
+          curl -fs http://127.0.0.1:3000/mcp -H 'Authorization: Bearer ci-smoke-token-0123456789' \
             -H 'Content-Type: application/json' -H 'Accept: application/json, text/event-stream' \
             -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}' | grep -q steam_getPlayerCount
           docker rm -f steam-mcp
