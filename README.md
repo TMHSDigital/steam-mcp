@@ -58,7 +58,14 @@ Most clients also show the server's [prompts](#prompts) (`launch-readiness`, `re
 
 ## Quick start
 
-Requires Node.js 22 or later. No clone or build needed: add this to your MCP client's config and restart it.
+Requires Node.js 22 or later. No clone or build needed.
+
+One-click install (no key set; add `STEAM_API_KEY` to the server's `env` afterwards for the tools that need one):
+
+[![Add to Cursor](https://cursor.com/deeplink/mcp-install-dark.svg)](https://cursor.com/en-US/install-mcp?name=steam&config=eyJjb21tYW5kIjoibnB4IiwiYXJncyI6WyIteSIsIkB0bWhzL3N0ZWFtLW1jcCJdfQ==)
+[![Install in VS Code](https://img.shields.io/badge/VS_Code-Install_Server-0098FF?logo=visualstudiocode&logoColor=white)](https://insiders.vscode.dev/redirect/mcp/install?name=steam&config=%7B%22command%22%3A%22npx%22%2C%22args%22%3A%5B%22-y%22%2C%22%40tmhs%2Fsteam-mcp%22%5D%7D)
+
+Or add this to your MCP client's config and restart it:
 
 > **Docs track `main`.** Anything under `[Unreleased]` in the [CHANGELOG](CHANGELOG.md) is not on npm yet. To use it before the next release, run from a local clone (see "Run from a local clone instead" under Client setup).
 
