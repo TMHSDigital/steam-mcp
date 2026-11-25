@@ -5,14 +5,16 @@
 #   docker build -t steam-mcp .
 #   docker run -p 127.0.0.1:3000:3000 -e STEAM_MCP_HTTP_TOKEN=... -e STEAM_API_KEY=... -e STEAM_MCP_ALLOWED_HOSTS=localhost steam-mcp
 
-FROM node:24-alpine AS build
+# Base image pinned to a digest so release images are reproducible; the tag
+# is kept for readability. To update: docker buildx imagetools inspect node:24-alpine
+FROM node:24-alpine@sha256:116b800c3754b440ee0aa3ed2f20f5bf3d99a554bfd9adeea09ea8017f6e85f5 AS build
 WORKDIR /app
 COPY package.json package-lock.json tsconfig.json ./
 RUN npm ci --ignore-scripts
 COPY src ./src
 RUN npm run build
 
-FROM node:24-alpine
+FROM node:24-alpine@sha256:116b800c3754b440ee0aa3ed2f20f5bf3d99a554bfd9adeea09ea8017f6e85f5
 ENV NODE_ENV=production
 WORKDIR /app
 COPY package.json package-lock.json ./

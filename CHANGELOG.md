@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Store and library image sizes live in one data file, `src/storeAssets/store-specs.json`, with the date they were last checked against Valve's Steamworks pages and the pages checked. The validator, the folder audit, and the Partner uploader read it; a test fails if a size is copied into code. `SIZE_HALF` now flags any fixed-size slot exported at exactly half size, not only the library hero. (#25)
 - The CI secret scan (`scripts/scan-secrets.py`) matches keys in JSON, YAML, and TOML as well as `KEY=value`, also checks `STEAM_FINANCIAL_API_KEY`, tracked `.env` files, and private-key blocks, and now scans the docs. Findings show the rule, file, and line, never the value, and a `--selftest` run in CI proves each rule still matches. (#25)
 - `steam_getDeckCompatibility` fetches up to 4 reports at once instead of one at a time, and caches each report for an hour. (#101)
+- The Docker image's `node:24-alpine` base is pinned to a digest in both build stages, so release images are reproducible. (#103)
 
 ### Fixed
 
