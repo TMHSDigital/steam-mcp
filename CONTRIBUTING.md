@@ -89,7 +89,7 @@ export const TOOLSETS = {
 
 5. If the tool performs a live mutation (inventory grant, achievement/stat write, leaderboard write, Workshop metadata update, Partner-admin upload, or similar), spread `confirmSchema` from `src/utils/confirm.ts`, call `refuseIfUnconfirmed` before any network I/O, run the dry-run branch before `requireApiKey()`, and prepend a capability warning to the tool description. Do not add a new write tool that can send unconfirmed. Read-only Steam POSTs (for example `GetPublishedFileDetails`) are not mutations and must not use this gate.
 
-6. Add a row for the tool to the README tool table and bump the tool counts (README, `CLAUDE.md`, `package.json` description). `npm test` fails until they match.
+6. Add a row for the tool to the README tool table and bump the tool counts (README, `CLAUDE.md`, `package.json` description). Then run `npm run site` and commit the regenerated `docs/` pages, which list every tool. `npm test` fails until they match.
 
 7. Add a handler test under `src/tools/__tests__/` that stubs `fetch` with a fixture, and build and test:
 
@@ -118,14 +118,15 @@ npm test
 
 ## Release checklist
 
-The version lives only in `package.json`. Both servers read it at runtime from `src/version.ts`.
+The version lives in `package.json`, mirrored in `server.json` (a test enforces that they match). Both servers read it at runtime from `src/version.ts`.
 
 1. Move the `[Unreleased]` entries in `CHANGELOG.md` under a new version heading with today's date.
 2. `npm version <patch|minor|major> --no-git-tag-version` (updates `package.json` and `package-lock.json`), and set both `version` fields in `server.json` to the same value. `npm test` fails until they match.
 3. If the tool list changed, update the counts in `package.json` `description`, the README badge, summary line, and tool tables, and `CLAUDE.md`. `npm test` fails until they match the registered tools.
 4. If a supported-version boundary moved, update the table in `SECURITY.md`.
-5. `npm run build && npx tsc -p tsconfig.partner.json && npm run typecheck && npm test`
-6. Commit, push, and publish a GitHub release tagged `vX.Y.Z`. The publish workflow ships it to npm, then lists it in the official MCP Registry from `server.json`. The Docker workflow pushes `ghcr.io/tmhsdigital/steam-mcp`.
+5. Run `npm run site` and commit the regenerated `docs/` pages: they show the version, so `npm version` makes them stale.
+6. `npm run build && npx tsc -p tsconfig.partner.json && npm run typecheck && npm test`
+7. Commit, push, and publish a GitHub release tagged `vX.Y.Z`. The publish workflow ships it to npm, then lists it in the official MCP Registry from `server.json`. The Docker workflow pushes `ghcr.io/tmhsdigital/steam-mcp`.
 
 ## Developer Certificate of Origin and Inbound License Grant
 

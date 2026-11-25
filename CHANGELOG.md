@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Releases are listed in the official MCP Registry as `io.github.TMHSDigital/steam-mcp`. The publish workflow publishes `server.json` after each npm release; the first listing comes with the next release. (#46)
+- The README has one-click "Add to Cursor" and "Install in VS Code" buttons. (#46)
 - `steam_getLeaderboardEntries` takes `include_names: true` to add each player's `personaname`, looked up in batches of 100 IDs. If the lookup fails, the entries come back with a `names_warning` instead. (#99)
 
 ### Changed
@@ -19,6 +21,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- `steam_getSalesSummary` no longer passes off a partial day as complete: when a date hits the 50-page cap, the output names it in `truncated_dates` with a `warning` (CSV mode adds the warning as a second content block). (#97)
+- `steam_validateStoreAssetDir` files `event_header.png` and similar names as the event header instead of the header capsule, so a correct event header no longer fails the folder audit. (#96)
 - `steam_getLeaderboardEntries` accepts negative `rangestart`/`rangeend` with `datarequest: 1` (around user), where the range is an offset from the user, so it can show the players ranked above them. Around-user requests default to `-10..10`. Global and friends requests still need 0 or more. (#100)
 
 ## [0.10.0] - 2026-11-23
