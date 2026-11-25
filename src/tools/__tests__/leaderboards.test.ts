@@ -199,3 +199,60 @@ describe("steam_getLeaderboardEntries range cap (#89)", () => {
     expect(result.isError).toBe(true);
   });
 });
+
+describe("steam_getLeaderboardEntries include_names (#99)", () => {
+  const ids = Array.from({ length: 150 }, (_, i) => String(76561198000000000n + BigInt(i)));
+  const board = () =>
+    new Response(
+      JSON.stringify({
+        leaderboardEntryInformation: {
+          leaderboardID: 1,
+          leaderboardEntries: ids.map((steamID, i) => ({ steamID, score: 1000 - i, rank: i + 1 })),
+        },
+      }),
+    );
+
+  it("adds personaname, batching 100 IDs per GetPlayerSummaries request", async () => {
+    const fetchMock = vi.fn().mockImplementation(async (url: string) => {
+      const u = new URL(url);
+      if (u.pathname.includes("GetPlayerSummaries")) {
+        const players = u.searchParams.get("steamids")!.split(",").map((steamid) => ({ steamid, personaname: `p${steamid.slice(-3)}` }));
+        return new Response(JSON.stringify({ response: { players } }));
+      }
+      return board();
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const result = await captureHandler(registerEntries)({ appid: 480, leaderboardid: 1, rangeend: 149, include_names: true });
+    const body = JSON.parse(result.content[0].text);
+    const summaryCalls = fetchMock.mock.calls.map((c) => new URL(c[0] as string)).filter((u) => u.pathname.includes("GetPlayerSummaries"));
+    expect(summaryCalls).toHaveLength(2);
+    expect(summaryCalls[0].host).toBe("api.steampowered.com");
+    expect(summaryCalls[0].searchParams.get("steamids")!.split(",")).toHaveLength(100);
+    expect(summaryCalls[1].searchParams.get("steamids")!.split(",")).toHaveLength(50);
+    expect(body.leaderboardEntries[0]).toEqual({ steamID: ids[0], score: 1000, rank: 1, personaname: "p000" });
+    expect(body.leaderboardEntries[149].personaname).toBe("p149");
+    expect(body).not.toHaveProperty("names_warning");
+  });
+
+  it("leaves the output unchanged by default", async () => {
+    const fetchMock = vi.fn().mockImplementation(async () => board());
+    vi.stubGlobal("fetch", fetchMock);
+    const body = JSON.parse((await captureHandler(registerEntries)({ appid: 480, leaderboardid: 1, rangeend: 149 })).content[0].text);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(body.leaderboardEntries[0]).toEqual({ steamID: ids[0], score: 1000, rank: 1 });
+  });
+
+  it("keeps the entries and warns when the name lookup fails", async () => {
+    const fetchMock = vi.fn().mockImplementation(async (url: string) =>
+      new URL(url).pathname.includes("GetPlayerSummaries") ? new Response("", { status: 403 }) : board(),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+    const result = await captureHandler(registerEntries)({ appid: 480, leaderboardid: 1, rangeend: 149, include_names: true });
+    expect(result.isError).toBeUndefined();
+    const body = JSON.parse(result.content[0].text);
+    expect(body.leaderboardEntries).toHaveLength(150);
+    expect(body.leaderboardEntries[0]).not.toHaveProperty("personaname");
+    expect(body.names_warning).toContain("could not be looked up");
+  });
+});

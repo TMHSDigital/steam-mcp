@@ -1,6 +1,7 @@
 import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import {
+  steamApiUrl,
   steamPartnerUrl,
   steamFetch,
   requireApiKey,
@@ -16,6 +17,38 @@ import {
 
 /** Keeps one call from returning thousands of entries into the agent's context. */
 const MAX_ENTRIES_PER_CALL = 500;
+
+/** ISteamUser/GetPlayerSummaries takes at most 100 IDs per request. */
+const SUMMARIES_PER_REQUEST = 100;
+
+/**
+ * Add each entry's persona name, looked up in batches of 100 IDs. Returns a
+ * warning instead of throwing, so a failed lookup never loses the scores.
+ */
+async function addPersonaNames(entries: Array<Record<string, unknown>>, key: string): Promise<string | undefined> {
+  const ids = [...new Set(entries.map((e) => e.steamID).filter((id): id is string => typeof id === "string" && id !== ""))];
+  const names = new Map<string, string>();
+  try {
+    for (let i = 0; i < ids.length; i += SUMMARIES_PER_REQUEST) {
+      const data = (await steamFetch(
+        steamApiUrl("/ISteamUser/GetPlayerSummaries/v2/", {
+          key,
+          steamids: ids.slice(i, i + SUMMARIES_PER_REQUEST).join(","),
+        }),
+      )) as { response?: { players?: Array<{ steamid?: string; personaname?: string }> } };
+      for (const p of data.response?.players ?? []) {
+        if (p.steamid && p.personaname !== undefined) names.set(p.steamid, p.personaname);
+      }
+    }
+  } catch (error) {
+    return `Player names could not be looked up (${error instanceof Error ? error.message : String(error)}); entries are shown without them.`;
+  }
+  for (const e of entries) {
+    const name = names.get(e.steamID as string);
+    if (name !== undefined) e.personaname = name;
+  }
+  return undefined;
+}
 
 const inputSchema = {
   appid: z
@@ -56,6 +89,12 @@ const inputSchema = {
     .regex(/^\d{17}$/, "Must be a 17-digit Steam64 ID")
     .optional()
     .describe("Steam ID required for AroundUser (1) and Friends (2) requests"),
+  include_names: z
+    .boolean()
+    .optional()
+    .describe(
+      "Add each player's persona name (personaname) to the entries, looked up with ISteamUser/GetPlayerSummaries in batches of 100 (default: false)",
+    ),
 };
 
 export function register(server: McpServer): void {
@@ -76,6 +115,7 @@ export function register(server: McpServer): void {
       rangeend,
       datarequest,
       steamid,
+      include_names,
     }) => {
       try {
         const selectorError = leaderboardSelectorError(leaderboardid, leaderboard_name);
@@ -139,13 +179,20 @@ export function register(server: McpServer): void {
           );
         }
 
+        const namesWarning =
+          include_names && info.leaderboardEntries?.length
+            ? await addPersonaNames(info.leaderboardEntries, key)
+            : undefined;
+
         return {
           content: [
             {
               type: "text",
-              text: JSON.stringify(
-                resolved.resolved_from ? { resolved_from: resolved.resolved_from, ...info } : info
-              ),
+              text: JSON.stringify({
+                ...(resolved.resolved_from ? { resolved_from: resolved.resolved_from } : {}),
+                ...info,
+                ...(namesWarning ? { names_warning: namesWarning } : {}),
+              }),
             },
           ],
         };

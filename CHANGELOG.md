@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `steam_getLeaderboardEntries` takes `include_names: true` to add each player's `personaname`, looked up in batches of 100 IDs. If the lookup fails, the entries come back with a `names_warning` instead. (#99)
+
 ### Changed
 
 - Store and library image sizes live in one data file, `src/storeAssets/store-specs.json`, with the date they were last checked against Valve's Steamworks pages and the pages checked. The validator, the folder audit, and the Partner uploader read it; a test fails if a size is copied into code. `SIZE_HALF` now flags any fixed-size slot exported at exactly half size, not only the library hero. (#25)
