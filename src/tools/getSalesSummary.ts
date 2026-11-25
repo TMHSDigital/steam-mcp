@@ -75,9 +75,15 @@ function* dates(start: string, end: string): Generator<string> {
   }
 }
 
-/** Every DetailedSales row for one date, following max_id paging until it stops advancing. */
-async function salesForDate(key: string, day: string): Promise<Required<Omit<SalesPage, "max_id">>> {
-  const merged: Required<Omit<SalesPage, "max_id">> = { results: [], app_info: [], package_info: [], country_info: [] };
+type DaySales = Required<Omit<SalesPage, "max_id">> & { truncated: boolean };
+
+/**
+ * Every DetailedSales row for one date, following max_id paging until it stops advancing.
+ * `truncated` is true when the page cap was reached while max_id was still advancing,
+ * so the rows for that date are incomplete.
+ */
+async function salesForDate(key: string, day: string): Promise<DaySales> {
+  const merged: DaySales = { results: [], app_info: [], package_info: [], country_info: [], truncated: true };
   let highwatermark = "0";
   for (let page = 0; page < MAX_PAGES_PER_DATE; page++) {
     const data = (await steamFetch(
@@ -93,7 +99,10 @@ async function salesForDate(key: string, day: string): Promise<Required<Omit<Sal
     merged.package_info.push(...(r.package_info ?? []));
     merged.country_info.push(...(r.country_info ?? []));
     const next = String(r.max_id ?? highwatermark);
-    if (next === highwatermark) break;
+    if (next === highwatermark) {
+      merged.truncated = false;
+      break;
+    }
     highwatermark = next;
   }
   return merged;
@@ -138,9 +147,11 @@ export function register(server: McpServer): void {
         const names = new Map<string, string>();
         const groups = new Map<string, Record<string, number | string>>();
         let rowsSeen = 0;
+        const truncatedDates: string[] = [];
 
         for (const day of days) {
           const page = await salesForDate(key, day);
+          if (page.truncated) truncatedDates.push(day);
           for (const a of page.app_info) names.set(`app:${a.appid}`, a.app_name);
           for (const p of page.package_info) names.set(`package:${p.packageid}`, p.package_name);
           for (const c of page.country_info) names.set(`country:${c.country_code}`, c.country_name);
@@ -195,20 +206,28 @@ export function register(server: McpServer): void {
           { net_units_sold: 0, gross_sales_usd: 0, net_sales_usd: 0 },
         );
 
-        const text =
-          format === "csv"
-            ? toCsv(shown)
-            : JSON.stringify({
-                start_date,
-                end_date: end,
-                timezone: "America/Los_Angeles (Steam financial day)",
-                ...(appid ? { appid } : {}),
-                group_by: groupBy,
-                rows_counted: rowsSeen,
-                group_count: sorted.length,
-                totals,
-                groups: shown,
-              });
+        const warning =
+          truncatedDates.length > 0
+            ? `Incomplete: stopped after ${MAX_PAGES_PER_DATE} pages on ${truncatedDates.join(", ")}, so the totals leave out the rest of those dates' sales.`
+            : undefined;
+
+        if (format === "csv") {
+          const content = [{ type: "text" as const, text: toCsv(shown) }];
+          if (warning) content.push({ type: "text" as const, text: warning });
+          return { content };
+        }
+        const text = JSON.stringify({
+          start_date,
+          end_date: end,
+          timezone: "America/Los_Angeles (Steam financial day)",
+          ...(appid ? { appid } : {}),
+          group_by: groupBy,
+          rows_counted: rowsSeen,
+          ...(warning ? { truncated_dates: truncatedDates, warning } : {}),
+          group_count: sorted.length,
+          totals,
+          groups: shown,
+        });
         return { content: [{ type: "text", text }] };
       } catch (error) {
         return publisherErrorResponse(error);

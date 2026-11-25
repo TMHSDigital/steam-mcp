@@ -1,6 +1,12 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { registeredTools, schemaOf } from "./harness.js";
 
+// The page-cap test makes 100+ partner calls; skip the per-host token bucket so it runs instantly.
+vi.mock("../../utils/cache.js", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../../utils/cache.js")>()),
+  acquireToken: async () => 0,
+}));
+
 const tools = registeredTools();
 const sales = tools.get("steam_getSalesSummary")!.handler;
 
@@ -65,6 +71,44 @@ describe("steam_getSalesSummary", () => {
     const [header, row] = result.content[0].text.split("\n");
     expect(header.split(",")[0]).toBe("day");
     expect(row).toContain("2026-10-01");
+  });
+
+  it("flags a date whose max_id was still advancing at the page cap (#97)", async () => {
+    let n = 0;
+    const fetchMock = vi.fn().mockImplementation(async (url: string) => {
+      const day = new URL(url).searchParams.get("date");
+      // 2026-10-01 never stops advancing; 2026-10-02 finishes after one page.
+      if (day === "2026-10-01") return page([{ country_code: "US", net_units_sold: 1, net_sales_usd: "1.00" }], String(++n));
+      return page([{ country_code: "US", net_units_sold: 1, net_sales_usd: "1.00" }], "0");
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const result = await sales({ start_date: "2026-10-01", end_date: "2026-10-02" });
+    const body = JSON.parse(result.content[0].text);
+    expect(fetchMock).toHaveBeenCalledTimes(51);
+    expect(body.truncated_dates).toEqual(["2026-10-01"]);
+    expect(body.warning).toContain("2026-10-01");
+    expect(body.warning).not.toContain("2026-10-02");
+
+    n = 0;
+    const csv = await sales({ start_date: "2026-10-01", format: "csv" });
+    expect(csv.content).toHaveLength(2);
+    expect(csv.content[1].text).toContain("2026-10-01");
+  });
+
+  it("has no truncation flag when max_id stops advancing before the cap", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi
+        .fn()
+        .mockResolvedValueOnce(page([{ country_code: "US", net_units_sold: 1 }], "3"))
+        .mockResolvedValueOnce(page([], "3")),
+    );
+    const body = JSON.parse((await sales({ start_date: "2026-10-01" })).content[0].text);
+    expect(body).not.toHaveProperty("truncated_dates");
+    expect(body).not.toHaveProperty("warning");
+    const csv = await sales({ start_date: "2026-10-01", format: "csv" });
+    expect(csv.content).toHaveLength(1);
   });
 
   it("refuses ranges over 31 days and reversed ranges", async () => {
