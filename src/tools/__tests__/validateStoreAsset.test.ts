@@ -237,16 +237,16 @@ describe("slot coverage", () => {
   });
 });
 
-describe("validateStoreAsset resource bounds", () => {
-  function chunk(type: string, data: Buffer): Buffer {
-    const len = Buffer.alloc(4);
-    len.writeUInt32BE(data.length);
-    const body = Buffer.concat([Buffer.from(type, "ascii"), data]);
-    const crc = Buffer.alloc(4);
-    crc.writeUInt32BE(crc32(body));
-    return Buffer.concat([len, body, crc]);
-  }
+function chunk(type: string, data: Buffer): Buffer {
+  const len = Buffer.alloc(4);
+  len.writeUInt32BE(data.length);
+  const body = Buffer.concat([Buffer.from(type, "ascii"), data]);
+  const crc = Buffer.alloc(4);
+  crc.writeUInt32BE(crc32(body));
+  return Buffer.concat([len, body, crc]);
+}
 
+describe("validateStoreAsset resource bounds", () => {
   function craftedPng(
     width: number,
     height: number,
@@ -308,6 +308,95 @@ describe("validateStoreAsset resource bounds", () => {
   it("refuses to decode beyond the pixel cap even when asked directly", () => {
     const path = craftedPng(60000, 60000, deflateSync(Buffer.alloc(16)));
     expect(() => parseImage(readFileSync(path), true)).toThrow(/refusing to decode/);
+  });
+});
+
+describe("parseImage PNG row filters (#98)", () => {
+  function paethPredictor(a: number, b: number, c: number): number {
+    const p = a + b - c;
+    const pa = Math.abs(p - a);
+    const pb = Math.abs(p - b);
+    const pc = Math.abs(p - c);
+    if (pa <= pb && pa <= pc) return a;
+    return pb <= pc ? b : c;
+  }
+
+  /** Encode RGBA pixels as an 8-bit PNG, applying the PNG forward filter `filters[y]` to row y. */
+  function filteredPng(width: number, height: number, rgba: Uint8Array, withAlpha: boolean, filters: number[]): Buffer {
+    const channels = withAlpha ? 4 : 3;
+    const stride = width * channels;
+    const rows: Uint8Array[] = [];
+    for (let y = 0; y < height; y++) {
+      const row = new Uint8Array(stride);
+      for (let x = 0; x < width; x++) {
+        for (let ch = 0; ch < channels; ch++) row[x * channels + ch] = rgba[(y * width + x) * 4 + ch];
+      }
+      rows.push(row);
+    }
+    const raw = Buffer.alloc((stride + 1) * height);
+    for (let y = 0; y < height; y++) {
+      const filter = filters[y];
+      const cur = rows[y];
+      const prev = y > 0 ? rows[y - 1] : new Uint8Array(stride);
+      raw[y * (stride + 1)] = filter;
+      for (let x = 0; x < stride; x++) {
+        const a = x >= channels ? cur[x - channels] : 0;
+        const b = prev[x];
+        const c = x >= channels ? prev[x - channels] : 0;
+        const predictor = [0, a, b, (a + b) >> 1, paethPredictor(a, b, c)][filter] ?? 0;
+        raw[y * (stride + 1) + 1 + x] = (cur[x] - predictor) & 0xff;
+      }
+    }
+    const ihdr = Buffer.alloc(13);
+    ihdr.writeUInt32BE(width, 0);
+    ihdr.writeUInt32BE(height, 4);
+    ihdr[8] = 8;
+    ihdr[9] = withAlpha ? 6 : 2;
+    return Buffer.concat([
+      Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
+      chunk("IHDR", ihdr),
+      chunk("IDAT", deflateSync(raw)),
+      chunk("IEND", Buffer.alloc(0)),
+    ]);
+  }
+
+  /** Pseudo-random pixels so every predictor sees varied neighbours, including wraparound. */
+  function noise(width: number, height: number, withAlpha: boolean): Uint8Array {
+    const rgba = new Uint8Array(width * height * 4);
+    let seed = 12345;
+    for (let i = 0; i < rgba.length; i++) {
+      seed = (seed * 1103515245 + 12345) & 0x7fffffff;
+      rgba[i] = (i % 4 === 3 && !withAlpha) ? 255 : seed >> 16;
+    }
+    return rgba;
+  }
+
+  const cases = [1, 2, 3, 4].flatMap((filter) => [
+    [filter, "RGB", false] as const,
+    [filter, "RGBA", true] as const,
+  ]);
+
+  it.each(cases)("decodes filter %i rows in %s", (filter, _label, withAlpha) => {
+    const [w, h] = [7, 5];
+    const rgba = noise(w, h, withAlpha);
+    const decoded = parseImage(filteredPng(w, h, rgba, withAlpha, Array(h).fill(filter)), true);
+    expect(decoded.rgba).toEqual(rgba);
+  });
+
+  it.each([
+    ["RGB", false],
+    ["RGBA", true],
+  ])("decodes an image that mixes filters row by row (%s)", (_label, withAlpha) => {
+    const [w, h] = [9, 10];
+    const rgba = noise(w, h, withAlpha);
+    const filters = [4, 0, 1, 2, 3, 4, 3, 2, 1, 0];
+    const decoded = parseImage(filteredPng(w, h, rgba, withAlpha, filters), true);
+    expect(decoded.rgba).toEqual(rgba);
+  });
+
+  it("rejects an unknown filter byte", () => {
+    const buf = filteredPng(3, 2, noise(3, 2, false), false, [0, 5]);
+    expect(() => parseImage(buf, true)).toThrow("Unsupported PNG filter 5.");
   });
 });
 
