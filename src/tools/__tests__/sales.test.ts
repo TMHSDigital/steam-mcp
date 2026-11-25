@@ -111,6 +111,82 @@ describe("steam_getSalesSummary", () => {
     expect(csv.content).toHaveLength(1);
   });
 
+  describe("compare_previous (#105)", () => {
+    // Current window 2026-10-08..09, previous window 2026-10-06..07.
+    const byDate: Record<string, unknown[]> = {
+      "2026-10-06": [{ country_code: "US", net_units_sold: 5, net_sales_usd: "50.00" }, { country_code: "FR", net_units_sold: 1, net_sales_usd: "8.00" }],
+      "2026-10-07": [{ country_code: "US", net_units_sold: 5, net_sales_usd: "50.00" }],
+      "2026-10-08": [{ country_code: "US", net_units_sold: 12, net_sales_usd: "150.00" }],
+      "2026-10-09": [{ country_code: "DE", net_units_sold: 2, net_sales_usd: "20.00" }],
+    };
+    const fetchByDate = () =>
+      vi.fn().mockImplementation(async (url: string) => page(byDate[new URL(url).searchParams.get("date")!] ?? [], "0"));
+
+    it("adds previous figures and deltas per group and in totals", async () => {
+      const fetchMock = fetchByDate();
+      vi.stubGlobal("fetch", fetchMock);
+      const body = JSON.parse(
+        (await sales({ start_date: "2026-10-08", end_date: "2026-10-09", compare_previous: true })).content[0].text,
+      );
+      const dates = fetchMock.mock.calls.map((c) => new URL(c[0] as string).searchParams.get("date")).sort();
+      expect(dates).toEqual(["2026-10-06", "2026-10-07", "2026-10-08", "2026-10-09"]);
+      expect(body.previous_start_date).toBe("2026-10-06");
+      expect(body.previous_end_date).toBe("2026-10-07");
+      expect(body.rows_counted).toBe(2);
+
+      const group = (cc: string) => body.groups.find((g: { country: string }) => g.country === cc);
+      expect(group("US")).toMatchObject({
+        net_sales_usd: 150,
+        previous_net_sales_usd: 100,
+        delta_net_sales_usd: 50,
+        delta_pct: 50,
+        net_units_sold: 12,
+        previous_net_units_sold: 10,
+        delta_net_units_sold: 2,
+      });
+      // Only in the current period: no baseline, so no percentage.
+      expect(group("DE")).toMatchObject({ net_sales_usd: 20, previous_net_sales_usd: 0, delta_pct: null });
+      // Only in the previous period: still listed, with zeros for this one.
+      expect(group("FR")).toMatchObject({ net_sales_usd: 0, net_units_sold: 0, previous_net_sales_usd: 8, delta_net_sales_usd: -8, delta_pct: -100 });
+
+      expect(body.totals).toMatchObject({
+        net_sales_usd: 170,
+        previous_net_sales_usd: 108,
+        delta_net_sales_usd: 62,
+        delta_pct: 57.4,
+        net_units_sold: 14,
+        previous_net_units_sold: 11,
+      });
+    });
+
+    it("compares day groups by position in the period", async () => {
+      vi.stubGlobal("fetch", fetchByDate());
+      const body = JSON.parse(
+        (await sales({ start_date: "2026-10-08", end_date: "2026-10-09", group_by: "day", compare_previous: true })).content[0].text,
+      );
+      expect(body.groups.map((g: { day: string }) => g.day).sort()).toEqual(["2026-10-08", "2026-10-09"]);
+      const day = (d: string) => body.groups.find((g: { day: string }) => g.day === d);
+      expect(day("2026-10-08")).toMatchObject({ net_sales_usd: 150, previous_net_sales_usd: 58 });
+      expect(day("2026-10-09")).toMatchObject({ net_sales_usd: 20, previous_net_sales_usd: 50 });
+    });
+
+    it("adds the comparison columns to CSV", async () => {
+      vi.stubGlobal("fetch", fetchByDate());
+      const csv = (await sales({ start_date: "2026-10-08", end_date: "2026-10-09", format: "csv", compare_previous: true })).content[0].text;
+      expect(csv.split("\n")[0]).toContain("previous_net_sales_usd,delta_net_sales_usd,delta_pct");
+    });
+
+    it("leaves the default output unchanged", async () => {
+      const fetchMock = fetchByDate();
+      vi.stubGlobal("fetch", fetchMock);
+      const body = JSON.parse((await sales({ start_date: "2026-10-08", end_date: "2026-10-09" })).content[0].text);
+      expect(fetchMock).toHaveBeenCalledTimes(2);
+      expect(body).not.toHaveProperty("previous_start_date");
+      expect(body.totals).toEqual({ net_units_sold: 14, gross_sales_usd: 0, net_sales_usd: 170 });
+      expect(body.groups[0]).not.toHaveProperty("delta_pct");
+    });
+  });
+
   it("refuses ranges over 31 days and reversed ranges", async () => {
     vi.stubGlobal("fetch", vi.fn());
     expect((await sales({ start_date: "2026-01-01", end_date: "2026-03-01" })).isError).toBe(true);

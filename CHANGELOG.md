@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The README has one-click "Add to Cursor" and "Install in VS Code" buttons. (#46)
 - `steam_getLeaderboardEntries` takes `include_names: true` to add each player's `personaname`, looked up in batches of 100 IDs. If the lookup fails, the entries come back with a `names_warning` instead. (#99)
 - `steam_validateStoreAssetDir` takes an optional `slots` map (file name to slot) for art whose name and size don't identify it. Explicit entries win over inference and are reported as `inferred_by: "explicit"`; names not in the folder come back as `warnings`. (#104)
+- `steam_getSalesSummary` takes `compare_previous: true` to also total the same-length period just before and add `previous_*`, `delta_*`, and `delta_pct` to each group and to `totals` (and as extra CSV columns). It doubles the number of requests. (#105)
 
 ### Changed
 

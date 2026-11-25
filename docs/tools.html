@@ -488,7 +488,7 @@
       <article class="tool k-financial" id="steam_getSalesSummary">
         <h3>Get Sales Summary</h3>
         <p class="meta"><code>steam_getSalesSummary</code><span class="badge"><span class="sw k-financial" aria-hidden="true"></span>Financial API key</span><span class="badge">Read only</span></p>
-        <p class="desc">Summarize your Steam sales for a date range (up to 31 days): units sold, returned, and activated, and gross and net revenue in USD, grouped by country, day, app, package, or platform. Reads IPartnerFinancialsService with a Financial API Group key (STEAM_FINANCIAL_API_KEY, or STEAM_API_KEY), server IP allowlisted.</p>
+        <p class="desc">Summarize your Steam sales for a date range (up to 31 days): units sold, returned, and activated, and gross and net revenue in USD, grouped by country, day, app, package, or platform, optionally compared with the previous period of the same length. Reads IPartnerFinancialsService with a Financial API Group key (STEAM_FINANCIAL_API_KEY, or STEAM_API_KEY), server IP allowlisted.</p>
         <table class="params">
           <caption>Inputs</caption>
           <tbody>
@@ -498,6 +498,7 @@
           <tr><th scope="row"><code>group_by</code></th><td>How to group the totals (default: country)</td></tr>
           <tr><th scope="row"><code>top</code></th><td>Return the top N groups by net revenue (default: 25)</td></tr>
           <tr><th scope="row"><code>format</code></th><td>json (default) or csv for spreadsheets</td></tr>
+          <tr><th scope="row"><code>compare_previous</code></th><td>Also total the same-length period ending the day before start_date, and add previous_*, delta_*, and delta_pct to each group and to totals (default: false). Doubles the number of requests. With group_by day, each day is compared with the day the same distance into the previous period.</td></tr>
           </tbody>
         </table>
       </article>

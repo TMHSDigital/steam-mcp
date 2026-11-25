@@ -41,6 +41,12 @@ const inputSchema = {
     .describe("How to group the totals (default: country)"),
   top: z.number().int().min(1).max(500).optional().describe("Return the top N groups by net revenue (default: 25)"),
   format: z.enum(["json", "csv"]).optional().describe("json (default) or csv for spreadsheets"),
+  compare_previous: z
+    .boolean()
+    .optional()
+    .describe(
+      "Also total the same-length period ending the day before start_date, and add previous_*, delta_*, and delta_pct to each group and to totals (default: false). Doubles the number of requests. With group_by day, each day is compared with the day the same distance into the previous period.",
+    ),
 };
 
 interface SalesRow {
@@ -108,6 +114,12 @@ async function salesForDate(key: string, day: string): Promise<DaySales> {
   return merged;
 }
 
+function addDays(day: string, n: number): string {
+  const d = new Date(`${day}T00:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + n);
+  return d.toISOString().slice(0, 10);
+}
+
 const usd = (s: string | undefined) => (s ? Number(s) : 0);
 const round2 = (n: number) => Math.round(n * 100) / 100;
 
@@ -121,17 +133,115 @@ function toCsv(rows: Array<Record<string, unknown>>): string {
   return [cols.join(","), ...rows.map((r) => cols.map((c) => esc(r[c])).join(","))].join("\n");
 }
 
+type GroupBy = "country" | "day" | "app" | "package" | "platform";
+type Group = Record<string, number | string>;
+
+function emptyGroup(groupBy: GroupBy, groupKey: string): Group {
+  return {
+    [groupBy]: groupKey,
+    gross_units_sold: 0,
+    gross_units_returned: 0,
+    net_units_sold: 0,
+    gross_units_activated: 0,
+    gross_sales_usd: 0,
+    net_sales_usd: 0,
+  };
+}
+
+interface WindowTotals {
+  groups: Map<string, Group>;
+  rowsSeen: number;
+  truncatedDates: string[];
+}
+
+/**
+ * Fetch and group every sales row for `days`. `dayLabel` names the group for
+ * group_by day, so a previous period can be keyed by the matching current day.
+ */
+async function totalWindow(
+  key: string,
+  days: string[],
+  appid: number | undefined,
+  groupBy: GroupBy,
+  names: Map<string, string>,
+  dayLabel: (day: string) => string = (d) => d,
+): Promise<WindowTotals> {
+  const groups = new Map<string, Group>();
+  let rowsSeen = 0;
+  const truncatedDates: string[] = [];
+
+  for (const day of days) {
+    const page = await salesForDate(key, day);
+    if (page.truncated) truncatedDates.push(day);
+    for (const a of page.app_info) names.set(`app:${a.appid}`, a.app_name);
+    for (const p of page.package_info) names.set(`package:${p.packageid}`, p.package_name);
+    for (const c of page.country_info) names.set(`country:${c.country_code}`, c.country_name);
+
+    for (const row of page.results) {
+      if (appid && row.appid !== appid && row.primary_appid !== appid) continue;
+      rowsSeen++;
+      const groupKey = {
+        country: row.country_code ?? "unknown",
+        day: dayLabel(day),
+        app: String(row.appid ?? row.primary_appid ?? "unknown"),
+        package: String(row.packageid ?? "unknown"),
+        platform: row.platform ?? "unknown",
+      }[groupBy];
+      const g = groups.get(groupKey) ?? emptyGroup(groupBy, groupKey);
+      (g.gross_units_sold as number) += row.gross_units_sold ?? 0;
+      (g.gross_units_returned as number) += row.gross_units_returned ?? 0;
+      (g.net_units_sold as number) += row.net_units_sold ?? 0;
+      (g.gross_units_activated as number) += row.gross_units_activated ?? 0;
+      (g.gross_sales_usd as number) += usd(row.gross_sales_usd);
+      (g.net_sales_usd as number) += usd(row.net_sales_usd);
+      groups.set(groupKey, g);
+    }
+  }
+  return { groups, rowsSeen, truncatedDates };
+}
+
+interface Figures {
+  net_units_sold: number;
+  net_sales_usd: number;
+}
+
+/** previous_*, delta_*, and delta_pct (null when the previous period had no revenue). */
+function comparison(cur: Figures, prev: Figures) {
+  return {
+    previous_net_units_sold: prev.net_units_sold,
+    delta_net_units_sold: cur.net_units_sold - prev.net_units_sold,
+    previous_net_sales_usd: round2(prev.net_sales_usd),
+    delta_net_sales_usd: round2(cur.net_sales_usd - prev.net_sales_usd),
+    delta_pct:
+      prev.net_sales_usd === 0
+        ? null
+        : Math.round(((cur.net_sales_usd - prev.net_sales_usd) / Math.abs(prev.net_sales_usd)) * 1000) / 10,
+  };
+}
+
+function sumGroups(groups: Iterable<Group>): Figures & { gross_sales_usd: number } {
+  let net_units_sold = 0;
+  let gross_sales_usd = 0;
+  let net_sales_usd = 0;
+  for (const g of groups) {
+    net_units_sold += g.net_units_sold as number;
+    gross_sales_usd += g.gross_sales_usd as number;
+    net_sales_usd += g.net_sales_usd as number;
+  }
+  return { net_units_sold, gross_sales_usd, net_sales_usd };
+}
+
 export function register(server: McpServer): void {
   server.registerTool(
     "steam_getSalesSummary",
     {
       title: "Get Sales Summary",
       description:
-        "Summarize your Steam sales for a date range (up to 31 days): units sold, returned, and activated, and gross and net revenue in USD, grouped by country, day, app, package, or platform. Reads IPartnerFinancialsService with a Financial API Group key (STEAM_FINANCIAL_API_KEY, or STEAM_API_KEY), server IP allowlisted.",
+        "Summarize your Steam sales for a date range (up to 31 days): units sold, returned, and activated, and gross and net revenue in USD, grouped by country, day, app, package, or platform, optionally compared with the previous period of the same length. Reads IPartnerFinancialsService with a Financial API Group key (STEAM_FINANCIAL_API_KEY, or STEAM_API_KEY), server IP allowlisted.",
       inputSchema,
       annotations: READ_ONLY,
     },
-    async ({ start_date, end_date, appid, group_by, top, format }) => {
+    async ({ start_date, end_date, appid, group_by, top, format, compare_previous }) => {
       try {
         const end = end_date ?? start_date;
         const days = [...dates(start_date, end)];
@@ -143,68 +253,42 @@ export function register(server: McpServer): void {
         }
         const key = financialKey();
         const groupBy = group_by ?? "country";
-
         const names = new Map<string, string>();
-        const groups = new Map<string, Record<string, number | string>>();
-        let rowsSeen = 0;
-        const truncatedDates: string[] = [];
 
-        for (const day of days) {
-          const page = await salesForDate(key, day);
-          if (page.truncated) truncatedDates.push(day);
-          for (const a of page.app_info) names.set(`app:${a.appid}`, a.app_name);
-          for (const p of page.package_info) names.set(`package:${p.packageid}`, p.package_name);
-          for (const c of page.country_info) names.set(`country:${c.country_code}`, c.country_name);
-
-          for (const row of page.results) {
-            if (appid && row.appid !== appid && row.primary_appid !== appid) continue;
-            rowsSeen++;
-            const groupKey = {
-              country: row.country_code ?? "unknown",
-              day,
-              app: String(row.appid ?? row.primary_appid ?? "unknown"),
-              package: String(row.packageid ?? "unknown"),
-              platform: row.platform ?? "unknown",
-            }[groupBy];
-            const g = groups.get(groupKey) ?? {
-              [groupBy]: groupKey,
-              gross_units_sold: 0,
-              gross_units_returned: 0,
-              net_units_sold: 0,
-              gross_units_activated: 0,
-              gross_sales_usd: 0,
-              net_sales_usd: 0,
-            };
-            (g.gross_units_sold as number) += row.gross_units_sold ?? 0;
-            (g.gross_units_returned as number) += row.gross_units_returned ?? 0;
-            (g.net_units_sold as number) += row.net_units_sold ?? 0;
-            (g.gross_units_activated as number) += row.gross_units_activated ?? 0;
-            (g.gross_sales_usd as number) += usd(row.gross_sales_usd);
-            (g.net_sales_usd as number) += usd(row.net_sales_usd);
-            groups.set(groupKey, g);
+        const current = await totalWindow(key, days, appid, groupBy, names);
+        const previousDays = days.map((d) => addDays(d, -days.length));
+        const previous = compare_previous
+          ? await totalWindow(key, previousDays, appid, groupBy, names, (d) => addDays(d, days.length))
+          : undefined;
+        if (previous) {
+          // Groups that sold only in the previous period still show, with zeros for this one.
+          for (const k of previous.groups.keys()) {
+            if (!current.groups.has(k)) current.groups.set(k, emptyGroup(groupBy, k));
           }
         }
+        const truncatedDates = [...(previous?.truncatedDates ?? []), ...current.truncatedDates];
 
-        const sorted = [...groups.values()]
-          .map((g): Record<string, number | string> => {
+        const sorted = [...current.groups.entries()]
+          .map(([groupKey, g]): Record<string, number | string | null> => {
             const name = names.get(`${groupBy}:${g[groupBy]}`);
+            const prev = previous ? (previous.groups.get(groupKey) ?? emptyGroup(groupBy, groupKey)) : undefined;
             return {
               ...g,
               ...(name ? { name } : {}),
               gross_sales_usd: round2(g.gross_sales_usd as number),
               net_sales_usd: round2(g.net_sales_usd as number),
+              ...(prev ? comparison(sumGroups([g]), sumGroups([prev])) : {}),
             };
           })
           .sort((a, b) => (b.net_sales_usd as number) - (a.net_sales_usd as number));
         const shown = sorted.slice(0, top ?? 25);
-        const totals = sorted.reduce<{ net_units_sold: number; gross_sales_usd: number; net_sales_usd: number }>(
-          (t, g) => ({
-            net_units_sold: t.net_units_sold + (g.net_units_sold as number),
-            gross_sales_usd: round2(t.gross_sales_usd + (g.gross_sales_usd as number)),
-            net_sales_usd: round2(t.net_sales_usd + (g.net_sales_usd as number)),
-          }),
-          { net_units_sold: 0, gross_sales_usd: 0, net_sales_usd: 0 },
-        );
+        const cur = sumGroups(current.groups.values());
+        const totals = {
+          net_units_sold: cur.net_units_sold,
+          gross_sales_usd: round2(cur.gross_sales_usd),
+          net_sales_usd: round2(cur.net_sales_usd),
+          ...(previous ? comparison(cur, sumGroups(previous.groups.values())) : {}),
+        };
 
         const warning =
           truncatedDates.length > 0
@@ -219,10 +303,13 @@ export function register(server: McpServer): void {
         const text = JSON.stringify({
           start_date,
           end_date: end,
+          ...(previous
+            ? { previous_start_date: previousDays[0], previous_end_date: previousDays[previousDays.length - 1] }
+            : {}),
           timezone: "America/Los_Angeles (Steam financial day)",
           ...(appid ? { appid } : {}),
           group_by: groupBy,
-          rows_counted: rowsSeen,
+          rows_counted: current.rowsSeen,
           ...(warning ? { truncated_dates: truncatedDates, warning } : {}),
           group_count: sorted.length,
           totals,
