@@ -66,15 +66,17 @@ const inputSchema = {
   rangestart: z
     .number()
     .int()
-    .min(0)
     .optional()
-    .describe("Start index for entries (default: 0)"),
+    .describe(
+      "Start of the range. Global (0) and Friends (2): a rank index, 0 or more (default: 0). Around user (1): an offset from the user, negative for players above them (default: -10).",
+    ),
   rangeend: z
     .number()
     .int()
-    .min(0)
     .optional()
-    .describe(`End index for entries, inclusive (default: 100). At most ${MAX_ENTRIES_PER_CALL} entries per call; page with rangestart/rangeend.`),
+    .describe(
+      `End of the range, inclusive. Global and Friends: a rank index (default: 100). Around user: an offset from the user (default: 10). At most ${MAX_ENTRIES_PER_CALL} entries per call; page with rangestart/rangeend.`,
+    ),
   datarequest: z
     .number()
     .int()
@@ -122,8 +124,18 @@ export function register(server: McpServer): void {
         if (selectorError) {
           return errorResponse(new Error(selectorError));
         }
-        const start = rangestart ?? 0;
-        const end = rangeend ?? 100;
+        // Around-user requests read the range as offsets from the user, so
+        // negative values mean players ranked above them (#100).
+        const aroundUser = datarequest === 1;
+        const start = rangestart ?? (aroundUser ? -10 : 0);
+        const end = rangeend ?? (aroundUser ? 10 : 100);
+        if (!aroundUser && (start < 0 || end < 0)) {
+          return errorResponse(
+            new Error(
+              "rangestart and rangeend must be 0 or more, except with datarequest 1 (around user), where they are offsets from the user.",
+            ),
+          );
+        }
         if (end < start) {
           return errorResponse(new Error("rangeend must be greater than or equal to rangestart."));
         }

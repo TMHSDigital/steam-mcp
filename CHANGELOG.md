@@ -16,6 +16,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Store and library image sizes live in one data file, `src/storeAssets/store-specs.json`, with the date they were last checked against Valve's Steamworks pages and the pages checked. The validator, the folder audit, and the Partner uploader read it; a test fails if a size is copied into code. `SIZE_HALF` now flags any fixed-size slot exported at exactly half size, not only the library hero. (#25)
 - The CI secret scan (`scripts/scan-secrets.py`) matches keys in JSON, YAML, and TOML as well as `KEY=value`, also checks `STEAM_FINANCIAL_API_KEY`, tracked `.env` files, and private-key blocks, and now scans the docs. Findings show the rule, file, and line, never the value, and a `--selftest` run in CI proves each rule still matches. (#25)
 
+### Fixed
+
+- `steam_getLeaderboardEntries` accepts negative `rangestart`/`rangeend` with `datarequest: 1` (around user), where the range is an offset from the user, so it can show the players ranked above them. Around-user requests default to `-10..10`. Global and friends requests still need 0 or more. (#100)
+
 ## [0.10.0] - 2026-11-23
 
 ### Breaking changes

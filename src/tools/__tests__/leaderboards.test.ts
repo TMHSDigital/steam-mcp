@@ -3,6 +3,7 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { register } from "../getLeaderboardsForGame.js";
 import { register as registerEntries } from "../getLeaderboardEntries.js";
 import { register as registerUpload } from "../uploadLeaderboardScore.js";
+import { registeredTools, schemaOf } from "./harness.js";
 
 type Handler = (args: Record<string, unknown>) => Promise<{
   content: Array<{ text: string }>;
@@ -254,5 +255,49 @@ describe("steam_getLeaderboardEntries include_names (#99)", () => {
     expect(body.leaderboardEntries).toHaveLength(150);
     expect(body.leaderboardEntries[0]).not.toHaveProperty("personaname");
     expect(body.names_warning).toContain("could not be looked up");
+  });
+});
+
+describe("steam_getLeaderboardEntries around-user range (#100)", () => {
+  const ok = () => new Response(JSON.stringify({ leaderboardEntryInformation: { leaderboardID: 1 } }));
+  const steamid = "76561198000000000";
+
+  it("accepts a negative rangestart in the input schema", () => {
+    const schema = schemaOf(registeredTools().get("steam_getLeaderboardEntries")!);
+    expect(schema.safeParse({ appid: 480, leaderboardid: 1, datarequest: 1, steamid, rangestart: -5, rangeend: 5 }).success).toBe(true);
+  });
+
+  it("sends a negative rangestart for datarequest 1", async () => {
+    const fetchMock = vi.fn().mockImplementation(async () => ok());
+    vi.stubGlobal("fetch", fetchMock);
+    const result = await captureHandler(registerEntries)({ appid: 480, leaderboardid: 1, datarequest: 1, steamid, rangestart: -5, rangeend: 5 });
+    expect(result.isError).toBeUndefined();
+    const sent = new URL(fetchMock.mock.calls[0][0] as string).searchParams;
+    expect(sent.get("rangestart")).toBe("-5");
+    expect(sent.get("rangeend")).toBe("5");
+  });
+
+  it("defaults around-user requests to 10 above and 10 below", async () => {
+    const fetchMock = vi.fn().mockImplementation(async () => ok());
+    vi.stubGlobal("fetch", fetchMock);
+    await captureHandler(registerEntries)({ appid: 480, leaderboardid: 1, datarequest: 1, steamid });
+    const sent = new URL(fetchMock.mock.calls[0][0] as string).searchParams;
+    expect([sent.get("rangestart"), sent.get("rangeend")]).toEqual(["-10", "10"]);
+  });
+
+  it.each([0, 2, undefined])("still rejects a negative range with datarequest %s", async (datarequest) => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+    const result = await captureHandler(registerEntries)({ appid: 480, leaderboardid: 1, datarequest, steamid, rangestart: -5, rangeend: 5 });
+    expect(result.isError).toBe(true);
+    expect(result.content[0].text).toContain("0 or more");
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("keeps the 500-entry cap for around-user windows", async () => {
+    vi.stubGlobal("fetch", vi.fn());
+    const result = await captureHandler(registerEntries)({ appid: 480, leaderboardid: 1, datarequest: 1, steamid, rangestart: -300, rangeend: 300 });
+    expect(result.isError).toBe(true);
+    expect(result.content[0].text).toContain("At most 500 entries");
   });
 });
