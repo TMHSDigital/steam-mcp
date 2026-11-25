@@ -73,6 +73,31 @@ describe("steam_getSalesSummary", () => {
     expect(row).toContain("2026-10-01");
   });
 
+  it("keeps the CSV name column when only a lower row is named (#106)", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(
+        page(
+          [
+            { country_code: "ZZ", net_units_sold: 9, net_sales_usd: "90.00" },
+            { country_code: "US", net_units_sold: 2, net_sales_usd: "19.98" },
+          ],
+          "0",
+          { country_info: [{ country_code: "US", country_name: "United States" }] },
+        ),
+      ),
+    );
+    const result = await sales({ start_date: "2026-10-01", format: "csv" });
+    const [header, top, named] = result.content[0].text.split("\n");
+    const cols = header.split(",");
+    // Same place as when the top row is named: right after net_sales_usd.
+    expect(cols.slice(-2)).toEqual(["net_sales_usd", "name"]);
+    expect(top.split(",")[0]).toBe("ZZ");
+    expect(top.split(",")[cols.indexOf("name")]).toBe("");
+    expect(named.split(",")[0]).toBe("US");
+    expect(named.split(",")[cols.indexOf("name")]).toBe("United States");
+  });
+
   it("flags a date whose max_id was still advancing at the page cap (#97)", async () => {
     let n = 0;
     const fetchMock = vi.fn().mockImplementation(async (url: string) => {

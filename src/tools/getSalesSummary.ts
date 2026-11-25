@@ -123,9 +123,28 @@ function addDays(day: string, n: number): string {
 const usd = (s: string | undefined) => (s ? Number(s) : 0);
 const round2 = (n: number) => Math.round(n * 100) / 100;
 
+/**
+ * Every key that appears in any row, so a column only some rows have (such as
+ * `name`) is kept even when the first row lacks it. A key first seen in a later
+ * row goes right after the key before it in that row, so columns keep the
+ * order they have when every row has them.
+ */
+function csvColumns(rows: Array<Record<string, unknown>>): string[] {
+  const cols: string[] = [];
+  for (const row of rows) {
+    let at = 0;
+    for (const k of Object.keys(row)) {
+      const i = cols.indexOf(k);
+      if (i === -1) cols.splice(at++, 0, k);
+      else at = i + 1;
+    }
+  }
+  return cols;
+}
+
 function toCsv(rows: Array<Record<string, unknown>>): string {
   if (rows.length === 0) return "";
-  const cols = Object.keys(rows[0]);
+  const cols = csvColumns(rows);
   const esc = (v: unknown) => {
     const s = v === undefined || v === null ? "" : String(v);
     return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;

@@ -24,6 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- `steam_getSalesSummary` CSV keeps the `name` column when the top group has no name but a lower one does. Columns now come from every row, not just the first, and the unnamed rows get an empty cell. (#106)
 - `steam_getSalesSummary` no longer passes off a partial day as complete: when a date hits the 50-page cap, the output names it in `truncated_dates` with a `warning` (CSV mode adds the warning as a second content block). (#97)
 - `steam_validateStoreAssetDir` files `event_header.png` and similar names as the event header instead of the header capsule, so a correct event header no longer fails the folder audit. (#96)
 - `steam_getLeaderboardEntries` accepts negative `rangestart`/`rangeend` with `datarequest: 1` (around user), where the range is an offset from the user, so it can show the players ranked above them. Around-user requests default to `-10..10`. Global and friends requests still need 0 or more. (#100)
