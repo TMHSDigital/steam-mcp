@@ -79,17 +79,28 @@ export interface StoreAssetDirAudit {
   missing_slots: StoreAssetSlot[];
   screenshots: { found: number; required: number };
   unrecognized: string[];
-  files: Array<StoreAssetValidation & { file: string; inferred_by: "name" | "size" }>;
+  files: Array<StoreAssetValidation & { file: string; inferred_by: "name" | "size" | "explicit" }>;
+  warnings?: string[];
 }
 
-export function auditStoreAssetDir(directory: string): StoreAssetDirAudit {
+/**
+ * Audit every image in `directory`. `slots` maps file names to the slot they
+ * are for; an entry there wins over inference (#104).
+ */
+export function auditStoreAssetDir(
+  directory: string,
+  slots: Partial<Record<string, StoreAssetSlot>> = {},
+): StoreAssetDirAudit {
   const names = readdirSync(requireKind(directory, "directory").path).filter((n) => IMAGE.test(n)).sort();
   const files: StoreAssetDirAudit["files"] = [];
   const unrecognized: string[] = [];
+  const present = new Set(names);
+  const unknown = Object.keys(slots).filter((n) => !present.has(n));
 
   for (const name of names) {
     const path = join(directory, name);
-    const { slot, by } = inferSlot(path, name);
+    const explicit = Object.hasOwn(slots, name) ? slots[name] : undefined;
+    const { slot, by } = explicit ? { slot: explicit, by: "explicit" as const } : inferSlot(path, name);
     if (!slot || by === "none") {
       unrecognized.push(name);
       continue;
@@ -109,5 +120,8 @@ export function auditStoreAssetDir(directory: string): StoreAssetDirAudit {
     screenshots: { found: screenshots, required: MIN_SCREENSHOTS },
     unrecognized,
     files,
+    ...(unknown.length
+      ? { warnings: unknown.map((n) => `slots names "${n}", which is not a PNG or JPEG in this folder.`) }
+      : {}),
   };
 }

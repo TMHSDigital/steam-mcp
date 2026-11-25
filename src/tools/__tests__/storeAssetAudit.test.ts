@@ -3,6 +3,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, it, expect } from "vitest";
 import { encodePng } from "../../storeAssets/png.js";
+import { registeredTools, schemaOf } from "./harness.js";
 import { auditStoreAssetDir, inferSlot } from "../../storeAssets/audit.js";
 import { describeDeckToken } from "../getDeckCompatibility.js";
 
@@ -97,6 +98,45 @@ describe("auditStoreAssetDir", () => {
   });
 });
 
+describe("auditStoreAssetDir explicit slots (#104)", () => {
+  it("validates an explicitly assigned file as that slot, size error included", () => {
+    const dir = mkdtempSync(join(tmpdir(), "steam-audit-"));
+    png(dir, "key_art_final.png", 3000, 1000);
+    png(dir, "header.png", 920, 430);
+
+    const audit = auditStoreAssetDir(dir, { "key_art_final.png": "libraryHero" });
+    const hero = audit.files.find((f) => f.file === "key_art_final.png");
+    expect(hero?.slot).toBe("libraryHero");
+    expect(hero?.inferred_by).toBe("explicit");
+    expect(hero?.errors[0].code).toBe("SIZE");
+    expect(audit.unrecognized).toEqual([]);
+    expect(audit).not.toHaveProperty("warnings");
+  });
+
+  it("lets an explicit entry override a name hint", () => {
+    const dir = mkdtempSync(join(tmpdir(), "steam-audit-"));
+    png(dir, "header_alt.png", 920, 430);
+    const audit = auditStoreAssetDir(dir, { "header_alt.png": "libraryHeader" });
+    expect(audit.files[0]).toMatchObject({ slot: "libraryHeader", inferred_by: "explicit", ok: true });
+  });
+
+  it("warns about names that are not in the folder without failing", () => {
+    const dir = mkdtempSync(join(tmpdir(), "steam-audit-"));
+    png(dir, "header.png", 920, 430);
+    const audit = auditStoreAssetDir(dir, { "missing.png": "libraryHero" });
+    expect(audit.warnings).toEqual([expect.stringContaining("missing.png")]);
+    expect(audit.files.find((f) => f.file === "header.png")?.ok).toBe(true);
+  });
+
+  it("is unchanged without slots", () => {
+    const dir = mkdtempSync(join(tmpdir(), "steam-audit-"));
+    png(dir, "key_art_final.png", 3000, 1000);
+    const audit = auditStoreAssetDir(dir);
+    expect(audit.unrecognized).toEqual(["key_art_final.png"]);
+    expect(audit).not.toHaveProperty("warnings");
+  });
+});
+
 describe("describeDeckToken", () => {
   it.each([
     ["#SteamDeckVerified_TestResult_InterfaceTextIsNotLegible", "Interface text is not legible"],
@@ -105,5 +145,22 @@ describe("describeDeckToken", () => {
     ["#SteamDeckVerified_TestResult_UnsupportedAntiCheat_Other", "Unsupported anti cheat other"],
   ])("%s", (token, text) => {
     expect(describeDeckToken(token)).toBe(text);
+  });
+});
+
+describe("steam_validateStoreAssetDir slots input (#104)", () => {
+  const tool = registeredTools().get("steam_validateStoreAssetDir")!;
+
+  it("passes slots through to the audit", async () => {
+    const dir = mkdtempSync(join(tmpdir(), "steam-audit-"));
+    png(dir, "key_art_final.png", 3000, 1000);
+    const body = JSON.parse((await tool.handler({ dir, slots: { "key_art_final.png": "libraryHero" } })).content[0].text);
+    expect(body.files[0]).toMatchObject({ file: "key_art_final.png", slot: "libraryHero", inferred_by: "explicit" });
+  });
+
+  it("rejects an unknown slot name in the schema", () => {
+    const schema = schemaOf(tool);
+    expect(schema.safeParse({ dir: "x", slots: { "a.png": "libraryHero" } }).success).toBe(true);
+    expect(schema.safeParse({ dir: "x", slots: { "a.png": "hero" } }).success).toBe(false);
   });
 });
