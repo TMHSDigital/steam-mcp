@@ -30,6 +30,13 @@ describe("inferSlot", () => {
     ["screenshot-small-town.png", "screenshot"],
     ["screenshot_background_city.png", "screenshot"],
     ["Screenshot Vertical Slice.jpg", "screenshot"],
+    // Event headers must not fall through to the generic header hint (#96).
+    ["event_header.png", "eventHeader"],
+    ["eventheader.jpg", "eventHeader"],
+    ["Event-Header.png", "eventHeader"],
+    ["library_header.png", "libraryHeader"],
+    ["event_cover_main.png", "eventCover"],
+    ["community_icon_small.png", "communityIcon"],
   ])("%s -> %s by name", (name, slot) => {
     expect(inferSlot(png(dir, name, 10, 10), name)).toEqual({ slot, by: "name" });
   });

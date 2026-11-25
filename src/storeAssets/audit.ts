@@ -15,6 +15,12 @@ export const MIN_SCREENSHOTS = SCREENSHOT_RULES.minCount;
 const NAME_HINTS: Array<[RegExp, StoreAssetSlot]> = [
   // The vertical capsule was once called the "hero capsule".
   [/herocapsule/, "verticalCapsule"],
+  // Event, community, and achievement art before the generic words below:
+  // "event_header" would otherwise match /header/ (#96).
+  [/eventcover/, "eventCover"],
+  [/eventheader/, "eventHeader"],
+  [/communityicon/, "communityIcon"],
+  [/achieved|unachieved|achievement/, "achievementIcon"],
   [/libraryhero|hero/, "libraryHero"],
   [/librarylogo|logo/, "libraryLogo"],
   [/libraryheader/, "libraryHeader"],
@@ -24,10 +30,6 @@ const NAME_HINTS: Array<[RegExp, StoreAssetSlot]> = [
   [/smallcapsule|small/, "smallCapsule"],
   [/headercapsule|header/, "headerCapsule"],
   [/pagebackground|background/, "pageBackground"],
-  [/eventcover/, "eventCover"],
-  [/eventheader/, "eventHeader"],
-  [/communityicon/, "communityIcon"],
-  [/achieved|unachieved|achievement/, "achievementIcon"],
 ];
 
 /**
