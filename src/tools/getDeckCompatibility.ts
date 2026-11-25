@@ -3,6 +3,9 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { steamStoreUrl, steamFetch, errorResponse } from "../utils/steam-api.js";
 import { READ_ONLY } from "../utils/annotations.js";
 
+/** Same pool size as getRegionalPricing: fast without draining the store host's token bucket. */
+const MAX_CONCURRENT_REPORTS = 4;
+
 const inputSchema = {
   appids: z
     .array(z.number().int().positive())
@@ -54,8 +57,7 @@ export function register(server: McpServer): void {
     },
     async ({ appids }) => {
       try {
-        const reports = [];
-        for (const appid of appids) {
+        const report = async (appid: number) => {
           const data = (await steamFetch(
             steamStoreUrl("/saleaction/ajaxgetdeckappcompatibilityreport", { nAppID: appid }),
           )) as {
@@ -69,10 +71,9 @@ export function register(server: McpServer): void {
           };
           const r = data.results;
           if (data.success !== 1 || !r) {
-            reports.push({ appid, category: "unknown", error: "No Deck report for this app" });
-            continue;
+            return { appid, category: "unknown", error: "No Deck report for this app" };
           }
-          reports.push({
+          return {
             appid,
             category: CATEGORIES[r.resolved_category ?? 0] ?? "unknown",
             tests: tests(r.resolved_items),
@@ -82,8 +83,20 @@ export function register(server: McpServer): void {
                   tests: tests(r.steamos_resolved_items),
                 }
               : undefined,
-          });
-        }
+          };
+        };
+
+        // A small worker pool; results are stored by index so output keeps the input order.
+        const reports: Array<Awaited<ReturnType<typeof report>>> = new Array(appids.length);
+        let next = 0;
+        await Promise.all(
+          Array.from({ length: Math.min(MAX_CONCURRENT_REPORTS, appids.length) }, async () => {
+            while (next < appids.length) {
+              const i = next++;
+              reports[i] = await report(appids[i]);
+            }
+          }),
+        );
 
         return {
           content: [

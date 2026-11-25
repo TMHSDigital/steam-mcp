@@ -5,6 +5,8 @@
 /** [pattern on host+path, TTL seconds]. First match wins; no match is not cached. */
 const TTL_RULES: Array<[RegExp, number]> = [
   [/^store\.steampowered\.com\/api\/(appdetails|storesearch)/, 600],
+  // Deck categories change rarely.
+  [/^store\.steampowered\.com\/saleaction\/ajaxgetdeckappcompatibilityreport/, 3600],
   [/\/ISteamUserStats\/GetNumberOfCurrentPlayers\//, 30],
   [/\/ISteamUserStats\/(GetSchemaForGame|GetGlobalAchievementPercentagesForApp)\//, 3600],
   [/\/ISteamNews\/GetNewsForApp\//, 600],
