@@ -54,7 +54,7 @@ Agent: 102,022 people are in TF2 right now. Reviews are Very Positive: 91% of 1,
 - "Show the top 20 on the speedrun leaderboard." (`steam_getLeaderboardEntries`)
 - "Which branches and builds are live right now?" (`steam_getAppBetas`, `steam_getAppBuilds`)
 
-Most clients also show the server's [prompts](#prompts) (`launch-readiness`, `review-digest`, `regional-price-audit`, and more) as slash commands.
+Most clients also show the server's [prompts](#prompts) (`launch-readiness`, `review-digest`, `sales-report`, and more) as slash commands.
 
 ## Quick start
 
@@ -266,6 +266,7 @@ Ready-made workflows that most clients show as slash commands. Each one tells th
 | `competitor-snapshot` | `appids` (comma-separated) | store | Side-by-side price, reviews, live players, genres, and recent news |
 | `achievement-health` | `appid` | store, publisher | Achievements that look unobtainable (<0.1%), trivial (>90%), or badly described |
 | `review-digest` | `appid`, optional `language`, `since` | store | Positive and negative review themes with counts and quotes |
+| `sales-report` | `appid`, optional `days` (default 7) | publisher (Financial API Group key) | Totals vs the previous period, top gaining and losing countries, best and worst day |
 | `regional-price-audit` | `appid` | store | Regional prices in USD, with outliers flagged |
 | `workshop-health` | `appid` | community | Trending vs top-rated Workshop items, stale top items, common tags |
 | `launch-readiness` | `dir`, optional `appid` | assets, store | PASS/FAIL checklist from your local art folder plus the live store page, prices, and Deck status |

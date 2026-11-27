@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
 import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { registerPrompts } from "../../prompts.js";
+import { registerPrompts, lastCompleteDays } from "../../prompts.js";
 import { registerResources } from "../../resources.js";
 import { registeredTools, jsonFetch } from "./harness.js";
 import { toolNamesFor, TOOLSET_NAMES, DEFAULT_TOOLSETS, type ToolsetName } from "../index.js";
@@ -41,7 +41,7 @@ const toolNames = new Set(registeredTools().keys());
 describe("prompts", () => {
   it("registers the workflow prompts", () => {
     expect([...prompts.keys()].sort()).toEqual(
-      ["achievement-health", "competitor-snapshot", "launch-readiness", "regional-price-audit", "review-digest", "workshop-health"],
+      ["achievement-health", "competitor-snapshot", "launch-readiness", "regional-price-audit", "review-digest", "sales-report", "workshop-health"],
     );
   });
 
@@ -52,6 +52,7 @@ describe("prompts", () => {
     ["review-digest", { appid: "440", since: "2026-11-20" }],
     ["regional-price-audit", { appid: "440" }],
     ["workshop-health", { appid: "4000" }],
+    ["sales-report", { appid: "620", days: "14" }],
     ["launch-readiness", { dir: "./art", appid: "620" }],
   ])("%s only names tools that exist", (name, args) => {
     const prompt = prompts.get(name)!;
@@ -71,6 +72,7 @@ describe("prompts", () => {
     "review-digest": { appid: "440", since: "2026-11-20" },
     "regional-price-audit": { appid: "440" },
     "workshop-health": { appid: "4000" },
+    "sales-report": { appid: "620" },
     "launch-readiness": { dir: "./art", appid: "620" },
   };
 
@@ -100,6 +102,22 @@ describe("prompts", () => {
     ]);
     expect(promptsFor(new Set()).size).toBe(0);
     expect(Object.keys(sampleArgs).sort()).toEqual([...prompts.keys()].sort());
+  });
+
+  it("sales-report asks for the right window and comparison (#135)", () => {
+    const text = prompts.get("sales-report")!.cb({ appid: "620", days: "7" }).messages[0].content.text;
+    const { start, end } = lastCompleteDays(7);
+    expect(text).toContain(`start_date "${start}", end_date "${end}"`);
+    expect(text).toContain("compare_previous true");
+    expect(text).toContain("truncated_dates");
+    expect(z.object(prompts.get("sales-report")!.argsSchema).safeParse({ appid: "620", days: "32" }).success).toBe(false);
+    expect(promptsFor(toolNamesFor(["store"])).has("sales-report")).toBe(false);
+  });
+
+  it("lastCompleteDays ends yesterday in Pacific Time", () => {
+    // 2026-11-27 05:00 UTC is still 2026-11-26 in Los Angeles.
+    expect(lastCompleteDays(7, new Date("2026-11-27T05:00:00Z"))).toEqual({ start: "2026-11-19", end: "2026-11-25" });
+    expect(lastCompleteDays(1, new Date("2026-11-27T20:00:00Z"))).toEqual({ start: "2026-11-26", end: "2026-11-26" });
   });
 
   it("rejects non-numeric appids", () => {
