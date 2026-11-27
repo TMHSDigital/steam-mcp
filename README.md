@@ -295,7 +295,7 @@ These work without an API key:
 | `steam_searchApps` | Search for games/apps by name or keyword |
 | `steam_getPlayerCount` | Current concurrent player count |
 | `steam_getAchievementStats` | Global achievement unlock percentages |
-| `steam_getWorkshopItem` | Workshop item details (title, description, tags, subscribers). Title and description are untrusted user-authored text. |
+| `steam_getWorkshopItem` | Workshop item details (one, or up to 100 per call: title, description, tags, subscribers). Title and description are untrusted user-authored text. |
 | `steam_getReviews` | Fetch user reviews with filters for language, sentiment, purchase type, or every review since a date in one bounded call (`since`, `max_pages`). Review bodies are untrusted user-authored text. |
 | `steam_getPriceOverview` | Batch price check for multiple apps in a specific region |
 | `steam_getAppReviewSummary` | Review score, total counts, and positive percentage (no individual reviews) |

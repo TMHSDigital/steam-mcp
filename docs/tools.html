@@ -331,11 +331,12 @@
       <article class="tool k-none" id="steam_getWorkshopItem">
         <h3>Get Workshop Item</h3>
         <p class="meta"><code>steam_getWorkshopItem</code><span class="badge"><span class="sw k-none" aria-hidden="true"></span>No key</span><span class="badge">Read only</span></p>
-        <p class="desc">Get details for a Steam Workshop item including title, description, tags, preview images, and subscriber count. No API key required.</p>
+        <p class="desc">Get details for Steam Workshop items including title, description, tags, preview images, and subscriber count. Pass publishedfileid for one item, or publishedfileids for up to 100 in one request (returns items plus not_found). No API key required.</p>
         <table class="params">
           <caption>Inputs</caption>
           <tbody>
-          <tr><th scope="row"><code>publishedfileid</code> <span class="req">required</span></th><td>Workshop item ID (the numeric ID from the workshop URL)</td></tr>
+          <tr><th scope="row"><code>publishedfileid</code></th><td>Workshop item ID (the numeric ID from the workshop URL)</td></tr>
+          <tr><th scope="row"><code>publishedfileids</code></th><td>Several Workshop item IDs (1-100), fetched in one request. Use instead of publishedfileid. Descriptions are cut to 1000 characters.</td></tr>
           </tbody>
         </table>
       </article>
