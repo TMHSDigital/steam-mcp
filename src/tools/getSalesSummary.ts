@@ -1,6 +1,6 @@
 import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { steamPartnerUrl, steamFetch, publisherErrorResponse, errorResponse } from "../utils/steam-api.js";
+import { steamPartnerUrl, steamFetch, financialErrorResponse, errorResponse } from "../utils/steam-api.js";
 import { READ_ONLY } from "../utils/annotations.js";
 
 // IPartnerFinancialsService needs a Financial API Group key, which is separate
@@ -336,7 +336,7 @@ export function register(server: McpServer): void {
         });
         return { content: [{ type: "text", text }] };
       } catch (error) {
-        return publisherErrorResponse(error);
+        return financialErrorResponse(error);
       }
     },
   );

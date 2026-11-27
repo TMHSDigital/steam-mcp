@@ -347,6 +347,29 @@ export function publisherErrorResponse(error: unknown): ReturnType<typeof errorR
   return errorResponse(error);
 }
 
+/**
+ * errorResponse() for IPartnerFinancialsService calls. These send
+ * STEAM_FINANCIAL_API_KEY (falling back to STEAM_API_KEY), so a 401/403 means
+ * that key is not in a Financial API Group or the server IP is not allowlisted.
+ */
+export function financialErrorResponse(error: unknown): ReturnType<typeof errorResponse> {
+  if (error instanceof SteamApiError && (error.statusCode === 401 || error.statusCode === 403)) {
+    return errorResponse(
+      new Error(
+        `HTTP ${error.statusCode} - Sales data needs a Financial API Group key, which is separate from a normal publisher key. Create one in Steamworks > Users & Permissions > Manage Groups (Financial API Group), set STEAM_FINANCIAL_API_KEY to it (STEAM_API_KEY is used only when STEAM_FINANCIAL_API_KEY is unset), and add the server IP to the key's allowed IP list. See https://partner.steamgames.com/doc/webapi/IPartnerFinancialsService.${steamDetailSuffix(error)}`,
+      ),
+    );
+  }
+  if (error instanceof SteamApiError && error.statusCode === 400) {
+    return errorResponse(
+      new Error(
+        `HTTP 400 - Steam rejected the request. Check the dates (YYYY-MM-DD, Pacific Time) and the highwatermark.${steamDetailSuffix(error)}`,
+      ),
+    );
+  }
+  return errorResponse(error);
+}
+
 export function errorResponse(error: unknown): {
   content: Array<{ type: "text"; text: string }>;
   isError: true;

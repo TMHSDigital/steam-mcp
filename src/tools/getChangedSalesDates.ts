@@ -1,6 +1,6 @@
 import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { steamPartnerUrl, steamFetch, publisherErrorResponse } from "../utils/steam-api.js";
+import { steamPartnerUrl, steamFetch, financialErrorResponse } from "../utils/steam-api.js";
 import { READ_ONLY } from "../utils/annotations.js";
 import { financialKey } from "./getSalesSummary.js";
 
@@ -32,7 +32,7 @@ export function register(server: McpServer): void {
         )) as { response?: { dates?: string[]; result_highwatermark?: string } };
         const r = data.response;
         if (!r) {
-          return publisherErrorResponse(new Error("Steam returned no changed-dates data."));
+          return financialErrorResponse(new Error("Steam returned no changed-dates data."));
         }
         return {
           content: [
@@ -47,7 +47,7 @@ export function register(server: McpServer): void {
           ],
         };
       } catch (error) {
-        return publisherErrorResponse(error);
+        return financialErrorResponse(error);
       }
     },
   );

@@ -24,6 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- `steam_getSalesSummary` and `steam_getChangedSalesDates` now explain a 401/403 in terms of the Financial API Group key and `STEAM_FINANCIAL_API_KEY` instead of telling users to set `STEAM_API_KEY` to a publisher key, and their 400 text names the dates and highwatermark they actually take. (#110)
 - Boolean environment flags now trim surrounding whitespace and carriage returns and accept lowercase or uppercase `true` and `yes`. This fixes HTTP opt-in switches such as `STEAM_MCP_HTTP_ALLOW_ASSETS` when the variable is set with a trailing space or CRLF from an env file. Partner-admin remains a strict `STEAM_PARTNER_ADMIN=1` gate. (#124)
 - `steam_validateStoreAssetDir` and the achievement icon folder check no longer report every file as missing when the folder path ends in a space or newline. File names are now joined onto the trimmed, resolved folder path that was listed. (#109)
 - `steam_getSalesSummary` CSV keeps the `name` column when the top group has no name but a lower one does. Columns now come from every row, not just the first, and the unnamed rows get an empty cell. (#106)

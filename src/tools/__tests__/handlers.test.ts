@@ -368,6 +368,29 @@ describe.each(Object.entries(CASES))("%s handler", (name, c) => {
   }
 });
 
+describe.each(["steam_getSalesSummary", "steam_getChangedSalesDates"])("%s key errors (#110)", (name) => {
+  it("points a 403 at the Financial API Group key, not STEAM_API_KEY", async () => {
+    process.env.STEAM_API_KEY = "TESTKEY_NOT_REAL";
+    vi.stubGlobal("fetch", vi.fn(jsonFetch({}, 403)));
+
+    const result = await tools.get(name)!.handler(CASES[name].args);
+    const text = result.content[0].text;
+    expect(result.isError).toBe(true);
+    expect(text).toContain("STEAM_FINANCIAL_API_KEY");
+    expect(text).toContain("Financial API Group");
+    expect(text).not.toContain("Set STEAM_API_KEY to a publisher key");
+  });
+
+  it("describes a 400 in terms of dates and highwatermark", async () => {
+    process.env.STEAM_API_KEY = "TESTKEY_NOT_REAL";
+    vi.stubGlobal("fetch", vi.fn(jsonFetch({}, 400)));
+
+    const text = (await tools.get(name)!.handler(CASES[name].args)).content[0].text;
+    expect(text).toContain("highwatermark");
+    expect(text).not.toContain("leaderboard");
+  });
+});
+
 it("every registered tool has a handler case", () => {
   expect([...tools.keys()].filter((name) => !(name in CASES))).toEqual([]);
 });
