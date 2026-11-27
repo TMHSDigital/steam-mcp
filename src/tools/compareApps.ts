@@ -30,10 +30,14 @@ async function settle<T>(p: Promise<T>): Promise<T | undefined> {
 }
 
 async function compareOne(appid: number, cc: string) {
+  let storeError: unknown;
   const [details, reviews, players] = await Promise.all([
-    settle(steamFetch(steamStoreUrl("/api/appdetails", { appids: appid, cc })) as Promise<
+    (steamFetch(steamStoreUrl("/api/appdetails", { appids: appid, cc })) as Promise<
       Record<string, { success: boolean; data?: Details }>
-    >),
+    >).catch((error: unknown) => {
+      storeError = error;
+      return undefined;
+    }),
     settle(fetchAppReviews({ appid, languages: ["all"], purchase_type: "all", num_per_page: 1 })),
     settle(
       steamFetch(steamApiUrl("/ISteamUserStats/GetNumberOfCurrentPlayers/v1/", { appid })) as Promise<{
@@ -63,7 +67,14 @@ async function compareOne(appid: number, cc: string) {
     review_count: s?.total_reviews,
     current_players: players?.response?.player_count,
     language_count: languages?.length,
-    ...(d ? {} : { error: "Store data unavailable (app missing, delisted, or region-locked)" }),
+    // A failed store call reports its real cause, not a guess (#119).
+    ...(d
+      ? {}
+      : {
+          error: storeError
+            ? `Store data unavailable: ${errorResponse(storeError).content[0].text}`
+            : "Store data unavailable (app missing, delisted, or region-locked)",
+        }),
   };
 }
 

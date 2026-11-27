@@ -2,6 +2,7 @@ import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { steamStoreUrl, steamFetch, errorResponse } from "../utils/steam-api.js";
 import { READ_ONLY } from "../utils/annotations.js";
+import { mapPool } from "../utils/pool.js";
 
 const DEFAULT_REGIONS = ["US", "GB", "DE", "BR", "RU", "CN", "JP", "AU", "IN", "TR"];
 const MAX_CONCURRENT_REGIONS = 4;
@@ -66,16 +67,7 @@ export function register(server: McpServer): void {
           }
         };
 
-        let nextRegion = 0;
-        await Promise.all(Array.from(
-          { length: Math.min(MAX_CONCURRENT_REGIONS, regions.length) },
-          async () => {
-            while (nextRegion < regions.length) {
-              const cc = regions[nextRegion++];
-              await fetchRegion(cc);
-            }
-          },
-        ));
+        await mapPool(regions, MAX_CONCURRENT_REGIONS, fetchRegion);
 
         return {
           content: [

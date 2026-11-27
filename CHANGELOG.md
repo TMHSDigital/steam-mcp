@@ -24,6 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- `steam_getDeckCompatibility` keeps the other reports when one app's fetch fails (timeout, 5xx, rate limit) and records `error` and `error_type` on that app, as `steam_getRegionalPricing` does. It returns an error only when every fetch failed. `steam_compareApps` reports the real cause when an app's store call fails instead of guessing "missing, delisted, or region-locked". The two tools' worker pools now share `mapPool`. (#119)
 - `steam_updateWorkshopItem` refuses, before sending, an update that changes nothing: `tags: []` (which the Web API cannot use to clear tags) or no fields at all. Previously a confirmed call sent no changes and reported `success: true`. `updated` now lists `tags` once instead of `tags[0]`, `tags[1]`, ... (#120)
 - `steam_getGlobalStatsForGame` without `stat_names` no longer passes off the first 50 schema stats as all of them: when the schema has more, the output adds `schema_stat_count`, `skipped`, and a note to pass `stat_names` for the rest, and the parameter description says so. (#121)
 - `steam_getOwnedGames` returns `game_count: 0` and an empty `games` list for a public profile with no games, instead of calling it private. A response with neither field is still reported as private or invalid. (#122)

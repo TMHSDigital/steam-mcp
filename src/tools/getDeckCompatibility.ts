@@ -2,6 +2,7 @@ import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { steamStoreUrl, steamFetch, errorResponse } from "../utils/steam-api.js";
 import { READ_ONLY } from "../utils/annotations.js";
+import { mapPool } from "../utils/pool.js";
 
 /** Same pool size as getRegionalPricing: fast without draining the store host's token bucket. */
 const MAX_CONCURRENT_REPORTS = 4;
@@ -57,7 +58,7 @@ export function register(server: McpServer): void {
     },
     async ({ appids }) => {
       try {
-        const report = async (appid: number) => {
+        const fetchReport = async (appid: number) => {
           const data = (await steamFetch(
             steamStoreUrl("/saleaction/ajaxgetdeckappcompatibilityreport", { nAppID: appid }),
           )) as {
@@ -86,17 +87,26 @@ export function register(server: McpServer): void {
           };
         };
 
-        // A small worker pool; results are stored by index so output keeps the input order.
-        const reports: Array<Awaited<ReturnType<typeof report>>> = new Array(appids.length);
-        let next = 0;
-        await Promise.all(
-          Array.from({ length: Math.min(MAX_CONCURRENT_REPORTS, appids.length) }, async () => {
-            while (next < appids.length) {
-              const i = next++;
-              reports[i] = await report(appids[i]);
-            }
-          }),
-        );
+        // One failed fetch is recorded on that app, like getRegionalPricing,
+        // so the other reports are kept (#119).
+        const report = async (appid: number) => {
+          try {
+            return await fetchReport(appid);
+          } catch (error) {
+            return {
+              appid,
+              category: "unknown",
+              error: errorResponse(error).content[0].text,
+              error_type: error instanceof Error ? error.name : "UnknownError",
+            };
+          }
+        };
+
+        const reports = await mapPool(appids, MAX_CONCURRENT_REPORTS, report);
+        const failed = reports.filter((r) => "error_type" in r);
+        if (failed.length === reports.length) {
+          return errorResponse(new Error(`Could not fetch any Deck report. ${failed[0].error}`));
+        }
 
         return {
           content: [
