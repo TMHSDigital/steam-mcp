@@ -12,6 +12,29 @@ const inputSchema = {
   cc: z.string().length(2).optional().describe("Two-letter country code for prices (default: US)"),
 };
 
+const appRow = z.object({
+  appid: z.number().int(),
+  name: z.string().optional(),
+  developer: z.string().optional(),
+  price: z.string().optional().describe('Formatted price, "free", or "no price listed"'),
+  discount_percent: z.number().optional(),
+  release_date: z.string().optional(),
+  genres: z.array(z.string()).optional(),
+  tags: z.array(z.string()).optional().describe("Top user tags"),
+  metacritic: z.number().optional(),
+  review_score: z.string().optional().describe('Steam review summary, e.g. "Very Positive"'),
+  review_positive_pct: z.number().optional(),
+  review_count: z.number().int().optional(),
+  current_players: z.number().int().optional(),
+  language_count: z.number().int().optional(),
+  error: z.string().optional().describe("Why store data is missing for this app"),
+});
+
+const outputSchema = {
+  region: z.string().describe("Country code used for prices"),
+  apps: z.array(appRow),
+};
+
 type Details = {
   name?: string;
   is_free?: boolean;
@@ -87,6 +110,7 @@ export function register(server: McpServer): void {
       description:
         "Compare 2-10 Steam apps in one compact table: price, discount, release date, genres, top user tags, metacritic, review score and count, current players, and language count. No API key required.",
       inputSchema,
+      outputSchema,
       annotations: READ_ONLY,
     },
     async ({ appids, cc }) => {
@@ -98,8 +122,11 @@ export function register(server: McpServer): void {
             new Error(`No store data for any of ${appids.join(", ")}. Steam may be unavailable, or the apps are delisted or region-locked.`),
           );
         }
+        // JSON round trip drops undefined fields, so structuredContent matches the text block.
+        const structured = JSON.parse(JSON.stringify({ region: cc ?? "US", apps: rows })) as { region: string; apps: unknown[] };
         return {
-          content: [{ type: "text", text: JSON.stringify({ region: cc ?? "US", apps: rows }) }],
+          content: [{ type: "text", text: JSON.stringify(structured) }],
+          structuredContent: structured,
         };
       } catch (error) {
         return errorResponse(error);

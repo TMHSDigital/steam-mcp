@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, afterEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { z } from "zod";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
@@ -10,7 +10,47 @@ import { registeredTools, jsonFetch } from "./harness.js";
 
 const tools = registeredTools();
 
-const CASES: Record<string, { args: Record<string, unknown>; fixture: unknown }> = {
+/** Answers each compareApps endpoint with a realistic body. */
+async function compareFetch(url: string): Promise<Response> {
+  const u = new URL(url);
+  const json = (body: unknown) => new Response(JSON.stringify(body));
+  if (u.pathname === "/api/appdetails") {
+    const appid = u.searchParams.get("appids")!;
+    if (appid === "400") return json({ [appid]: { success: false } });
+    return json({
+      [appid]: {
+        success: true,
+        data: {
+          name: "Portal 2",
+          developers: ["Valve"],
+          price_overview: { final_formatted: "$9.99", discount_percent: 0 },
+          release_date: { date: "Apr 18, 2011", coming_soon: false },
+          genres: [{ description: "Action" }],
+          metacritic: { score: 95 },
+          supported_languages: "English<strong>*</strong>, French",
+        },
+      },
+    });
+  }
+  if (u.pathname.includes("GetAppReviews")) {
+    return json({ response: { query_summary: { review_score_desc: "Overwhelmingly Positive", total_reviews: 100, total_positive: 98 } } });
+  }
+  if (u.pathname.includes("GetNumberOfCurrentPlayers")) return json({ response: { player_count: 1234, result: 1 } });
+  return json({});
+}
+
+const salesFixture = {
+  response: {
+    results: [
+      { country_code: "US", net_units_sold: 3, gross_sales_usd: "29.97", net_sales_usd: "29.97" },
+      { country_code: "DE", net_units_sold: 1, gross_sales_usd: "9.99", net_sales_usd: "9.99" },
+    ],
+    country_info: [{ country_code: "US", country_name: "United States" }],
+    max_id: "0",
+  },
+};
+
+const CASES: Record<string, { args: Record<string, unknown>; fixture?: unknown; fetch?: (url: string) => Promise<Response> }> = {
   steam_getPlayerCount: {
     args: { appid: 440 },
     fixture: { response: { player_count: 82269, result: 1 } },
@@ -33,10 +73,23 @@ const CASES: Record<string, { args: Record<string, unknown>; fixture: unknown }>
       "999999": { success: false },
     },
   },
+  steam_compareApps: {
+    args: { appids: [620, 400] },
+    fetch: compareFetch,
+  },
+  steam_getSalesSummary: {
+    args: { start_date: "2026-10-01", end_date: "2026-10-02", compare_previous: true },
+    fixture: salesFixture,
+  },
 };
+
+beforeEach(() => {
+  vi.stubEnv("STEAM_FINANCIAL_API_KEY", "TESTKEY_NOT_REAL");
+});
 
 afterEach(() => {
   vi.unstubAllGlobals();
+  vi.unstubAllEnvs();
 });
 
 describe("structured output", () => {
@@ -49,7 +102,7 @@ describe("structured output", () => {
   for (const [name, c] of Object.entries(CASES)) {
     it(`${name}: structuredContent validates and matches the text block`, async () => {
       const tool = tools.get(name)!;
-      vi.stubGlobal("fetch", vi.fn(jsonFetch(c.fixture)));
+      vi.stubGlobal("fetch", vi.fn(c.fetch ?? jsonFetch(c.fixture)));
 
       const result = await tool.handler(c.args);
       expect(result.isError).toBeUndefined();
@@ -71,6 +124,33 @@ describe("structured output", () => {
     expect(listed?.outputSchema).toBeDefined();
     const result = await client.callTool({ name: "steam_getPlayerCount", arguments: { appid: 440 } });
     expect(result.structuredContent).toEqual({ appid: 440, player_count: 82269 });
+    await client.close();
+  });
+
+  it("steam_compareApps keeps a failed app's error row in structuredContent (#144)", async () => {
+    vi.stubGlobal("fetch", vi.fn(compareFetch));
+    const result = await tools.get("steam_compareApps")!.handler({ appids: [620, 400] });
+    const apps = (result.structuredContent as { apps: Array<Record<string, unknown>> }).apps;
+    expect(apps[0]).toMatchObject({ appid: 620, name: "Portal 2", price: "$9.99", review_positive_pct: 98, current_players: 1234 });
+    expect(apps[1]).toMatchObject({ appid: 400, error: expect.stringContaining("delisted") });
+    expect(apps[1].name).toBeUndefined();
+  });
+
+  it("steam_getSalesSummary format csv passes the SDK's output validation, with the JSON summary as structuredContent (#144)", async () => {
+    vi.stubGlobal("fetch", vi.fn(jsonFetch(salesFixture)));
+    const { server } = createServer(["publisher"], "stdio");
+    const [clientSide, serverSide] = InMemoryTransport.createLinkedPair();
+    await server.connect(serverSide);
+    const client = new Client({ name: "test", version: "0" });
+    await client.connect(clientSide);
+
+    const result = (await client.callTool({
+      name: "steam_getSalesSummary",
+      arguments: { start_date: "2026-10-01", format: "csv" },
+    })) as { isError?: boolean; content: Array<{ text: string }>; structuredContent?: Record<string, unknown> };
+    expect(result.isError).toBeFalsy();
+    expect(result.content[0].text.split("\n")[0]).toContain("country");
+    expect(result.structuredContent).toMatchObject({ group_by: "country", totals: { net_sales_usd: 39.96 } });
     await client.close();
   });
 

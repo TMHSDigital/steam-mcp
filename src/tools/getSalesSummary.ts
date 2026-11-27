@@ -52,6 +52,31 @@ const inputSchema = {
     ),
 };
 
+const figures = z.record(z.string(), z.number().nullable());
+
+/**
+ * The JSON summary. format csv returns the same object as structuredContent
+ * (the SDK requires it once a tool declares an outputSchema), with the CSV as
+ * the text block.
+ */
+const outputSchema = {
+  start_date: z.string(),
+  end_date: z.string(),
+  previous_start_date: z.string().optional(),
+  previous_end_date: z.string().optional(),
+  timezone: z.string(),
+  appid: z.number().int().optional(),
+  group_by: z.enum(["country", "day", "app", "package", "platform"]),
+  rows_counted: z.number().int(),
+  truncated_dates: z.array(z.string()).optional().describe("Dates cut off at the page limit; totals leave out the rest"),
+  warning: z.string().optional(),
+  group_count: z.number().int().describe("Groups before the top N cut"),
+  totals: figures.describe("Totals over every group, plus previous_*, delta_*, and delta_pct with compare_previous"),
+  groups: z
+    .array(z.record(z.string(), z.union([z.string(), z.number(), z.null()])))
+    .describe("Top N groups by net revenue: the group key, an optional name, the figures, and comparison fields"),
+};
+
 interface SalesRow {
   date?: string;
   appid?: number;
@@ -277,6 +302,7 @@ export function register(server: McpServer): void {
       description:
         "Summarize your Steam sales for a date range (up to 31 days): units sold, returned, and activated, and gross and net revenue in USD, grouped by country, day, app, package, or platform, optionally compared with the previous period of the same length. Reads IPartnerFinancialsService with a Financial API Group key (STEAM_FINANCIAL_API_KEY, or STEAM_API_KEY), server IP allowlisted.",
       inputSchema,
+      outputSchema,
       annotations: READ_ONLY,
     },
     async ({ start_date, end_date, appid, group_by, top, format, compare_previous }) => {
@@ -336,12 +362,7 @@ export function register(server: McpServer): void {
             ? `Incomplete: stopped after ${MAX_PAGES_PER_DATE} pages on ${truncatedDates.join(", ")}, so the totals leave out the rest of those dates' sales.`
             : undefined;
 
-        if (format === "csv") {
-          const content = [{ type: "text" as const, text: toCsv(shown) }];
-          if (warning) content.push({ type: "text" as const, text: warning });
-          return { content };
-        }
-        const text = JSON.stringify({
+        const summary = {
           start_date,
           end_date: end,
           ...(previous
@@ -355,8 +376,14 @@ export function register(server: McpServer): void {
           group_count: sorted.length,
           totals,
           groups: shown,
-        });
-        return { content: [{ type: "text", text }] };
+        };
+
+        if (format === "csv") {
+          const content = [{ type: "text" as const, text: toCsv(shown) }];
+          if (warning) content.push({ type: "text" as const, text: warning });
+          return { content, structuredContent: summary };
+        }
+        return { content: [{ type: "text", text: JSON.stringify(summary) }], structuredContent: summary };
       } catch (error) {
         return financialErrorResponse(error);
       }
