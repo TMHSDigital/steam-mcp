@@ -24,6 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- `steam_updateWorkshopItem` refuses, before sending, an update that changes nothing: `tags: []` (which the Web API cannot use to clear tags) or no fields at all. Previously a confirmed call sent no changes and reported `success: true`. `updated` now lists `tags` once instead of `tags[0]`, `tags[1]`, ... (#120)
 - `steam_getGlobalStatsForGame` without `stat_names` no longer passes off the first 50 schema stats as all of them: when the schema has more, the output adds `schema_stat_count`, `skipped`, and a note to pass `stat_names` for the rest, and the parameter description says so. (#121)
 - `steam_getOwnedGames` returns `game_count: 0` and an empty `games` list for a public profile with no games, instead of calling it private. A response with neither field is still reported as private or invalid. (#122)
 - A timeout that fires while Steam is still sending the response body now raises the timeout error instead of "Unexpected non-JSON response", and a success body cut off mid-read is reported as a network failure. (#123)

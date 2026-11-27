@@ -39,7 +39,7 @@ const inputSchema = {
   tags: z
     .array(z.string())
     .optional()
-    .describe("Replace the item's tags with this list"),
+    .describe("Replace the item's tags with this list (at least one tag; the Web API cannot clear tags)"),
   ...confirmSchema,
 };
 
@@ -55,6 +55,23 @@ export function register(server: McpServer): void {
     },
     async ({ publishedfileid, appid, title, file_description, visibility, tags, dry_run, confirm }) => {
       try {
+        // Refuse before any plan or request: an empty tag list would be
+        // dropped and the call would report success while changing nothing (#120).
+        if (tags && tags.length === 0) {
+          return errorResponse(
+            new Error(
+              "tags: [] cannot clear an item's tags through the Web API. Remove the tags in Steamworks or on the Workshop page instead. No request was sent.",
+            ),
+          );
+        }
+        if (title === undefined && file_description === undefined && visibility === undefined && !tags) {
+          return errorResponse(
+            new Error(
+              "Nothing to update: pass at least one of title, file_description, visibility, or tags. No request was sent.",
+            ),
+          );
+        }
+
         const dryRun = dry_run !== false;
         const blocked = refuseIfUnconfirmed(dryRun, confirm);
         if (blocked) return refusal(blocked);
@@ -67,7 +84,7 @@ export function register(server: McpServer): void {
           visibility,
         };
 
-        if (tags && tags.length > 0) {
+        if (tags) {
           tags.forEach((tag, i) => {
             params[`tags[${i}]`] = tag;
           });
@@ -110,9 +127,10 @@ export function register(server: McpServer): void {
                   success: true,
                   publishedfileid,
                   appid,
-                  updated: Object.keys(params).filter(
-                    (k) => k !== "publishedfileid" && k !== "appid" && params[k] !== undefined,
-                  ),
+                  updated: [
+                    ...(["title", "file_description", "visibility"] as const).filter((k) => params[k] !== undefined),
+                    ...(tags ? ["tags"] : []),
+                  ],
                   response: data.response,
                 },
                 null,
