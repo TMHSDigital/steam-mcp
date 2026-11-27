@@ -1,7 +1,8 @@
 import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { steamStoreUrl, steamApiUrl, steamFetch, errorResponse } from "../utils/steam-api.js";
+import { steamApiUrl, steamFetch, errorResponse } from "../utils/steam-api.js";
 import { fetchAppReviews } from "../utils/reviews.js";
+import { fetchAppDetails, appData } from "../utils/appdetails.js";
 import { READ_ONLY } from "../utils/annotations.js";
 import { stripHtml } from "../utils/text.js";
 import { topTagsOrNone } from "../utils/tags.js";
@@ -33,9 +34,7 @@ async function settle<T>(p: Promise<T>): Promise<T | undefined> {
 async function compareOne(appid: number, cc: string, allTags: Promise<Map<number, string[]>>) {
   let storeError: unknown;
   const [details, reviews, players] = await Promise.all([
-    (steamFetch(steamStoreUrl("/api/appdetails", { appids: appid, cc })) as Promise<
-      Record<string, { success: boolean; data?: Details }>
-    >).catch((error: unknown) => {
+    fetchAppDetails<Details>([appid], { cc }).catch((error: unknown) => {
       storeError = error;
       return undefined;
     }),
@@ -47,7 +46,7 @@ async function compareOne(appid: number, cc: string, allTags: Promise<Map<number
     ),
   ]);
 
-  const d = details?.[String(appid)]?.data;
+  const d = appData(details?.get(appid));
   const s = reviews?.query_summary;
   const languages = d?.supported_languages
     ? stripHtml(d.supported_languages).split(/,\s*/).map((l) => l.replace(/\*$/, "").trim()).filter(Boolean)

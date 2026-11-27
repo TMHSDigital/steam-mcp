@@ -1,6 +1,7 @@
 import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { steamStoreUrl, steamFetch, errorResponse } from "../utils/steam-api.js";
+import { errorResponse } from "../utils/steam-api.js";
+import { fetchAppDetails, classifyPrice } from "../utils/appdetails.js";
 import { READ_ONLY } from "../utils/annotations.js";
 import { mapPool } from "../utils/pool.js";
 
@@ -40,25 +41,8 @@ export function register(server: McpServer): void {
 
         const fetchRegion = async (cc: string) => {
           try {
-            const url = steamStoreUrl("/api/appdetails", {
-              appids: appid,
-              cc,
-              filters: "price_overview",
-            });
-
-            const data = (await steamFetch(url)) as Record<
-              string,
-              { success: boolean; data?: { price_overview?: unknown } }
-            >;
-
-            const entry = data[String(appid)];
-            if (!entry || !entry.success) {
-              results[cc] = { error: "Not available in this region" };
-            } else if (!entry.data?.price_overview) {
-              results[cc] = { price_overview: null, reason: "no_price_listed" };
-            } else {
-              results[cc] = entry.data.price_overview;
-            }
+            const entries = await fetchAppDetails<{ price_overview?: unknown }>([appid], { cc, filters: "price_overview" });
+            results[cc] = classifyPrice(entries.get(appid), "Not available in this region");
           } catch (error) {
             results[cc] = {
               error: errorResponse(error).content[0].text,

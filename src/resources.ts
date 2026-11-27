@@ -3,7 +3,7 @@ import { SLOT_SPECS, SLOT_FORM_FIELD } from "./storeAssets/slots.js";
 import { QUERY_TYPES } from "./tools/queryWorkshop.js";
 import { REVIEW_FILTERS, REVIEW_TYPES, PURCHASE_TYPES } from "./utils/reviews.js";
 import { summarize, type AppData } from "./tools/getAppDetails.js";
-import { steamFetch, steamStoreUrl } from "./utils/steam-api.js";
+import { fetchAppDetails, appData } from "./utils/appdetails.js";
 
 // Read-only reference data an agent (or user) can attach instead of guessing.
 
@@ -111,15 +111,11 @@ export function registerResources(server: McpServer): void {
       if (!Number.isInteger(id) || id <= 0) {
         throw new Error(`Invalid appid in ${uri.href}`);
       }
-      const data = (await steamFetch(steamStoreUrl("/api/appdetails", { appids: id }))) as Record<
-        string,
-        { success: boolean; data?: AppData }
-      >;
-      const entry = data[String(id)];
-      if (!entry?.success || !entry.data) {
+      const data = appData((await fetchAppDetails<AppData>([id])).get(id));
+      if (!data) {
         throw new Error(`App ${id} is not available in the Steam store.`);
       }
-      return json(uri, summarize(entry.data));
+      return json(uri, summarize(data));
     },
   );
 }

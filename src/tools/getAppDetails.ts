@@ -1,6 +1,7 @@
 import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { steamStoreUrl, steamFetch, errorResponse } from "../utils/steam-api.js";
+import { errorResponse } from "../utils/steam-api.js";
+import { fetchAppDetails, appData } from "../utils/appdetails.js";
 import { READ_ONLY } from "../utils/annotations.js";
 import { topTagsOrNone } from "../utils/tags.js";
 import { stripHtml, truncate } from "../utils/text.js";
@@ -105,21 +106,15 @@ export function register(server: McpServer): void {
     },
     async ({ appid, cc, l, detail, fields, include_html }) => {
       try {
-        const url = steamStoreUrl("/api/appdetails", {
-          appids: appid,
-          cc,
-          l,
-        });
-
         // The summary also carries the top user tags, fetched alongside (#118).
         const summary = !fields?.length && detail !== "full";
-        const [data, tags] = await Promise.all([
-          steamFetch(url) as Promise<Record<string, { success: boolean; data?: AppData }>>,
+        const [entries, tags] = await Promise.all([
+          fetchAppDetails<AppData>([appid], { cc, l }),
           summary ? topTagsOrNone([appid], cc) : undefined,
         ]);
 
-        const entry = data[String(appid)];
-        if (!entry || !entry.success || !entry.data) {
+        const data = appData(entries.get(appid));
+        if (!data) {
           return errorResponse(
             new Error(
               `App ${appid} data is not available in the Steam store. The app may not exist, or it may be region-locked.`,
@@ -129,12 +124,12 @@ export function register(server: McpServer): void {
 
         let out: AppData;
         if (fields?.length) {
-          out = { steam_appid: entry.data.steam_appid };
-          for (const f of fields) out[f] = entry.data[f];
+          out = { steam_appid: data.steam_appid };
+          for (const f of fields) out[f] = data[f];
         } else if (detail === "full") {
-          out = entry.data;
+          out = data;
         } else {
-          out = summarize(entry.data, tags?.get(appid));
+          out = summarize(data, tags?.get(appid));
         }
         if (!include_html) {
           out = cleanHtml(out) as AppData;

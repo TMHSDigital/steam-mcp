@@ -1,6 +1,7 @@
 import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { steamStoreUrl, steamFetch, errorResponse } from "../utils/steam-api.js";
+import { errorResponse } from "../utils/steam-api.js";
+import { fetchAppDetails, classifyPrice } from "../utils/appdetails.js";
 import { READ_ONLY } from "../utils/annotations.js";
 
 const inputSchema = {
@@ -55,27 +56,10 @@ export function register(server: McpServer): void {
     },
     async ({ appids, cc }) => {
       try {
-        const url = steamStoreUrl("/api/appdetails", {
-          appids: appids.join(","),
-          filters: "price_overview",
-          cc,
-        });
-
-        const data = (await steamFetch(url)) as Record<
-          string,
-          { success: boolean; data?: { price_overview?: unknown } }
-        >;
-
+        const entries = await fetchAppDetails<{ price_overview?: unknown }>(appids, { cc, filters: "price_overview" });
         const results: Record<string, unknown> = {};
         for (const id of appids) {
-          const entry = data[String(id)];
-          if (!entry || !entry.success) {
-            results[String(id)] = { error: "App not found or region-locked" };
-          } else if (!entry.data?.price_overview) {
-            results[String(id)] = { price_overview: null, reason: "no_price_listed" };
-          } else {
-            results[String(id)] = entry.data.price_overview;
-          }
+          results[String(id)] = classifyPrice(entries.get(id), "App not found or region-locked");
         }
 
         const structured = { region: cc ?? "default", prices: results };
