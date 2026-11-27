@@ -3,8 +3,8 @@ import { mkdtempSync, statSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { refuseIfUnconfirmed } from "../../utils/confirm.js";
 import {
-  refuseIfUnconfirmed,
   registerPartnerLogin,
   registerUploadStoreImage,
   registerUploadTrailer,

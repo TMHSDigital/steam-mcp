@@ -4,7 +4,7 @@ import { MAX_FILE_BYTES, readLocalFile, requireKind } from "../storeAssets/safeP
 import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { errorResponse } from "../utils/steam-api.js";
-import { refuseIfUnconfirmed, refusal } from "../utils/confirm.js";
+import { confirmSchema, refuseIfUnconfirmed, refusal } from "../utils/confirm.js";
 import { UPLOADABLE_SLOTS, SLOT_FORM_FIELD } from "../storeAssets/slots.js";
 import { validateStoreAsset } from "../storeAssets/validate.js";
 import {
@@ -16,8 +16,6 @@ import {
 import { LIVE_WRITE, LOCAL_ONLY } from "../utils/annotations.js";
 
 const UPLOAD_TIMEOUT_MS = 60_000;
-
-export { refuseIfUnconfirmed };
 
 function cookiePath(): string | undefined {
   const raw = process.env.STEAM_PARTNER_COOKIES?.trim();
@@ -45,24 +43,24 @@ export function registerPartnerLogin(server: McpServer): void {
     {
       title: "Partner Login",
       description:
-        "Check Partner-admin session sources (cookie jar path or Chromium profile dir). Does not print cookie values. Requires STEAM_PARTNER_ADMIN=1.",
+        "Check the Partner-admin session source (the STEAM_PARTNER_COOKIES cookie jar). Does not print cookie values. Requires STEAM_PARTNER_ADMIN=1.",
       inputSchema: {},
       annotations: LOCAL_ONLY,
     },
     async () => {
       const cookies = cookiePath();
       const profile = profileDir();
-      if (!cookies && !profile) {
-        return authError(
-          "Set STEAM_PARTNER_COOKIES to a cookie-jar path or STEAM_PARTNER_PROFILE_DIR to a Chromium user-data dir outside the repo.",
-        );
+      // Uploads read only the cookie jar; profile-based sessions are not built yet (#126).
+      if (!cookies) {
+        return authError("Set STEAM_PARTNER_COOKIES to a cookie-jar path outside the repo.");
       }
       const report: Record<string, unknown> = {
         cookiesPathSet: Boolean(cookies),
         cookiesPathExists: cookies ? existsSync(cookies) : false,
         profileDirSet: Boolean(profile),
         profileDirExists: profile ? existsSync(profile) : false,
-        note: "Session cookies expire and trip Steam Guard. Never commit the jar or profile. Default profile location is %LOCALAPPDATA%/steam-mcp/partner-profile (Windows) or ~/.local/share/steam-mcp/partner-profile.",
+        profileDirUsed: false,
+        note: "Uploads use the cookie jar. STEAM_PARTNER_PROFILE_DIR is not used yet. Session cookies expire and trip Steam Guard. Never commit the jar.",
       };
       return {
         content: [{ type: "text" as const, text: JSON.stringify(report, null, 2) }],
@@ -77,14 +75,7 @@ const uploadImageSchema = {
     .enum(UPLOADABLE_SLOTS)
     .describe("Store or library slot to upload. Achievement, community, and event art are uploaded elsewhere in Steamworks."),
   path: z.string().min(1).describe("Local PNG or JPEG path"),
-  dry_run: z
-    .boolean()
-    .optional()
-    .describe("If true (default), return the planned POST without contacting Steam"),
-  confirm: z
-    .boolean()
-    .optional()
-    .describe("Required true when dry_run is false. Refuses otherwise."),
+  ...confirmSchema,
 };
 
 export function registerUploadStoreImage(server: McpServer): void {

@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { ToolAnnotations } from "@modelcontextprotocol/sdk/types.js";
 import { registerAllTools } from "../index.js";
+import { confirmSchema } from "../../utils/confirm.js";
 import {
   registerPartnerLogin,
   registerUploadStoreImage,
@@ -63,6 +64,13 @@ describe("tool registration", () => {
           expect(tool.annotations?.readOnlyHint).toBe(true);
         }
       });
+
+      if (gated) {
+        it("spreads the shared confirmSchema instead of copying it (#126)", () => {
+          expect(tool.inputSchema!.confirm).toBe(confirmSchema.confirm);
+          expect(tool.inputSchema!.dry_run).toBe(confirmSchema.dry_run);
+        });
+      }
     });
   }
 });

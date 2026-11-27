@@ -168,7 +168,7 @@ Every setting is an environment variable. Put it in the `env` block of your clie
 | `STEAM_MCP_HTTP_ALLOW_ASSETS` | unset | HTTP only: `1` lets the `assets` toolset (local file reads) load. |
 | `STEAM_PARTNER_ADMIN` | unset | Partner-admin process only (`src/partner/index.ts`): must be `1` to start it. Ignored by the default server. |
 | `STEAM_PARTNER_COOKIES` | unset | Partner-admin only: path to a cookie-jar file (never a cookie string). |
-| `STEAM_PARTNER_PROFILE_DIR` | unset | Partner-admin only: Chromium user-data directory outside the repo, for the login helper. |
+| `STEAM_PARTNER_PROFILE_DIR` | unset | Partner-admin only: reserved for profile-based sessions, not used yet. The Partner process needs `STEAM_PARTNER_COOKIES`. |
 
 ## Troubleshooting
 

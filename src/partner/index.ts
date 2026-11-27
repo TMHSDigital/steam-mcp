@@ -28,12 +28,9 @@ if (!envFlag("STEAM_PARTNER_ADMIN", process.env, { strict: true })) {
   fail("Set STEAM_PARTNER_ADMIN=1 to start the Partner-admin process.");
 }
 
-const cookies = process.env.STEAM_PARTNER_COOKIES?.trim();
-const profile = process.env.STEAM_PARTNER_PROFILE_DIR?.trim();
-if (!cookies && !profile) {
-  fail(
-    "Set STEAM_PARTNER_COOKIES (cookie-jar path) or STEAM_PARTNER_PROFILE_DIR (Chromium profile outside the repo).",
-  );
+// The upload tool reads only the cookie jar; STEAM_PARTNER_PROFILE_DIR is not used yet (#126).
+if (!process.env.STEAM_PARTNER_COOKIES?.trim()) {
+  fail("Set STEAM_PARTNER_COOKIES to a cookie-jar path outside the repo.");
 }
 
 console.error(
