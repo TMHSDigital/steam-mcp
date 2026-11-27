@@ -135,13 +135,14 @@
       <article class="tool k-none" id="steam_searchApps">
         <h3>Search Apps</h3>
         <p class="meta"><code>steam_searchApps</code><span class="badge"><span class="sw k-none" aria-hidden="true"></span>No key</span><span class="badge">Read only</span></p>
-        <p class="desc">Search the Steam store for games and apps by name or keyword. Returns app IDs, names, icons, and price info. No API key required.</p>
+        <p class="desc">Search the Steam store for games and apps by name or keyword. Returns up to 10 matches as { appid, name, type, final_price, original_price, discount_percent, currency, platforms, metascore }; prices are in the currency's smallest unit (cents), and are left out when Steam lists none (free or unreleased). No API key required.</p>
         <table class="params">
           <caption>Inputs</caption>
           <tbody>
           <tr><th scope="row"><code>query</code> <span class="req">required</span></th><td>Search query for games or apps (e.g. 'Hades', 'Counter-Strike')</td></tr>
           <tr><th scope="row"><code>cc</code></th><td>Two-letter country code for pricing (e.g. US, GB)</td></tr>
           <tr><th scope="row"><code>l</code></th><td>Language code (e.g. english, german). Defaults to english.</td></tr>
+          <tr><th scope="row"><code>limit</code></th><td>Maximum results (1-10, default 10)</td></tr>
           </tbody>
         </table>
       </article>

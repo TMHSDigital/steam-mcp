@@ -147,3 +147,59 @@ describe("stripHtml", () => {
     expect(stripHtml("&#99999999999999999999;")).toBe("&#99999999999999999999;");
   });
 });
+
+describe("steam_searchApps compact output (#141)", () => {
+  const items = [
+    {
+      type: "app",
+      name: "Portal 2",
+      id: 620,
+      price: { currency: "USD", initial: 999, final: 999 },
+      tiny_image: "https://example.invalid/620.jpg",
+      metascore: "95",
+      platforms: { windows: true, mac: false, linux: true },
+      streamingvideo: false,
+      controller_support: "full",
+    },
+    {
+      type: "app",
+      name: "Portal Knights",
+      id: 374040,
+      price: { currency: "USD", initial: 1999, final: 299 },
+      tiny_image: "https://example.invalid/374040.jpg",
+      metascore: "",
+      platforms: { windows: true, mac: true, linux: true },
+    },
+    { type: "app", name: "Dota 2", id: 570, tiny_image: "https://example.invalid/570.jpg", metascore: "90", platforms: { windows: true } },
+  ];
+
+  it("returns appid, prices, and platforms without image or video fields", async () => {
+    const { text, data } = await run("steam_searchApps", { query: "portal" }, { total: 3, items });
+    expect(data).toEqual([
+      { appid: 620, name: "Portal 2", type: "app", final_price: 999, currency: "USD", platforms: ["windows", "linux"], metascore: 95 },
+      {
+        appid: 374040,
+        name: "Portal Knights",
+        type: "app",
+        final_price: 299,
+        original_price: 1999,
+        discount_percent: 85,
+        currency: "USD",
+        platforms: ["windows", "mac", "linux"],
+      },
+      { appid: 570, name: "Dota 2", type: "app", platforms: ["windows"], metascore: 90 },
+    ]);
+    expect(text).not.toMatch(/tiny_image|streamingvideo|controller_support/);
+  });
+
+  it("caps the result count at limit", async () => {
+    const { data } = await run("steam_searchApps", { query: "portal", limit: 1 }, { total: 3, items });
+    expect(data.map((d: { appid: number }) => d.appid)).toEqual([620]);
+  });
+
+  it("keeps the no-results message", async () => {
+    vi.stubGlobal("fetch", vi.fn(jsonFetch({ total: 0, items: [] })));
+    const result = await tools.get("steam_searchApps")!.handler({ query: "zzzz" });
+    expect(result.content[0].text).toBe('No results found for "zzzz".');
+  });
+});

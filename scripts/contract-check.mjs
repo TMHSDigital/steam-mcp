@@ -16,7 +16,7 @@ registerAllTools({
 /** [tool, args, required JSON paths in the output] */
 const CHECKS = [
   ["steam_getAppDetails", { appid: 440 }, ["name", "steam_appid", "is_free", "tags.0"]],
-  ["steam_searchApps", { query: "portal 2" }, ["0.id", "0.name"]],
+  ["steam_searchApps", { query: "portal 2" }, ["0.appid", "0.name"]],
   ["steam_getPlayerCount", { appid: 440 }, ["player_count"]],
   ["steam_getAchievementStats", { appid: 440 }, ["achievements.0.name", "achievements.0.percent"]],
   ["steam_getWorkshopItem", { publishedfileid: "160250458" }, ["publishedfileid", "title", "consumer_app_id"]],

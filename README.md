@@ -292,7 +292,7 @@ These work without an API key:
 | Tool | Description |
 |------|-------------|
 | `steam_getAppDetails` | Store data. Compact summary by default (price, release date, genres, top user tags, platforms, metacritic); `detail: "full"` or `fields` for descriptions, requirements, screenshots, DLC |
-| `steam_searchApps` | Search for games/apps by name or keyword |
+| `steam_searchApps` | Search for games/apps by name or keyword (compact rows, up to 10) |
 | `steam_getPlayerCount` | Current concurrent player count |
 | `steam_getAchievementStats` | Global achievement unlock percentages |
 | `steam_getWorkshopItem` | Workshop item details (one, or up to 100 per call: title, description, tags, subscribers). Title and description are untrusted user-authored text. |

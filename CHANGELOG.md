@@ -23,6 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- `steam_searchApps` returns compact rows using `steam_getFeatured`'s field names: `appid` (was `id`), `name`, `type`, `final_price`, `original_price` and `discount_percent` when discounted, `currency`, `platforms`, and a numeric `metascore`. Image, video, and controller fields are dropped. A new `limit` (1-10, default 10) caps the results; Steam's search endpoint returns at most 10. (#141)
 - `steam_getReviews` sends `languages: ["english"]` when no `language` is given, matching its documented default, instead of leaving the choice to Steam. Docs drift fixed: the `steam_getSalesSummary` `end_date` limit wording, the README leaderboard row (publisher key) and Development commands, the CONTRIBUTING tool template and key phrases, and the CLAUDE.md architecture map. (#129)
 - `steam_validateStoreAssetDir` reads each file once: a file whose slot is inferred from its pixel size is validated from the same bytes instead of being read again, and header-only PNG parsing no longer copies the image data. (#133)
 - MCP prompts are offered only when every tool they call is loaded, so `STEAM_MCP_TOOLSETS=store` or HTTP mode without the assets opt-in no longer advertises a slash command whose first step fails. The README prompts table lists the toolsets each one needs. (#125)
