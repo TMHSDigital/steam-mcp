@@ -156,18 +156,46 @@ function toCsv(rows: Array<Record<string, unknown>>): string {
 }
 
 type GroupBy = "country" | "day" | "app" | "package" | "platform";
-type Group = Record<string, number | string>;
 
-function emptyGroup(groupBy: GroupBy, groupKey: string): Group {
-  return {
-    [groupBy]: groupKey,
-    gross_units_sold: 0,
-    gross_units_returned: 0,
-    net_units_sold: 0,
-    gross_units_activated: 0,
-    gross_sales_usd: 0,
-    net_sales_usd: 0,
-  };
+/** Every sales figure, in output order. The one list the rest derive from (#116). */
+const METRICS = [
+  "gross_units_sold",
+  "gross_units_returned",
+  "net_units_sold",
+  "gross_units_activated",
+  "gross_sales_usd",
+  "net_sales_usd",
+] as const;
+type Metric = (typeof METRICS)[number];
+type Metrics = Record<Metric, number>;
+
+/** USD figures: parsed from strings and rounded to cents in the output. */
+const USD_METRICS: ReadonlySet<Metric> = new Set(["gross_sales_usd", "net_sales_usd"]);
+/** Figures shown in totals. */
+const TOTAL_METRICS = ["net_units_sold", "gross_sales_usd", "net_sales_usd"] as const satisfies readonly Metric[];
+/** Figures that get previous_* and delta_* with compare_previous, in JSON and CSV. */
+const COMPARED_METRICS = ["net_units_sold", "net_sales_usd"] as const satisfies readonly Metric[];
+
+interface Group {
+  key: string;
+  m: Metrics;
+}
+
+function zeroMetrics(): Metrics {
+  return Object.fromEntries(METRICS.map((k) => [k, 0])) as Metrics;
+}
+
+function emptyGroup(groupKey: string): Group {
+  return { key: groupKey, m: zeroMetrics() };
+}
+
+function rowValue(row: SalesRow, metric: Metric): number {
+  return USD_METRICS.has(metric) ? usd(row[metric] as string | undefined) : ((row[metric] as number | undefined) ?? 0);
+}
+
+/** A figure as output: USD rounded to cents. */
+function display(metric: Metric, value: number): number {
+  return USD_METRICS.has(metric) ? round2(value) : value;
 }
 
 interface WindowTotals {
@@ -211,48 +239,34 @@ function totalWindow(
         package: String(row.packageid ?? "unknown"),
         platform: row.platform ?? "unknown",
       }[groupBy];
-      const g = groups.get(groupKey) ?? emptyGroup(groupBy, groupKey);
-      (g.gross_units_sold as number) += row.gross_units_sold ?? 0;
-      (g.gross_units_returned as number) += row.gross_units_returned ?? 0;
-      (g.net_units_sold as number) += row.net_units_sold ?? 0;
-      (g.gross_units_activated as number) += row.gross_units_activated ?? 0;
-      (g.gross_sales_usd as number) += usd(row.gross_sales_usd);
-      (g.net_sales_usd as number) += usd(row.net_sales_usd);
+      const g = groups.get(groupKey) ?? emptyGroup(groupKey);
+      for (const metric of METRICS) g.m[metric] += rowValue(row, metric);
       groups.set(groupKey, g);
     }
   }
   return { groups, rowsSeen, truncatedDates };
 }
 
-interface Figures {
-  net_units_sold: number;
-  net_sales_usd: number;
-}
-
-/** previous_*, delta_*, and delta_pct (null when the previous period had no revenue). */
-function comparison(cur: Figures, prev: Figures) {
-  return {
-    previous_net_units_sold: prev.net_units_sold,
-    delta_net_units_sold: cur.net_units_sold - prev.net_units_sold,
-    previous_net_sales_usd: round2(prev.net_sales_usd),
-    delta_net_sales_usd: round2(cur.net_sales_usd - prev.net_sales_usd),
-    delta_pct:
-      prev.net_sales_usd === 0
-        ? null
-        : Math.round(((cur.net_sales_usd - prev.net_sales_usd) / Math.abs(prev.net_sales_usd)) * 1000) / 10,
-  };
-}
-
-function sumGroups(groups: Iterable<Group>): Figures & { gross_sales_usd: number } {
-  let net_units_sold = 0;
-  let gross_sales_usd = 0;
-  let net_sales_usd = 0;
-  for (const g of groups) {
-    net_units_sold += g.net_units_sold as number;
-    gross_sales_usd += g.gross_sales_usd as number;
-    net_sales_usd += g.net_sales_usd as number;
+/** previous_* and delta_* per compared figure, then delta_pct (null when the previous period had no revenue). */
+function comparison(cur: Metrics, prev: Metrics): Record<string, number | null> {
+  const out: Record<string, number | null> = {};
+  for (const metric of COMPARED_METRICS) {
+    out[`previous_${metric}`] = display(metric, prev[metric]);
+    out[`delta_${metric}`] = display(metric, cur[metric] - prev[metric]);
   }
-  return { net_units_sold, gross_sales_usd, net_sales_usd };
+  out.delta_pct =
+    prev.net_sales_usd === 0
+      ? null
+      : Math.round(((cur.net_sales_usd - prev.net_sales_usd) / Math.abs(prev.net_sales_usd)) * 1000) / 10;
+  return out;
+}
+
+function sumGroups(groups: Iterable<Group>): Metrics {
+  const sum = zeroMetrics();
+  for (const g of groups) {
+    for (const metric of METRICS) sum[metric] += g.m[metric];
+  }
+  return sum;
 }
 
 export function register(server: McpServer): void {
@@ -292,30 +306,28 @@ export function register(server: McpServer): void {
         if (previous) {
           // Groups that sold only in the previous period still show, with zeros for this one.
           for (const k of previous.groups.keys()) {
-            if (!current.groups.has(k)) current.groups.set(k, emptyGroup(groupBy, k));
+            if (!current.groups.has(k)) current.groups.set(k, emptyGroup(k));
           }
         }
         const truncatedDates = [...(previous?.truncatedDates ?? []), ...current.truncatedDates];
 
         const sorted = [...current.groups.entries()]
-          .map(([groupKey, g]): Record<string, number | string | null> => {
-            const name = names.get(`${groupBy}:${g[groupBy]}`);
-            const prev = previous ? (previous.groups.get(groupKey) ?? emptyGroup(groupBy, groupKey)) : undefined;
+          .map(([groupKey, g]) => {
+            const name = names.get(`${groupBy}:${g.key}`);
+            const prev = previous ? (previous.groups.get(groupKey) ?? emptyGroup(groupKey)) : undefined;
+            const row: Record<string, number | string | null> = { [groupBy]: g.key };
+            for (const metric of METRICS) row[metric] = display(metric, g.m[metric]);
             return {
-              ...g,
-              ...(name ? { name } : {}),
-              gross_sales_usd: round2(g.gross_sales_usd as number),
-              net_sales_usd: round2(g.net_sales_usd as number),
-              ...(prev ? comparison(sumGroups([g]), sumGroups([prev])) : {}),
+              row: { ...row, ...(name ? { name } : {}), ...(prev ? comparison(g.m, prev.m) : {}) },
+              net: display("net_sales_usd", g.m.net_sales_usd),
             };
           })
-          .sort((a, b) => (b.net_sales_usd as number) - (a.net_sales_usd as number));
+          .sort((a, b) => b.net - a.net)
+          .map((s) => s.row);
         const shown = sorted.slice(0, top ?? 25);
         const cur = sumGroups(current.groups.values());
         const totals = {
-          net_units_sold: cur.net_units_sold,
-          gross_sales_usd: round2(cur.gross_sales_usd),
-          net_sales_usd: round2(cur.net_sales_usd),
+          ...Object.fromEntries(TOTAL_METRICS.map((metric) => [metric, display(metric, cur[metric])])),
           ...(previous ? comparison(cur, sumGroups(previous.groups.values())) : {}),
         };
 
