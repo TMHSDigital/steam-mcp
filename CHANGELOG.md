@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `steam_getReviews` takes `since` (ISO date or unix seconds) and `max_pages` (default 5, max 20) to read every review since a date in one bounded call: it pages the newest reviews until an older one, and adds `window: { since, oldest_seen, pages, complete }` so a cut-off is visible. The `review-digest` prompt takes an optional `since`. (#117)
 - Releases are listed in the official MCP Registry as `io.github.TMHSDigital/steam-mcp`. The publish workflow publishes `server.json` after each npm release; the first listing comes with the next release. (#46)
 - The README has one-click "Add to Cursor" and "Install in VS Code" buttons. (#46)
 - `steam_getLeaderboardEntries` takes `include_names: true` to add each player's `personaname`, looked up in batches of 100 IDs. If the lookup fails, the entries come back with a `names_warning` instead. (#99)
