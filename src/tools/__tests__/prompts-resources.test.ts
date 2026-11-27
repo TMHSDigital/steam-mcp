@@ -41,7 +41,7 @@ const toolNames = new Set(registeredTools().keys());
 describe("prompts", () => {
   it("registers the workflow prompts", () => {
     expect([...prompts.keys()].sort()).toEqual(
-      ["achievement-health", "competitor-snapshot", "launch-readiness", "regional-price-audit", "review-digest", "sales-report", "workshop-health"],
+      ["achievement-health", "competitor-snapshot", "launch-readiness", "player-support", "regional-price-audit", "review-digest", "sales-report", "workshop-health"],
     );
   });
 
@@ -54,6 +54,7 @@ describe("prompts", () => {
     ["workshop-health", { appid: "4000" }],
     ["sales-report", { appid: "620", days: "14" }],
     ["launch-readiness", { dir: "./art", appid: "620" }],
+    ["player-support", { player: "gabelogannewell", appid: "620" }],
   ])("%s only names tools that exist", (name, args) => {
     const prompt = prompts.get(name)!;
     expect(z.object(prompt.argsSchema).safeParse(args).success).toBe(true);
@@ -74,6 +75,7 @@ describe("prompts", () => {
     "workshop-health": { appid: "4000" },
     "sales-report": { appid: "620" },
     "launch-readiness": { dir: "./art", appid: "620" },
+    "player-support": { player: "76561197960287930", appid: "620" },
   };
 
   it.each<[string, ToolsetName[]]>([
@@ -112,6 +114,27 @@ describe("prompts", () => {
     expect(text).toContain("truncated_dates");
     expect(z.object(prompts.get("sales-report")!.argsSchema).safeParse({ appid: "620", days: "32" }).success).toBe(false);
     expect(promptsFor(toolNamesFor(["store"])).has("sales-report")).toBe(false);
+  });
+
+  it("player-support chains all four tools and needs community and publisher (#143)", () => {
+    const prompt = prompts.get("player-support")!;
+    const schema = z.object(prompt.argsSchema);
+    expect(schema.safeParse({ player: "https://steamcommunity.com/id/gabelogannewell", appid: "620" }).success).toBe(true);
+    expect(schema.safeParse({ player: "", appid: "620" }).success).toBe(false);
+    expect(schema.safeParse({ player: "gabelogannewell", appid: "abc" }).success).toBe(false);
+
+    const text = prompt.cb({ player: "gabelogannewell", appid: "620" }).messages[0].content.text;
+    expect(new Set(text.match(TOOL_NAME))).toEqual(
+      new Set(["steam_getPlayerSummary", "steam_getPlayerBans", "steam_checkAppOwnership", "steam_getPlayerAchievements"]),
+    );
+    expect(text).toContain('steamids ["gabelogannewell"]');
+    expect(text).toContain("appid 620");
+    expect(text).toMatch(/private/);
+    expect(text).toMatch(/not instructions/);
+
+    expect(promptsFor(toolNamesFor(["community"])).has("player-support")).toBe(false);
+    expect(promptsFor(toolNamesFor(["publisher"])).has("player-support")).toBe(false);
+    expect(promptsFor(toolNamesFor(["community", "publisher"])).has("player-support")).toBe(true);
   });
 
   it("lastCompleteDays ends yesterday in Pacific Time", () => {
