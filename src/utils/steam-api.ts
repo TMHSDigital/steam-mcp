@@ -154,7 +154,12 @@ function describeNonJson(text: string, contentType: string | null): string {
 async function readBody(response: Response): Promise<string> {
   try {
     return await response.text();
-  } catch {
+  } catch (error) {
+    // On an error status the body is only extra detail. A timeout, or a
+    // success body cut off mid-read, must reach the caller's catch (#123).
+    if (response.ok || (error instanceof DOMException && error.name === "AbortError")) {
+      throw error;
+    }
     return "";
   }
 }

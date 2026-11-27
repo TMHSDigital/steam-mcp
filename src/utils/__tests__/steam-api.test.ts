@@ -216,6 +216,47 @@ describe("steamFetch", () => {
     ).rejects.toThrow(TimeoutError);
   });
 
+  it("throws TimeoutError when the body stalls after the headers (#123)", async () => {
+    vi.useFakeTimers();
+    try {
+      // Like undici: the body stream errors with the abort reason.
+      vi.stubGlobal(
+        "fetch",
+        vi.fn((_url: string, init: RequestInit) => {
+          const body = new ReadableStream({
+            start(controller) {
+              init.signal!.addEventListener("abort", () => controller.error(init.signal!.reason));
+            },
+          });
+          return Promise.resolve(new Response(body, { status: 200 }));
+        }),
+      );
+
+      const pending = steamFetch("https://api.steampowered.com/test");
+      const assertion = expect(pending).rejects.toThrow(TimeoutError);
+      await vi.advanceTimersByTimeAsync(15_000);
+      await assertion;
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("reports a body cut off on a 200 as a network failure, not non-JSON (#123)", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        headers: new Headers(),
+        text: () => Promise.reject(new TypeError("terminated")),
+      }),
+    );
+
+    await expect(steamFetch("https://api.steampowered.com/test")).rejects.toThrow(
+      "Failed to reach Steam API: terminated",
+    );
+  });
+
   it("throws SteamApiError on network failure", async () => {
     vi.stubGlobal(
       "fetch",
