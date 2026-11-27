@@ -279,11 +279,12 @@
       <article class="tool k-key" id="steam_getPlayerSummary">
         <h3>Get Player Summary</h3>
         <p class="meta"><code>steam_getPlayerSummary</code><span class="badge"><span class="sw k-key" aria-hidden="true"></span>Steam Web API key</span><span class="badge">Read only</span></p>
-        <p class="desc">Get a player's Steam profile including display name, avatar, online status, and profile visibility. Requires STEAM_API_KEY.</p>
+        <p class="desc">Get Steam profiles including display name, avatar, online status, and profile visibility. Pass steamid for one player, or steamids for up to 100 in one request (returns players plus not_found). Requires STEAM_API_KEY.</p>
         <table class="params">
           <caption>Inputs</caption>
           <tbody>
-          <tr><th scope="row"><code>steamid</code> <span class="req">required</span></th><td>The player: a 17-digit Steam64 ID, a profile URL (steamcommunity.com/profiles/... or /id/...), a vanity name, or a SteamID2/SteamID3 (STEAM_0:1:123, [U:1:246])</td></tr>
+          <tr><th scope="row"><code>steamid</code></th><td></td></tr>
+          <tr><th scope="row"><code>steamids</code></th><td>Several players at once (1-100): Steam64 IDs, profile URLs, vanity names, or SteamID2/3. Use instead of steamid.</td></tr>
           </tbody>
         </table>
       </article>

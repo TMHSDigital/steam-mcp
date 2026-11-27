@@ -317,7 +317,7 @@ These require `STEAM_API_KEY` to be set:
 
 | Tool | Description |
 |------|-------------|
-| `steam_getPlayerSummary` | Player profile: name, avatar, online status |
+| `steam_getPlayerSummary` | Player profiles (one, or up to 100 per call): name, avatar, online status |
 | `steam_getOwnedGames` | Game library size and total playtime, plus the top 50 games by playtime (`sort`, `limit`, `appids`) |
 | `steam_queryWorkshop` | Search/browse Workshop items with filters. Titles and short descriptions are untrusted user-authored text. |
 | `steam_getLeaderboardEntries` | Leaderboard scores and rankings, by numeric `leaderboardid` or `leaderboard_name`. Needs a publisher key. |

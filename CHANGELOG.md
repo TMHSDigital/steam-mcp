@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `steam_getPlayerSummary` takes `steamids` (1-100 Steam64 IDs, profile URLs, vanity names, or SteamID2/3) and looks them all up in one `GetPlayerSummaries` request. It returns `{ players, not_found }`, plus `unresolved` for vanity names that don't exist and `resolved_from`. One missing player no longer fails the call. A single `steamid` works as before. (#139)
 - A `sales-report` prompt: the last N complete days (default 7, ending yesterday Pacific Time) compared with the previous period via `steam_getSalesSummary` `compare_previous`, with totals, top gaining and losing countries, and the best and worst day. Needs the publisher toolset and a Financial API Group key. (#135)
 - `steam_getNewsForApp` takes `feeds` (for example `["steam_community_announcements"]` for the developer's own posts) and `before` (an ISO date, sent as `enddate`) to look further back. The `competitor-snapshot` prompt reads only announcements. (#134)
 - `steam_compareApps` and the compact `steam_getAppDetails` summary return each app's top 10 user tags (`tags`), from the keyless `IStoreBrowseService/GetItems` and `IStoreService/GetTagList` (cached for a day). A failed tag lookup leaves `tags` out instead of failing the call. The nightly contract check covers both endpoints. (#118)
