@@ -110,6 +110,79 @@ describe("steam_getReviews", () => {
   });
 });
 
+describe("steam_getReviews since (#117)", () => {
+  const handler = captureHandler(registerGetReviews);
+  const SINCE = 1_700_000_000;
+  const summary = fixture.response.query_summary;
+
+  /** Pages keyed by the cursor they answer; each review is [id, seconds after SINCE]. */
+  function pagedFetch(pages: Record<string, { reviews: Array<[string, number]>; next: string }>) {
+    return vi.fn(async (url: string) => {
+      const input = JSON.parse(new URL(url).searchParams.get("input_json")!);
+      const p = pages[input.cursor];
+      const body = {
+        response: {
+          ...(input.cursor === "*" ? { query_summary: summary } : {}),
+          reviews: p.reviews.map(([id, offset]) => ({ recommendationid: id, timestamp_created: SINCE + offset })),
+          cursor: p.next,
+        },
+      };
+      return new Response(JSON.stringify(body));
+    });
+  }
+
+  it("pages newest-first and stops at the first older review", async () => {
+    const fetchMock = pagedFetch({
+      "*": { reviews: [["a", 300], ["b", 200]], next: "c1" },
+      c1: { reviews: [["c", 100], ["d", -5], ["e", -10]], next: "c2" },
+      c2: { reviews: [["f", -20]], next: "c3" },
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const body = JSON.parse((await handler({ appid: 440, since: SINCE })).content[0].text);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(requestedInput(fetchMock)).toMatchObject({ filter: 1, num_per_page: 100, cursor: "*" });
+    expect(body.reviews.map((r: { recommendationid: string }) => r.recommendationid)).toEqual(["a", "b", "c"]);
+    expect(body.window).toEqual({
+      since: new Date(SINCE * 1000).toISOString(),
+      oldest_seen: new Date((SINCE - 5) * 1000).toISOString(),
+      pages: 2,
+      complete: true,
+    });
+    expect(body.query_summary.total_reviews).toBe(summary.total_reviews);
+  });
+
+  it("reports complete: false when max_pages stops it", async () => {
+    vi.stubGlobal(
+      "fetch",
+      pagedFetch({
+        "*": { reviews: [["a", 300]], next: "c1" },
+        c1: { reviews: [["b", 200]], next: "c2" },
+        c2: { reviews: [["c", 100]], next: "c3" },
+      }),
+    );
+
+    const body = JSON.parse((await handler({ appid: 440, since: new Date(SINCE * 1000).toISOString(), max_pages: 2 })).content[0].text);
+    expect(body.reviews).toHaveLength(2);
+    expect(body.window).toMatchObject({ pages: 2, complete: false });
+    expect(body.cursor).toBe("c2");
+  });
+
+  it("is complete when the reviews run out", async () => {
+    vi.stubGlobal("fetch", pagedFetch({ "*": { reviews: [["a", 300]], next: "*" } }));
+    const body = JSON.parse((await handler({ appid: 440, since: SINCE })).content[0].text);
+    expect(body.window).toMatchObject({ pages: 1, complete: true });
+  });
+
+  it("refuses a sort order other than recent, and max_pages without since", async () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+    expect((await handler({ appid: 440, since: SINCE, filter: "funny" })).isError).toBe(true);
+    expect((await handler({ appid: 440, max_pages: 3 })).isError).toBe(true);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+});
+
 describe("steam_getAppReviewSummary", () => {
   const handler = captureHandler(registerGetAppReviewSummary);
 

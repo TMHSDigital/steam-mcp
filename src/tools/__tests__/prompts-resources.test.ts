@@ -36,6 +36,7 @@ describe("prompts", () => {
     ["competitor-snapshot", { appids: "413150,1145360" }],
     ["achievement-health", { appid: "440" }],
     ["review-digest", { appid: "440" }],
+    ["review-digest", { appid: "440", since: "2026-11-20" }],
     ["regional-price-audit", { appid: "440" }],
     ["workshop-health", { appid: "4000" }],
     ["launch-readiness", { dir: "./art", appid: "620" }],

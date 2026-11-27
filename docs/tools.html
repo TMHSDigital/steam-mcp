@@ -194,7 +194,7 @@
       <article class="tool k-none" id="steam_getReviews">
         <h3>Get Reviews</h3>
         <p class="meta"><code>steam_getReviews</code><span class="badge"><span class="sw k-none" aria-hidden="true"></span>No key</span><span class="badge">Read only</span></p>
-        <p class="desc">Fetch user reviews for a Steam app with filters for language, sentiment, purchase type, and pagination. Uses IUserReviewsService/GetAppReviews. No API key required.</p>
+        <p class="desc">Fetch user reviews for a Steam app with filters for language, sentiment, purchase type, and pagination, or every review since a date in one bounded call (since, max_pages). Uses IUserReviewsService/GetAppReviews. No API key required.</p>
         <table class="params">
           <caption>Inputs</caption>
           <tbody>
@@ -205,6 +205,8 @@
           <tr><th scope="row"><code>purchase_type</code></th><td>Filter by purchase type (default: steam)</td></tr>
           <tr><th scope="row"><code>num_per_page</code></th><td>Number of reviews to return (default: 20, max: 100)</td></tr>
           <tr><th scope="row"><code>cursor</code></th><td>Pagination cursor from a previous response</td></tr>
+          <tr><th scope="row"><code>since</code></th><td>Only reviews created at or after this time: an ISO date or datetime (UTC), or unix seconds. Pages through the newest reviews (filter recent) until an older one or max_pages, and adds a window summary.</td></tr>
+          <tr><th scope="row"><code>max_pages</code></th><td>With since: the most pages to read (default: 5, max: 20). window.complete is false when this stops the search.</td></tr>
           </tbody>
         </table>
       </article>
