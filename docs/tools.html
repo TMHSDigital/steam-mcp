@@ -119,14 +119,14 @@
       <article class="tool k-none" id="steam_getAppDetails">
         <h3>Get App Details</h3>
         <p class="meta"><code>steam_getAppDetails</code><span class="badge"><span class="sw k-none" aria-hidden="true"></span>No key</span><span class="badge">Read only</span></p>
-        <p class="desc">Get Steam store data for an app. Returns a compact summary by default (price, release date, genres, platforms, metacritic, short description). Pass detail: &quot;full&quot; or a fields list for descriptions, requirements, screenshots, DLC, and the rest. No API key required.</p>
+        <p class="desc">Get Steam store data for an app. Returns a compact summary by default (price, release date, genres, top user tags, platforms, metacritic, short description). Pass detail: &quot;full&quot; or a fields list for descriptions, requirements, screenshots, DLC, and the rest. No API key required.</p>
         <table class="params">
           <caption>Inputs</caption>
           <tbody>
           <tr><th scope="row"><code>appid</code> <span class="req">required</span></th><td>Steam application ID (e.g. 440 for Team Fortress 2)</td></tr>
           <tr><th scope="row"><code>cc</code></th><td>Two-letter country code for pricing (e.g. US, GB, DE)</td></tr>
           <tr><th scope="row"><code>l</code></th><td>Language code for descriptions (e.g. english, german)</td></tr>
-          <tr><th scope="row"><code>detail</code></th><td>summary (default): name, type, price, release date, genres, categories, platforms, metacritic, recommendations, and the short description, about 2 KB. full: every store field, about 30 KB.</td></tr>
+          <tr><th scope="row"><code>detail</code></th><td>summary (default): name, type, price, release date, genres, top user tags, categories, platforms, metacritic, recommendations, and the short description, about 2 KB. full: every store field, about 30 KB.</td></tr>
           <tr><th scope="row"><code>fields</code></th><td>Return only these raw store fields (e.g. [&quot;pc_requirements&quot;, &quot;dlc&quot;, &quot;screenshots&quot;]). Overrides detail.</td></tr>
           <tr><th scope="row"><code>include_html</code></th><td>Keep store HTML in description and requirements fields (default: false, which strips tags and truncates long text to 2000 chars).</td></tr>
           </tbody>
@@ -261,7 +261,7 @@
       <article class="tool k-none" id="steam_compareApps">
         <h3>Compare Apps</h3>
         <p class="meta"><code>steam_compareApps</code><span class="badge"><span class="sw k-none" aria-hidden="true"></span>No key</span><span class="badge">Read only</span></p>
-        <p class="desc">Compare 2-10 Steam apps in one compact table: price, discount, release date, genres, metacritic, review score and count, current players, and language count. No API key required.</p>
+        <p class="desc">Compare 2-10 Steam apps in one compact table: price, discount, release date, genres, top user tags, metacritic, review score and count, current players, and language count. No API key required.</p>
         <table class="params">
           <caption>Inputs</caption>
           <tbody>

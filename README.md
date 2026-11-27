@@ -290,7 +290,7 @@ These work without an API key:
 
 | Tool | Description |
 |------|-------------|
-| `steam_getAppDetails` | Store data. Compact summary by default (price, release date, genres, platforms, metacritic); `detail: "full"` or `fields` for descriptions, requirements, screenshots, DLC |
+| `steam_getAppDetails` | Store data. Compact summary by default (price, release date, genres, top user tags, platforms, metacritic); `detail: "full"` or `fields` for descriptions, requirements, screenshots, DLC |
 | `steam_searchApps` | Search for games/apps by name or keyword |
 | `steam_getPlayerCount` | Current concurrent player count |
 | `steam_getAchievementStats` | Global achievement unlock percentages |
@@ -304,7 +304,7 @@ These work without an API key:
 | `steam_validateStoreAssetDir` | Launch-readiness audit of a local art folder: infers each slot, validates it, and lists missing required slots and screenshots |
 | `steam_getDeckCompatibility` | Steam Deck category (verified, playable, unsupported) and each test result in plain language, for up to 20 apps. Unofficial store endpoint. |
 | `steam_getFeatured` | Current top sellers, new releases, specials, and coming soon for a region |
-| `steam_compareApps` | One compact table for 2-10 apps: price, release date, genres, metacritic, reviews, current players, languages |
+| `steam_compareApps` | One compact table for 2-10 apps: price, release date, genres, top user tags, metacritic, reviews, current players, languages |
 | `steam_getGlobalStatsForGame` | All-player totals for aggregated stats, with optional daily history. Keyless when stat names are given. |
 
 </details>

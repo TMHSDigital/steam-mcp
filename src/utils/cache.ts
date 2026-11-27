@@ -12,6 +12,9 @@ const TTL_RULES: Array<[RegExp, number]> = [
   [/\/ISteamNews\/GetNewsForApp\//, 600],
   [/\/IUserReviewsService\/GetAppReviews\//, 600],
   [/\/ISteamUser\/ResolveVanityURL\//, 3600],
+  // User tags (#118): the tag name list changes very rarely.
+  [/\/IStoreService\/GetTagList\//, 86400],
+  [/\/IStoreBrowseService\/GetItems\//, 3600],
 ];
 
 const MAX_ENTRIES = 500;

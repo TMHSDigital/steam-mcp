@@ -4,6 +4,7 @@ import { steamStoreUrl, steamApiUrl, steamFetch, errorResponse } from "../utils/
 import { fetchAppReviews } from "../utils/reviews.js";
 import { READ_ONLY } from "../utils/annotations.js";
 import { stripHtml } from "../utils/text.js";
+import { topTagsOrNone } from "../utils/tags.js";
 
 const inputSchema = {
   appids: z.array(z.number().int().positive()).min(2).max(10).describe("Steam appids to compare (2-10)"),
@@ -29,7 +30,7 @@ async function settle<T>(p: Promise<T>): Promise<T | undefined> {
   }
 }
 
-async function compareOne(appid: number, cc: string) {
+async function compareOne(appid: number, cc: string, allTags: Promise<Map<number, string[]>>) {
   let storeError: unknown;
   const [details, reviews, players] = await Promise.all([
     (steamFetch(steamStoreUrl("/api/appdetails", { appids: appid, cc })) as Promise<
@@ -60,6 +61,7 @@ async function compareOne(appid: number, cc: string) {
     discount_percent: d?.price_overview?.discount_percent || undefined,
     release_date: d?.release_date?.coming_soon ? `coming soon (${d.release_date.date})` : d?.release_date?.date,
     genres: d?.genres?.map((g) => g.description),
+    tags: (await allTags).get(appid),
     metacritic: d?.metacritic?.score,
     review_score: s?.review_score_desc,
     review_positive_pct:
@@ -84,13 +86,14 @@ export function register(server: McpServer): void {
     {
       title: "Compare Apps",
       description:
-        "Compare 2-10 Steam apps in one compact table: price, discount, release date, genres, metacritic, review score and count, current players, and language count. No API key required.",
+        "Compare 2-10 Steam apps in one compact table: price, discount, release date, genres, top user tags, metacritic, review score and count, current players, and language count. No API key required.",
       inputSchema,
       annotations: READ_ONLY,
     },
     async ({ appids, cc }) => {
       try {
-        const rows = await Promise.all(appids.map((id) => compareOne(id, cc ?? "US")));
+        const allTags = topTagsOrNone(appids, cc ?? "US");
+        const rows = await Promise.all(appids.map((id) => compareOne(id, cc ?? "US", allTags)));
         if (rows.every((r) => "error" in r)) {
           return errorResponse(
             new Error(`No store data for any of ${appids.join(", ")}. Steam may be unavailable, or the apps are delisted or region-locked.`),

@@ -15,7 +15,7 @@ registerAllTools({
 
 /** [tool, args, required JSON paths in the output] */
 const CHECKS = [
-  ["steam_getAppDetails", { appid: 440 }, ["name", "steam_appid", "is_free"]],
+  ["steam_getAppDetails", { appid: 440 }, ["name", "steam_appid", "is_free", "tags.0"]],
   ["steam_searchApps", { query: "portal 2" }, ["0.id", "0.name"]],
   ["steam_getPlayerCount", { appid: 440 }, ["player_count"]],
   ["steam_getAchievementStats", { appid: 440 }, ["achievements.0.name", "achievements.0.percent"]],
@@ -28,7 +28,7 @@ const CHECKS = [
   ["steam_getGlobalStatsForGame", { appid: 480, stat_names: ["FeetTraveled"] }, ["stats.FeetTraveled"]],
   ["steam_getDeckCompatibility", { appids: [620] }, ["reports.0.category", "reports.0.tests.0.result"]],
   ["steam_getFeatured", { limit: 2 }, ["lists.top_sellers.0.appid", "lists.new_releases.0.name"]],
-  ["steam_compareApps", { appids: [620, 400] }, ["apps.0.name", "apps.0.review_count", "apps.1.price"]],
+  ["steam_compareApps", { appids: [620, 400] }, ["apps.0.name", "apps.0.review_count", "apps.1.price", "apps.0.tags.0"]],
 ];
 
 function get(obj, path) {

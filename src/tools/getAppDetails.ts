@@ -2,6 +2,7 @@ import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { steamStoreUrl, steamFetch, errorResponse } from "../utils/steam-api.js";
 import { READ_ONLY } from "../utils/annotations.js";
+import { topTagsOrNone } from "../utils/tags.js";
 import { stripHtml, truncate } from "../utils/text.js";
 
 const inputSchema = {
@@ -23,7 +24,7 @@ const inputSchema = {
     .enum(["summary", "full"])
     .optional()
     .describe(
-      "summary (default): name, type, price, release date, genres, categories, platforms, metacritic, recommendations, and the short description, about 2 KB. full: every store field, about 30 KB.",
+      "summary (default): name, type, price, release date, genres, top user tags, categories, platforms, metacritic, recommendations, and the short description, about 2 KB. full: every store field, about 30 KB.",
     ),
   fields: z
     .array(z.string().min(1))
@@ -49,7 +50,7 @@ function descriptions(list: unknown): string[] | undefined {
     : undefined;
 }
 
-export function summarize(d: AppData): AppData {
+export function summarize(d: AppData, tags?: string[]): AppData {
   const releaseDate = d.release_date as { coming_soon?: boolean; date?: string } | undefined;
   return {
     steam_appid: d.steam_appid,
@@ -63,6 +64,7 @@ export function summarize(d: AppData): AppData {
     price_overview: d.price_overview,
     release_date: releaseDate,
     genres: descriptions(d.genres),
+    tags,
     categories: descriptions(d.categories),
     platforms: d.platforms,
     metacritic: d.metacritic,
@@ -97,7 +99,7 @@ export function register(server: McpServer): void {
     {
       title: "Get App Details",
       description:
-        "Get Steam store data for an app. Returns a compact summary by default (price, release date, genres, platforms, metacritic, short description). Pass detail: \"full\" or a fields list for descriptions, requirements, screenshots, DLC, and the rest. No API key required.",
+        "Get Steam store data for an app. Returns a compact summary by default (price, release date, genres, top user tags, platforms, metacritic, short description). Pass detail: \"full\" or a fields list for descriptions, requirements, screenshots, DLC, and the rest. No API key required.",
       inputSchema,
       annotations: READ_ONLY,
     },
@@ -109,10 +111,12 @@ export function register(server: McpServer): void {
           l,
         });
 
-        const data = (await steamFetch(url)) as Record<
-          string,
-          { success: boolean; data?: AppData }
-        >;
+        // The summary also carries the top user tags, fetched alongside (#118).
+        const summary = !fields?.length && detail !== "full";
+        const [data, tags] = await Promise.all([
+          steamFetch(url) as Promise<Record<string, { success: boolean; data?: AppData }>>,
+          summary ? topTagsOrNone([appid], cc) : undefined,
+        ]);
 
         const entry = data[String(appid)];
         if (!entry || !entry.success || !entry.data) {
@@ -130,7 +134,7 @@ export function register(server: McpServer): void {
         } else if (detail === "full") {
           out = entry.data;
         } else {
-          out = summarize(entry.data);
+          out = summarize(entry.data, tags?.get(appid));
         }
         if (!include_html) {
           out = cleanHtml(out) as AppData;
