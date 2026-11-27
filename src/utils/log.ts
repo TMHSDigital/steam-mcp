@@ -2,13 +2,14 @@
 // optionally to the client via MCP logging notifications. Never pass secrets:
 // use describeUrl() for anything that may carry a key.
 
+import { envFlag } from "./env.js";
+
 type Sink = (line: string) => void;
 
 let mcpSink: Sink | undefined;
 
 export function debugEnabled(): boolean {
-  const v = process.env.STEAM_MCP_DEBUG?.trim().toLowerCase();
-  return v === "1" || v === "true" || v === "yes";
+  return envFlag("STEAM_MCP_DEBUG");
 }
 
 /** Also forward debug lines to the MCP client (server.sendLoggingMessage). */

@@ -1,5 +1,6 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 
+import { envFlag } from "../utils/env.js";
 import { register as registerGetAppDetails } from "./getAppDetails.js";
 import { register as registerSearchApps } from "./searchApps.js";
 import { register as registerGetPlayerCount } from "./getPlayerCount.js";
@@ -117,7 +118,7 @@ export function selectToolsets(env: NodeJS.ProcessEnv = process.env): ToolsetSel
   let enabled = requested.includes("all")
     ? [...TOOLSET_NAMES]
     : TOOLSET_NAMES.filter((n) => requested.includes(n));
-  const readOnly = ["1", "true", "yes"].includes(env.STEAM_MCP_READ_ONLY?.trim().toLowerCase() ?? "");
+  const readOnly = envFlag("STEAM_MCP_READ_ONLY", env);
   if (readOnly) {
     enabled = enabled.filter((n) => n !== "mutations");
   }
