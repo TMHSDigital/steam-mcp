@@ -61,7 +61,8 @@ describe("store-specs.json", () => {
     for (const s of Object.values(SLOT_SPECS)) {
       for (const n of [s.width, s.height]) if (n >= 170 && ![256, 1080, 1920].includes(n)) distinctive.add(n);
     }
-    const pattern = new RegExp(`\\b(${[...distinctive].join("|")})\\b`);
+    // Not \b: digits and "x" are both word characters, so \b misses "184x184" (#128).
+    const pattern = new RegExp(`(?<!\\d)(${[...distinctive].join("|")})(?!\\d)`);
     // The code that handles store art: asset validation, the asset tools, the
     // Partner uploader, and the resources that publish the specs.
     const artCode = sourceFiles(srcDir).filter((f) =>

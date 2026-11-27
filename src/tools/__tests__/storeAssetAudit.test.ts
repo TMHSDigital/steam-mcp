@@ -1,11 +1,22 @@
-import { mkdtempSync, writeFileSync } from "node:fs";
+import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, afterAll } from "vitest";
 import { encodePng } from "../../storeAssets/png.js";
 import { registeredTools, schemaOf } from "./harness.js";
 import { auditStoreAssetDir, inferSlot } from "../../storeAssets/audit.js";
 import { describeDeckToken } from "../getDeckCompatibility.js";
+
+// Temp dirs made by these tests, removed afterwards (#128).
+const tempDirs: string[] = [];
+function tempDir(prefix: string): string {
+  const dir = mkdtempSync(join(tmpdir(), prefix));
+  tempDirs.push(dir);
+  return dir;
+}
+afterAll(() => {
+  for (const dir of tempDirs) rmSync(dir, { recursive: true, force: true });
+});
 
 function png(dir: string, name: string, w: number, h: number, alpha = false): string {
   const path = join(dir, name);
@@ -14,7 +25,7 @@ function png(dir: string, name: string, w: number, h: number, alpha = false): st
 }
 
 describe("inferSlot", () => {
-  const dir = mkdtempSync(join(tmpdir(), "steam-audit-"));
+  const dir = tempDir("steam-audit-");
 
   it.each([
     ["library_hero.png", "libraryHero"],
@@ -58,7 +69,7 @@ describe("inferSlot", () => {
 
 describe("auditStoreAssetDir", () => {
   it("reports missing slots, too few screenshots, and unrecognized files", () => {
-    const dir = mkdtempSync(join(tmpdir(), "steam-audit-"));
+    const dir = tempDir("steam-audit-");
     png(dir, "header.png", 920, 430);
     png(dir, "small.png", 462, 174);
     png(dir, "main.png", 1000, 700); // wrong size
@@ -82,7 +93,7 @@ describe("auditStoreAssetDir", () => {
   });
 
   it("passes a complete folder", () => {
-    const dir = mkdtempSync(join(tmpdir(), "steam-audit-"));
+    const dir = tempDir("steam-audit-");
     png(dir, "header.png", 920, 430);
     png(dir, "small.png", 462, 174);
     png(dir, "main.png", 1232, 706);
@@ -100,7 +111,7 @@ describe("auditStoreAssetDir", () => {
 
 describe("auditStoreAssetDir with surrounding whitespace (#109)", () => {
   it.each([" ", "\n", "\r\n"])("gives the same result when the path ends in %j", (suffix) => {
-    const dir = mkdtempSync(join(tmpdir(), "steam-audit-"));
+    const dir = tempDir("steam-audit-");
     png(dir, "header.png", 920, 430);
     png(dir, "small.png", 462, 174);
     png(dir, "main.png", 1000, 700); // wrong size
@@ -117,7 +128,7 @@ describe("auditStoreAssetDir with surrounding whitespace (#109)", () => {
 
 describe("auditStoreAssetDir explicit slots (#104)", () => {
   it("validates an explicitly assigned file as that slot, size error included", () => {
-    const dir = mkdtempSync(join(tmpdir(), "steam-audit-"));
+    const dir = tempDir("steam-audit-");
     png(dir, "key_art_final.png", 3000, 1000);
     png(dir, "header.png", 920, 430);
 
@@ -131,14 +142,14 @@ describe("auditStoreAssetDir explicit slots (#104)", () => {
   });
 
   it("lets an explicit entry override a name hint", () => {
-    const dir = mkdtempSync(join(tmpdir(), "steam-audit-"));
+    const dir = tempDir("steam-audit-");
     png(dir, "header_alt.png", 920, 430);
     const audit = auditStoreAssetDir(dir, { "header_alt.png": "libraryHeader" });
     expect(audit.files[0]).toMatchObject({ slot: "libraryHeader", inferred_by: "explicit", ok: true });
   });
 
   it("warns about names that are not in the folder without failing", () => {
-    const dir = mkdtempSync(join(tmpdir(), "steam-audit-"));
+    const dir = tempDir("steam-audit-");
     png(dir, "header.png", 920, 430);
     const audit = auditStoreAssetDir(dir, { "missing.png": "libraryHero" });
     expect(audit.warnings).toEqual([expect.stringContaining("missing.png")]);
@@ -146,7 +157,7 @@ describe("auditStoreAssetDir explicit slots (#104)", () => {
   });
 
   it("is unchanged without slots", () => {
-    const dir = mkdtempSync(join(tmpdir(), "steam-audit-"));
+    const dir = tempDir("steam-audit-");
     png(dir, "key_art_final.png", 3000, 1000);
     const audit = auditStoreAssetDir(dir);
     expect(audit.unrecognized).toEqual(["key_art_final.png"]);
@@ -169,7 +180,7 @@ describe("steam_validateStoreAssetDir slots input (#104)", () => {
   const tool = registeredTools().get("steam_validateStoreAssetDir")!;
 
   it("passes slots through to the audit", async () => {
-    const dir = mkdtempSync(join(tmpdir(), "steam-audit-"));
+    const dir = tempDir("steam-audit-");
     png(dir, "key_art_final.png", 3000, 1000);
     const body = JSON.parse((await tool.handler({ dir, slots: { "key_art_final.png": "libraryHero" } })).content[0].text);
     expect(body.files[0]).toMatchObject({ file: "key_art_final.png", slot: "libraryHero", inferred_by: "explicit" });

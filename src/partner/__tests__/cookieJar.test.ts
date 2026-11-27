@@ -1,10 +1,21 @@
-import { describe, it, expect, vi, afterEach } from "vitest";
-import { mkdtempSync, writeFileSync } from "node:fs";
+import { describe, it, expect, vi, afterEach, afterAll } from "vitest";
+import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { parseCookieJar, cookieHeaderFor, redactCookies } from "../cookieJar.js";
 import { registerUploadStoreImage } from "../tools.js";
+
+// Temp dirs made by these tests, removed afterwards (#128).
+const tempDirs: string[] = [];
+function tempDir(prefix: string): string {
+  const dir = mkdtempSync(join(tmpdir(), prefix));
+  tempDirs.push(dir);
+  return dir;
+}
+afterAll(() => {
+  for (const dir of tempDirs) rmSync(dir, { recursive: true, force: true });
+});
 
 vi.mock("../../storeAssets/validate.js", () => ({
   validateStoreAsset: () => ({ ok: true }),
@@ -76,7 +87,7 @@ describe("steam_uploadStoreImage live auth detection", () => {
   }>;
 
   function setup(): Handler {
-    const dir = mkdtempSync(join(tmpdir(), "steam-mcp-jar-"));
+    const dir = tempDir("steam-mcp-jar-");
     const jarPath = join(dir, "jar.txt");
     const imgPath = join(dir, "hero.png");
     writeFileSync(

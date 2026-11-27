@@ -1,8 +1,19 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { mkdtempSync, writeFileSync } from "node:fs";
+import { describe, it, expect, vi, beforeEach, afterEach, afterAll } from "vitest";
+import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { registeredTools, jsonFetch, schemaOf } from "./harness.js";
+
+// Temp dirs made by these tests, removed afterwards (#128).
+const tempDirs: string[] = [];
+function tempDir(prefix: string): string {
+  const dir = mkdtempSync(join(tmpdir(), prefix));
+  tempDirs.push(dir);
+  return dir;
+}
+afterAll(() => {
+  for (const dir of tempDirs) rmSync(dir, { recursive: true, force: true });
+});
 
 // One success-path and one error-path case per tool, run against the real
 // registered handlers with fetch stubbed. Fixture bodies are trimmed copies of
@@ -25,7 +36,7 @@ interface Case {
 }
 
 const pngPath = (() => {
-  const dir = mkdtempSync(join(tmpdir(), "steam-handlers-"));
+  const dir = tempDir("steam-handlers-");
   const path = join(dir, "not-an-image.png");
   writeFileSync(path, "plain text");
   return path;

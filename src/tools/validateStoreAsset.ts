@@ -2,7 +2,10 @@ import { kindOf } from "../storeAssets/safePath.js";
 import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { errorResponse } from "../utils/steam-api.js";
-import { STORE_ASSET_SLOTS } from "../storeAssets/slots.js";
+import { STORE_ASSET_SLOTS, SLOT_SPECS, type StoreAssetSlot } from "../storeAssets/slots.js";
+
+/** "WxH" from store-specs.json, the only place slot sizes live. */
+const sizeOf = (slot: StoreAssetSlot) => `${SLOT_SPECS[slot].width}x${SLOT_SPECS[slot].height}`;
 import { validateStoreAsset, validateAchievementIconDir } from "../storeAssets/validate.js";
 import { LOCAL_ONLY } from "../utils/annotations.js";
 
@@ -16,7 +19,7 @@ const inputSchema = {
   slot: z
     .enum(STORE_ASSET_SLOTS)
     .describe(
-      "Asset slot: store capsules (headerCapsule, smallCapsule, mainCapsule, verticalCapsule), library (libraryCapsule, libraryHero, libraryLogo, libraryHeader), screenshot, pageBackground, achievementIcon (256x256 JPG), communityIcon (184x184 JPG), eventCover (800x450), eventHeader (1920x622)",
+      `Asset slot: store capsules (headerCapsule, smallCapsule, mainCapsule, verticalCapsule), library (libraryCapsule, libraryHero, libraryLogo, libraryHeader), screenshot, pageBackground, achievementIcon (${sizeOf("achievementIcon")} JPG), communityIcon (${sizeOf("communityIcon")} JPG), eventCover (${sizeOf("eventCover")}), eventHeader (${sizeOf("eventHeader")})`,
     ),
 };
 

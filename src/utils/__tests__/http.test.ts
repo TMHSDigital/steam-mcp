@@ -207,3 +207,47 @@ describe("HTTP env parsing", () => {
     expect(httpTokenFromEnv({ STEAM_MCP_HTTP_TOKEN: " abc " })).toBe("abc");
   });
 });
+
+// #128: Origin and Host edge cases.
+describe("HTTP Host and Origin edge cases", () => {
+  const list = JSON.stringify({ jsonrpc: "2.0", id: 1, method: "tools/list" });
+
+  it.each(["null", "not a url"])("rejects Origin: %s", async (origin) => {
+    expect((await rawWithBody("/mcp", "POST", "localhost", list, { Origin: origin })).status).toBe(403);
+  });
+
+  it("rejects a request without a Host header", async () => {
+    const status = await new Promise<number>((resolve, reject) => {
+      const req = request(
+        {
+          host: "127.0.0.1",
+          port,
+          path: "/mcp",
+          method: "POST",
+          setHost: false,
+          headers: { "Content-Type": "application/json", Accept: "application/json, text/event-stream" },
+        },
+        (res) => {
+          res.resume();
+          resolve(res.statusCode ?? 0);
+        },
+      );
+      req.on("error", reject);
+      req.end(list);
+    });
+    // Node refuses an HTTP/1.1 request without Host (400) before the handler runs;
+    // either way it never reaches MCP.
+    expect(status).toBe(400);
+  });
+
+  it('allowedHosts ["*"] accepts any Host and Origin', async () => {
+    const open = await startHttpServer({ host: "127.0.0.1", port: 0, enabled: ["sdk"], allowedHosts: ["*"] });
+    try {
+      const openPort = (open.address() as AddressInfo).port;
+      const res = await rawWithBody("/mcp", "POST", "anything.example", list, { Origin: "https://elsewhere.example" }, openPort);
+      expect(res.status).toBe(200);
+    } finally {
+      open.close();
+    }
+  });
+});

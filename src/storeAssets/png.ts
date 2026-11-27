@@ -22,7 +22,7 @@ export class UnsupportedPixelFormatError extends Error {
   }
 }
 
-/** Upper bound on decoded pixels (64 MB of RGBA). The largest slot, libraryHero, is 3840x1240. */
+/** Upper bound on decoded pixels (64 MB of RGBA), well above the largest slot (libraryHero, see store-specs.json). */
 export const MAX_DECODE_PIXELS = 16_000_000;
 
 const PNG_SIG =Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
@@ -45,7 +45,13 @@ function parseJpeg(buf: Buffer): DecodedImage {
       continue;
     }
     const marker = buf[i + 1];
-    if (marker === 0xd8 || marker === 0xd9 || marker === 0x01) {
+    // FF fill bytes may pad before a marker (#128).
+    if (marker === 0xff) {
+      i += 1;
+      continue;
+    }
+    // SOI, EOI, TEM, and RST0-7 stand alone: no length field.
+    if (marker === 0xd8 || marker === 0xd9 || marker === 0x01 || (marker >= 0xd0 && marker <= 0xd7)) {
       i += 2;
       continue;
     }

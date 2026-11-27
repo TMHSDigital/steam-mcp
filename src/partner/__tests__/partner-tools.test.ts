@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, afterEach } from "vitest";
-import { mkdtempSync, statSync, writeFileSync } from "node:fs";
+import { describe, it, expect, vi, afterEach, afterAll } from "vitest";
+import { mkdtempSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
@@ -11,6 +11,17 @@ import {
 } from "../../partner/tools.js";
 import { SLOT_FORM_FIELD } from "../../storeAssets/slots.js";
 import { encodePng } from "../../storeAssets/png.js";
+
+// Temp dirs made by these tests, removed afterwards (#128).
+const tempDirs: string[] = [];
+function tempDir(prefix: string): string {
+  const dir = mkdtempSync(join(tmpdir(), prefix));
+  tempDirs.push(dir);
+  return dir;
+}
+afterAll(() => {
+  for (const dir of tempDirs) rmSync(dir, { recursive: true, force: true });
+});
 
 describe("partner destructive gates", () => {
   it("allows dry_run without confirm", () => {
@@ -88,7 +99,7 @@ describe("steam_uploadStoreImage and steam_partnerLogin handlers", () => {
     return handler!;
   }
 
-  const dir = mkdtempSync(join(tmpdir(), "steam-partner-"));
+  const dir = tempDir("steam-partner-");
   function png(name: string, w: number, h: number): string {
     const path = join(dir, name);
     writeFileSync(path, encodePng(w, h, new Uint8Array(w * h * 4).fill(40), false));

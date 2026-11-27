@@ -24,7 +24,11 @@ const NAME_HINTS: Array<[RegExp, StoreAssetSlot]> = [
   [/libraryhero|hero/, "libraryHero"],
   [/librarylogo|logo/, "libraryLogo"],
   [/libraryheader/, "libraryHeader"],
-  [/librarycapsule|library600|600x900/, "libraryCapsule"],
+  // Also the common "library<width>" and "<width>x<height>" file names, from the spec.
+  [
+    new RegExp(`librarycapsule|library${SLOT_SPECS.libraryCapsule.width}|${SLOT_SPECS.libraryCapsule.width}x${SLOT_SPECS.libraryCapsule.height}`),
+    "libraryCapsule",
+  ],
   [/verticalcapsule|vertical/, "verticalCapsule"],
   [/maincapsule|main/, "mainCapsule"],
   [/smallcapsule|small/, "smallCapsule"],
@@ -47,7 +51,7 @@ function slotBySize(width: number, height: number): StoreAssetSlot | undefined {
   const exact = (Object.entries(SLOT_SPECS) as Array<[StoreAssetSlot, (typeof SLOT_SPECS)[StoreAssetSlot]]>).filter(
     ([, s]) => s.kind === "exact" && s.width === width && s.height === height,
   );
-  // headerCapsule and libraryHeader share 920x430; prefer the store header.
+  // headerCapsule and libraryHeader share a size; prefer the store header.
   if (exact.length) return exact[0][0];
   const { minWidth, aspect, aspectTolerance } = SCREENSHOT_RULES;
   if (width >= minWidth && Math.abs(width / height - aspect[0] / aspect[1]) < aspectTolerance) return "screenshot";

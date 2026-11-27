@@ -273,6 +273,74 @@ describe("steam_getSalesSummary", () => {
     });
   });
 
+  describe("edge cases (#128)", () => {
+    /** Answers each date from `byDate` in one page; dates in `endless` never stop paging. */
+    function byDateFetch(byDate: Record<string, unknown[]>, extra: Record<string, unknown> = {}, endless: string[] = []) {
+      let n = 0;
+      return vi.fn(async (url: string) => {
+        const day = new URL(url).searchParams.get("date")!;
+        if (endless.includes(day)) return page([], String(++n));
+        return page(byDate[day] ?? [], "0", extra);
+      });
+    }
+
+    it("quotes CSV names with commas and quotes", async () => {
+      vi.stubGlobal(
+        "fetch",
+        byDateFetch(
+          { "2026-10-01": [{ country_code: "KR", net_units_sold: 2, net_sales_usd: "20.00" }, { country_code: "XQ", net_units_sold: 1, net_sales_usd: "5.00" }] },
+          { country_info: [{ country_code: "KR", country_name: "Korea, Republic of" }, { country_code: "XQ", country_name: 'The "Q" Islands' }] },
+        ),
+      );
+      const csv = (await sales({ start_date: "2026-10-01", format: "csv" })).content[0].text;
+      expect(csv).toContain('"Korea, Republic of"');
+      expect(csv).toContain('"The ""Q"" Islands"');
+    });
+
+    it("a day with no rows gives an empty CSV", async () => {
+      vi.stubGlobal("fetch", byDateFetch({}));
+      const result = await sales({ start_date: "2026-10-01", format: "csv" });
+      expect(result.isError).toBeUndefined();
+      expect(result.content[0].text).toBe("");
+    });
+
+    it("compares against a negative previous period with a positive delta", async () => {
+      vi.stubGlobal(
+        "fetch",
+        byDateFetch({
+          "2026-10-01": [{ country_code: "US", net_units_sold: -1, net_sales_usd: "-10.00" }],
+          "2026-10-02": [{ country_code: "US", net_units_sold: 1, net_sales_usd: "5.00" }],
+        }),
+      );
+      const body = JSON.parse((await sales({ start_date: "2026-10-02", compare_previous: true })).content[0].text);
+      expect(body.totals).toMatchObject({ net_sales_usd: 5, previous_net_sales_usd: -10, delta_net_sales_usd: 15, delta_pct: 150 });
+    });
+
+    it("lists a previous-window date that hit the page cap in truncated_dates", async () => {
+      vi.stubGlobal("fetch", byDateFetch({}, {}, ["2026-10-01"]));
+      const body = JSON.parse((await sales({ start_date: "2026-10-02", compare_previous: true })).content[0].text);
+      expect(body.truncated_dates).toEqual(["2026-10-01"]);
+    });
+
+    it("appid filters both windows, and group_by app takes the app name", async () => {
+      const rows = (n: number) => [
+        { appid: 620, net_units_sold: n, net_sales_usd: `${n * 10}.00` },
+        { appid: 999, net_units_sold: 100, net_sales_usd: "1000.00" },
+      ];
+      vi.stubGlobal(
+        "fetch",
+        byDateFetch({ "2026-10-01": rows(1), "2026-10-02": rows(3) }, { app_info: [{ appid: 620, app_name: "Portal 2" }] }),
+      );
+      const body = JSON.parse(
+        (await sales({ start_date: "2026-10-02", appid: 620, group_by: "app", compare_previous: true })).content[0].text,
+      );
+      expect(body.groups).toEqual([
+        expect.objectContaining({ app: "620", name: "Portal 2", net_units_sold: 3, previous_net_units_sold: 1 }),
+      ]);
+      expect(body.totals).toMatchObject({ net_sales_usd: 30, previous_net_sales_usd: 10 });
+    });
+  });
+
   it("refuses ranges over 31 days and reversed ranges", async () => {
     vi.stubGlobal("fetch", vi.fn());
     expect((await sales({ start_date: "2026-01-01", end_date: "2026-03-01" })).isError).toBe(true);
