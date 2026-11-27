@@ -23,7 +23,10 @@ jobs:
           registry-url: https://registry.npmjs.org
           cache: npm
 
-      - run: npm ci
+      # This job holds id-token: write, so no dependency lifecycle script may
+      # run here (#130). esbuild's binary comes from its optional platform
+      # package, so tests do not need its install script.
+      - run: npm ci --ignore-scripts
       - run: npm run build
       - run: npm test
       # Trusted publishing: npm exchanges this job's OIDC token (id-token:
