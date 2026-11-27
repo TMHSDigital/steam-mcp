@@ -259,16 +259,16 @@ The server also exposes an MCP resource, `steam://server-info`, listing the enab
 
 ### Prompts
 
-Ready-made workflows that most clients show as slash commands. Each one tells the agent which tools to chain and what to report.
+Ready-made workflows that most clients show as slash commands. Each one tells the agent which tools to chain and what to report. A prompt is offered only when the toolsets it needs are loaded (in HTTP mode, `launch-readiness` also needs `STEAM_MCP_HTTP_ALLOW_ASSETS=1`).
 
-| Prompt | Arguments | What you get |
-|--------|-----------|--------------|
-| `competitor-snapshot` | `appids` (comma-separated) | Side-by-side price, reviews, live players, genres, and recent news |
-| `achievement-health` | `appid` | Achievements that look unobtainable (<0.1%), trivial (>90%), or badly described |
-| `review-digest` | `appid`, optional `language` | Positive and negative review themes with counts and quotes |
-| `regional-price-audit` | `appid` | Regional prices in USD, with outliers flagged |
-| `workshop-health` | `appid` | Trending vs top-rated Workshop items, stale top items, common tags |
-| `launch-readiness` | `dir`, optional `appid` | PASS/FAIL checklist from your local art folder plus the live store page, prices, and Deck status |
+| Prompt | Arguments | Needs toolsets | What you get |
+|--------|-----------|----------------|--------------|
+| `competitor-snapshot` | `appids` (comma-separated) | store | Side-by-side price, reviews, live players, genres, and recent news |
+| `achievement-health` | `appid` | store, publisher | Achievements that look unobtainable (<0.1%), trivial (>90%), or badly described |
+| `review-digest` | `appid`, optional `language`, `since` | store | Positive and negative review themes with counts and quotes |
+| `regional-price-audit` | `appid` | store | Regional prices in USD, with outliers flagged |
+| `workshop-health` | `appid` | community | Trending vs top-rated Workshop items, stale top items, common tags |
+| `launch-readiness` | `dir`, optional `appid` | assets, store | PASS/FAIL checklist from your local art folder plus the live store page, prices, and Deck status |
 
 ### Resources
 

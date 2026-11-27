@@ -4,18 +4,28 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { registerPrompts } from "../../prompts.js";
 import { registerResources } from "../../resources.js";
 import { registeredTools, jsonFetch } from "./harness.js";
+import { toolNamesFor, TOOLSET_NAMES, DEFAULT_TOOLSETS, type ToolsetName } from "../index.js";
 
 type PromptCb = (args: Record<string, string>) => { messages: Array<{ content: { text: string } }> };
 type ResourceCb = (uri: URL, vars?: Record<string, string>) => Promise<{ contents: Array<{ text: string }> }> | { contents: Array<{ text: string }> };
 
-const prompts = new Map<string, { argsSchema: z.ZodRawShape; cb: PromptCb }>();
 const resources = new Map<string, ResourceCb>();
 
-registerPrompts({
-  registerPrompt(name: string, config: { argsSchema: z.ZodRawShape }, cb: PromptCb) {
-    prompts.set(name, { argsSchema: config.argsSchema, cb });
-  },
-} as unknown as McpServer);
+/** The prompts registered for a server with these tools. */
+function promptsFor(available: ReadonlySet<string>) {
+  const out = new Map<string, { argsSchema: z.ZodRawShape; cb: PromptCb }>();
+  registerPrompts(
+    {
+      registerPrompt(name: string, config: { argsSchema: z.ZodRawShape }, cb: PromptCb) {
+        out.set(name, { argsSchema: config.argsSchema, cb });
+      },
+    } as unknown as McpServer,
+    available,
+  );
+  return out;
+}
+
+const prompts = promptsFor(toolNamesFor(TOOLSET_NAMES));
 
 registerResources({
   registerResource(_name: string, uri: string | { uriTemplate: { toString(): string } }, _meta: unknown, cb: ResourceCb) {
@@ -49,6 +59,44 @@ describe("prompts", () => {
     for (const tool of mentioned) {
       expect(toolNames.has(tool), tool).toBe(true);
     }
+  });
+
+  // #125: a prompt is offered only when every tool it calls is loaded.
+  const sampleArgs: Record<string, Record<string, string>> = {
+    "competitor-snapshot": { appids: "413150,1145360" },
+    "achievement-health": { appid: "440" },
+    "review-digest": { appid: "440", since: "2026-11-20" },
+    "regional-price-audit": { appid: "440" },
+    "workshop-health": { appid: "4000" },
+    "launch-readiness": { dir: "./art", appid: "620" },
+  };
+
+  it.each<[string, ToolsetName[]]>([
+    ["all", TOOLSET_NAMES],
+    ["default", DEFAULT_TOOLSETS],
+    ["store", ["store"]],
+    ["HTTP default (no opt-ins)", ["store", "community", "publisher", "sdk"]],
+    ["community", ["community"]],
+    ["publisher", ["publisher"]],
+    ["assets", ["assets"]],
+  ])("with toolsets %s, registered prompts only mention registered tools", (_label, selection) => {
+    const available = toolNamesFor(selection);
+    for (const [name, prompt] of promptsFor(available)) {
+      const text = prompt.cb(sampleArgs[name]).messages[0].content.text;
+      for (const tool of text.match(/steam_\w+/g) ?? []) {
+        expect(available.has(tool), `${name} mentions ${tool}`).toBe(true);
+      }
+    }
+  });
+
+  it("hides prompts whose toolsets are off", () => {
+    expect([...promptsFor(toolNamesFor(["store"])).keys()].sort()).toEqual([
+      "competitor-snapshot",
+      "regional-price-audit",
+      "review-digest",
+    ]);
+    expect(promptsFor(new Set()).size).toBe(0);
+    expect(Object.keys(sampleArgs).sort()).toEqual([...prompts.keys()].sort());
   });
 
   it("rejects non-numeric appids", () => {

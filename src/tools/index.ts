@@ -125,6 +125,16 @@ export function selectToolsets(env: NodeJS.ProcessEnv = process.env): ToolsetSel
   return { enabled, unknown };
 }
 
+/** The tool names the given toolsets register, without registering them anywhere. */
+export function toolNamesFor(toolsets: readonly ToolsetName[]): Set<string> {
+  const names = new Set<string>();
+  const capture = { registerTool: (name: string) => names.add(name) } as unknown as McpServer;
+  for (const name of toolsets) {
+    for (const register of TOOLSETS[name]) register(capture);
+  }
+  return names;
+}
+
 /** Registers the tools in `toolsets` and returns how many were registered. */
 export function registerToolsets(server: McpServer, toolsets: readonly ToolsetName[]): number {
   let count = 0;

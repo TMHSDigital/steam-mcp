@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { TOOLSETS, DEFAULT_TOOLSETS, type ToolsetName } from "../src/tools/index.js";
+import { TOOLSETS, DEFAULT_TOOLSETS, TOOLSET_NAMES, toolNamesFor, type ToolsetName } from "../src/tools/index.js";
 import { registerPrompts } from "../src/prompts.js";
 import { registerResources } from "../src/resources.js";
 
@@ -121,7 +121,8 @@ function collectPrompts(): Entry[] {
     registerPrompt(name: string, config: { title: string; description: string }) {
       out.push({ name, title: config.title, description: config.description });
     },
-  } as unknown as McpServer);
+    // The site lists every prompt, so pretend every toolset is loaded.
+  } as unknown as McpServer, toolNamesFor(TOOLSET_NAMES));
   return out;
 }
 

@@ -1,6 +1,6 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 
-import { registerToolsets, TOOLSET_NAMES, type ToolsetName } from "./tools/index.js";
+import { registerToolsets, toolNamesFor, TOOLSET_NAMES, type ToolsetName } from "./tools/index.js";
 import { VERSION } from "./version.js";
 import { registerPrompts } from "./prompts.js";
 import { registerResources } from "./resources.js";
@@ -21,7 +21,7 @@ export function createServer(enabled: readonly ToolsetName[], transport: "stdio"
   );
 
   const toolCount = registerToolsets(server, enabled);
-  registerPrompts(server);
+  registerPrompts(server, toolNamesFor(enabled));
   registerResources(server);
 
   server.registerResource(

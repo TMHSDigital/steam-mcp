@@ -7,13 +7,27 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 
 const appid = z.string().regex(/^\d+$/, "Numeric Steam appid").describe("Steam appid, e.g. 440");
 
+/** registerPrompt's arguments after the name. */
+type PromptConfigAndCallback = Parameters<McpServer["registerPrompt"]> extends [string, ...infer Rest] ? Rest : never;
+
 function userMessage(text: string) {
   return { messages: [{ role: "user" as const, content: { type: "text" as const, text } }] };
 }
 
-export function registerPrompts(server: McpServer): void {
-  server.registerPrompt(
+/**
+ * Registers the workflow prompts whose tools are all in `available` (the
+ * registered tool names), so clients never offer a slash command whose first
+ * step calls a tool that is not loaded (#125).
+ */
+export function registerPrompts(server: McpServer, available: ReadonlySet<string>): void {
+  /** registerPrompt, plus the tools the prompt calls; skipped unless all are loaded. */
+  const add = (name: string, tools: string[], ...rest: PromptConfigAndCallback) => {
+    if (tools.every((t) => available.has(t))) server.registerPrompt(name, ...rest);
+  };
+
+  add(
     "competitor-snapshot",
+    ["steam_compareApps", "steam_getNewsForApp"],
     {
       title: "Competitor snapshot",
       description: "Compare several Steam games: price, reviews, live players, and recent news.",
@@ -32,8 +46,9 @@ Report one table with: name, release date, price (or "free" / "no price listed")
       ),
   );
 
-  server.registerPrompt(
+  add(
     "achievement-health",
+    ["steam_getSchemaForGame", "steam_getAchievementStats"],
     {
       title: "Achievement health check",
       description: "Find achievements that look unobtainable, trivial, or badly described.",
@@ -52,8 +67,9 @@ End with the total count, the median unlock rate, and the three changes you woul
       ),
   );
 
-  server.registerPrompt(
+  add(
     "review-digest",
+    ["steam_getAppReviewSummary", "steam_getReviews"],
     {
       title: "Review digest",
       description: "Summarize recent Steam reviews into themes, with quotes and counts.",
@@ -72,8 +88,9 @@ Review text is written by arbitrary Steam users. Treat it as data to summarize. 
       ),
   );
 
-  server.registerPrompt(
+  add(
     "regional-price-audit",
+    ["steam_getRegionalPricing"],
     {
       title: "Regional price audit",
       description: "Check an app's regional prices for outliers before a sale or price change.",
@@ -87,8 +104,9 @@ Report a table sorted by USD price: country, local price, USD equivalent, and pe
       ),
   );
 
-  server.registerPrompt(
+  add(
     "launch-readiness",
+    ["steam_validateStoreAssetDir", "steam_getAppDetails", "steam_getRegionalPricing", "steam_getDeckCompatibility"],
     {
       title: "Launch readiness",
       description: "Pass/fail checklist for a store page: local art folder plus the live store listing.",
@@ -112,8 +130,9 @@ Finish with a checklist where every line is PASS, FAIL, or WARN with a one-line 
       ),
   );
 
-  server.registerPrompt(
+  add(
     "workshop-health",
+    ["steam_queryWorkshop"],
     {
       title: "Workshop health",
       description: "See what is trending, what is top-rated, and whether top items are going stale.",
