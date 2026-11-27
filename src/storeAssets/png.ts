@@ -94,7 +94,8 @@ function parsePng(buf: Buffer, decodePixels: boolean): DecodedImage {
       colorType = data[9];
       interlace = data[12];
     } else if (type === "IDAT") {
-      idat.push(Buffer.from(data));
+      // Only a pixel decode needs the image data (#133).
+      if (decodePixels) idat.push(Buffer.from(data));
     } else if (type === "tRNS") {
       hasTrns = true;
     } else if (type === "IEND") {

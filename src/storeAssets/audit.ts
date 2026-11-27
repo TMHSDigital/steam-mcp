@@ -3,7 +3,7 @@ import { join } from "node:path";
 import { readLocalFile, requireKind } from "./safePath.js";
 import { REQUIRED_SLOTS, SCREENSHOT_RULES, SLOT_SPECS, type StoreAssetSlot } from "./slots.js";
 import { parseImage } from "./png.js";
-import { validateStoreAsset, MAX_FILE_BYTES, type StoreAssetValidation } from "./validate.js";
+import { validateStoreAsset, validateStoreAssetBuffer, MAX_FILE_BYTES, type StoreAssetValidation } from "./validate.js";
 
 // Store-page launch readiness: validate every image in a folder and report
 // which required store and library slots are still missing.
@@ -56,15 +56,27 @@ function slotBySize(width: number, height: number): StoreAssetSlot | undefined {
   return undefined;
 }
 
-export function inferSlot(path: string, name: string): { slot?: StoreAssetSlot; by: "name" | "size" | "none" } {
+/** The slot a file name points to, or undefined. Reads nothing. */
+function slotFromName(name: string): StoreAssetSlot | undefined {
   const base = name.toLowerCase().replace(IMAGE, "");
-  if (SCREENSHOT_HINT.test(base)) return { slot: "screenshot", by: "name" };
+  if (SCREENSHOT_HINT.test(base)) return "screenshot";
   const key = base.replace(/[\s_.-]+/g, "");
-  for (const [pattern, slot] of NAME_HINTS) {
-    if (pattern.test(key)) return { slot, by: "name" };
-  }
+  return NAME_HINTS.find(([pattern]) => pattern.test(key))?.[1];
+}
+
+/**
+ * The slot for a file, from its name or else its pixel size. Pass `buf` when
+ * the file is already read, so it is not read again (#133).
+ */
+export function inferSlot(
+  path: string,
+  name: string,
+  buf?: Buffer,
+): { slot?: StoreAssetSlot; by: "name" | "size" | "none" } {
+  const named = slotFromName(name);
+  if (named) return { slot: named, by: "name" };
   try {
-    const { width, height } = parseImage(readLocalFile(path, MAX_FILE_BYTES), false);
+    const { width, height } = parseImage(buf ?? readLocalFile(path, MAX_FILE_BYTES), false);
     const slot = slotBySize(width, height);
     return slot ? { slot, by: "size" } : { by: "none" };
   } catch {
@@ -103,12 +115,25 @@ export function auditStoreAssetDir(
   for (const name of names) {
     const path = join(root, name);
     const explicit = Object.hasOwn(slots, name) ? slots[name] : undefined;
-    const { slot, by } = explicit ? { slot: explicit, by: "explicit" as const } : inferSlot(path, name);
+    const named = explicit ? undefined : slotFromName(name);
+    if (explicit || named) {
+      files.push({ ...validateStoreAsset(path, (explicit ?? named)!), file: name, inferred_by: explicit ? "explicit" : "name" });
+      continue;
+    }
+    // Inferring from size needs the bytes: read once, then validate the same buffer.
+    let buf: Buffer;
+    try {
+      buf = readLocalFile(path, MAX_FILE_BYTES);
+    } catch {
+      unrecognized.push(name);
+      continue;
+    }
+    const { slot, by } = inferSlot(path, name, buf);
     if (!slot || by === "none") {
       unrecognized.push(name);
       continue;
     }
-    files.push({ ...validateStoreAsset(path, slot), file: name, inferred_by: by });
+    files.push({ ...validateStoreAssetBuffer(buf, path, slot), file: name, inferred_by: by });
   }
 
   const validSlots = new Set(files.filter((f) => f.ok).map((f) => f.slot));

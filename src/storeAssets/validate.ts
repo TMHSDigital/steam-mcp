@@ -24,35 +24,37 @@ export type StoreAssetValidation = {
   warnings: ValidationIssue[];
 };
 
-export function validateStoreAsset(path: string, slot: StoreAssetSlot): StoreAssetValidation {
-  const spec = SLOT_SPECS[slot];
-  const errors: ValidationIssue[] = [];
-  const warnings: ValidationIssue[] = [];
-  const result: StoreAssetValidation = {
-    ok: false,
-    slot,
-    path,
-    errors,
-    warnings,
-  };
+function emptyResult(path: string, slot: StoreAssetSlot): StoreAssetValidation {
+  return { ok: false, slot, path, errors: [], warnings: [] };
+}
 
+export function validateStoreAsset(path: string, slot: StoreAssetSlot): StoreAssetValidation {
   let buf: Buffer;
   try {
     buf = readLocalFile(path, MAX_FILE_BYTES);
   } catch (error) {
+    const result = emptyResult(path, slot);
     if (error instanceof FileTooLargeError) {
-      errors.push({
+      result.errors.push({
         code: "FILE_SIZE",
         message: `File is ${error.bytes} bytes; store images over ${MAX_FILE_BYTES} bytes are rejected without reading.`,
       });
       return result;
     }
-    errors.push({
+    result.errors.push({
       code: "IO",
       message: `Cannot read file: ${error instanceof LocalPathError ? error.message : "unexpected error"}`,
     });
     return result;
   }
+  return validateStoreAssetBuffer(buf, path, slot);
+}
+
+/** validateStoreAsset for bytes already read, so a folder audit reads each file once (#133). */
+export function validateStoreAssetBuffer(buf: Buffer, path: string, slot: StoreAssetSlot): StoreAssetValidation {
+  const spec = SLOT_SPECS[slot];
+  const result = emptyResult(path, slot);
+  const { errors, warnings } = result;
 
   // Read the header first. Pixels are decoded only for a libraryHero whose
   // declared size is already correct, so a bogus IHDR never drives allocation.
