@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
 import { steamFetch } from "../steam-api.js";
-import { describeUrl, debug, setMcpLogSink } from "../log.js";
+import { debugEnabled, describeUrl, debug, setMcpLogSink } from "../log.js";
 
 afterEach(() => {
   vi.unstubAllGlobals();
@@ -60,6 +60,13 @@ describe("debug logging", () => {
     expect(log).toContain("rate limited, retrying");
     expect(log).toContain("(attempt 2)");
     expect(sink).toHaveBeenCalled();
+  });
+
+  it("accepts trimmed and normalized debug values", () => {
+    vi.stubEnv("STEAM_MCP_DEBUG", "1\r");
+    expect(debugEnabled()).toBe(true);
+    vi.stubEnv("STEAM_MCP_DEBUG", "TRUE");
+    expect(debugEnabled()).toBe(true);
   });
 
   it("describeUrl drops every query value", () => {

@@ -7,6 +7,7 @@ import { selectToolsets, TOOLSET_NAMES } from "./tools/index.js";
 import { createServer } from "./server.js";
 import { startHttpServer } from "./http.js";
 import { VERSION } from "./version.js";
+import { envFlag } from "./utils/env.js";
 import { debug, debugEnabled, setMcpLogSink } from "./utils/log.js";
 
 const { values: args } = parseArgs({
@@ -43,9 +44,8 @@ async function main(): Promise<void> {
     // A network-reachable server must not mutate live Steam state unless the
     // operator opts in separately from the toolset list.
     // The same applies to the assets toolset, which reads local files.
-    const optIn = (name: string) => ["1", "true", "yes"].includes(process.env[name]?.toLowerCase() ?? "");
-    const allowWrites = optIn("STEAM_MCP_HTTP_ALLOW_WRITES");
-    const allowAssets = optIn("STEAM_MCP_HTTP_ALLOW_ASSETS");
+    const allowWrites = envFlag("STEAM_MCP_HTTP_ALLOW_WRITES");
+    const allowAssets = envFlag("STEAM_MCP_HTTP_ALLOW_ASSETS");
     const enabled = selection.enabled.filter(
       (n) => (n !== "mutations" || allowWrites) && (n !== "assets" || allowAssets),
     );

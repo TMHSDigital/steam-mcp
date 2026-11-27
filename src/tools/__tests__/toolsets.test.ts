@@ -44,6 +44,15 @@ describe("toolsets", () => {
     ).not.toContain("mutations");
   });
 
+  it("trims and normalizes READ_ONLY values", () => {
+    expect(
+      selectToolsets({ STEAM_MCP_TOOLSETS: "all", STEAM_MCP_READ_ONLY: " 1 " }).enabled,
+    ).not.toContain("mutations");
+    expect(
+      selectToolsets({ STEAM_MCP_TOOLSETS: "all", STEAM_MCP_READ_ONLY: "TRUE" }).enabled,
+    ).not.toContain("mutations");
+  });
+
   it("every toolset is non-empty", () => {
     for (const [name, registrars] of Object.entries(TOOLSETS)) {
       expect(registrars.length, name).toBeGreaterThan(0);

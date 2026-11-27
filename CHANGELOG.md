@@ -24,6 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Boolean environment flags now trim surrounding whitespace and carriage returns and accept lowercase or uppercase `true` and `yes`. This fixes HTTP opt-in switches such as `STEAM_MCP_HTTP_ALLOW_ASSETS` when the variable is set with a trailing space or CRLF from an env file. Partner-admin remains a strict `STEAM_PARTNER_ADMIN=1` gate. (#124)
 - `steam_validateStoreAssetDir` and the achievement icon folder check no longer report every file as missing when the folder path ends in a space or newline. File names are now joined onto the trimmed, resolved folder path that was listed. (#109)
 - `steam_getSalesSummary` CSV keeps the `name` column when the top group has no name but a lower one does. Columns now come from every row, not just the first, and the unnamed rows get an empty cell. (#106)
 - `steam_getSalesSummary` no longer passes off a partial day as complete: when a date hits the 50-page cap, the output names it in `truncated_dates` with a `warning` (CSV mode adds the warning as a second content block). (#97)

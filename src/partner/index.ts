@@ -10,6 +10,7 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { VERSION } from "../version.js";
+import { envFlag } from "../utils/env.js";
 import {
   registerPartnerLogin,
   registerUploadStoreImage,
@@ -21,7 +22,9 @@ function fail(message: string): never {
   process.exit(1);
 }
 
-if (process.env.STEAM_PARTNER_ADMIN !== "1") {
+// Keep partner-admin as an explicit 1 gate. Ordinary boolean switches accept
+// true and yes, but this operator-only process should not.
+if (!envFlag("STEAM_PARTNER_ADMIN", process.env, { strict: true })) {
   fail("Set STEAM_PARTNER_ADMIN=1 to start the Partner-admin process.");
 }
 
