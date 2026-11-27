@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { steamFetch } from "../steam-api.js";
-import { cacheKey, cacheTtlSeconds, acquireToken } from "../cache.js";
+import { cacheKey, cacheTtlSeconds, acquireToken, bucketFor } from "../cache.js";
 
 beforeEach(() => {
   vi.stubEnv("STEAM_MCP_CACHE_TTL", "");
@@ -91,11 +91,29 @@ describe("acquireToken", () => {
   it("lets a burst through, then queues", async () => {
     vi.useFakeTimers();
     for (let i = 0; i < 20; i++) {
-      expect(await acquireToken("store.steampowered.com")).toBe(0);
+      expect(await acquireToken("store.steampowered.com/api/appdetails")).toBe(0);
     }
-    const pending = acquireToken("store.steampowered.com");
+    const pending = acquireToken("store.steampowered.com/api/appdetails");
     await vi.advanceTimersByTimeAsync(2000);
     expect(await pending).toBeGreaterThan(0);
+  });
+
+  it("picks the bucket by host and path (#112)", () => {
+    expect(bucketFor("store.steampowered.com/api/appdetails")?.name).toBe("store appdetails");
+    for (const path of ["/api/storesearch", "/api/featuredcategories", "/saleaction/ajaxgetdeckappcompatibilityreport"]) {
+      expect(bucketFor("store.steampowered.com" + path)?.name, path).toBe("store");
+    }
+    expect(bucketFor("api.steampowered.com/ISteamUserStats/GetNumberOfCurrentPlayers/v1/")?.name).toBe("api.steampowered.com");
+    expect(bucketFor("partner.steam-api.com/IPartnerFinancialsService/GetDetailedSales/v001/")?.name).toBe("partner.steam-api.com");
+    expect(bucketFor("store.steampowered.com.evil.example/api/appdetails")).toBeUndefined();
+  });
+
+  it("draining appdetails does not delay other store endpoints (#112)", async () => {
+    vi.useFakeTimers();
+    for (let i = 0; i < 20; i++) await acquireToken("store.steampowered.com/api/appdetails");
+    for (const path of ["/saleaction/ajaxgetdeckappcompatibilityreport", "/api/storesearch", "/api/featuredcategories"]) {
+      expect(await acquireToken("store.steampowered.com" + path), path).toBe(0);
+    }
   });
 
   it("does not limit unknown hosts", async () => {

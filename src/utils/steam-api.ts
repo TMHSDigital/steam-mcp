@@ -7,7 +7,7 @@ import {
   TimeoutError,
 } from "./errors.js";
 import { debug, describeUrl } from "./log.js";
-import { acquireToken, cacheGet, cacheKey, cacheSet, cacheTtlSeconds } from "./cache.js";
+import { acquireToken, bucketFor, cacheGet, cacheKey, cacheSet, cacheTtlSeconds } from "./cache.js";
 
 const DEFAULT_TIMEOUT_MS = 15_000;
 
@@ -218,12 +218,12 @@ export async function steamFetch(
 async function fetchWithRetry(url: string, options: RequestInit): Promise<unknown> {
   const method = options.method ?? "GET";
   const target = describeUrl(url);
-  const host = new URL(url).host;
+  const { host, pathname } = new URL(url);
 
   for (let attempt = 0; ; attempt++) {
-    const queued = await acquireToken(host);
+    const queued = await acquireToken(host + pathname);
     if (queued > 0) {
-      debug(`${method} ${target} queued ${queued}ms by the ${host} rate limiter`);
+      debug(`${method} ${target} queued ${queued}ms by the ${bucketFor(host + pathname)?.name} rate limiter`);
     }
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), DEFAULT_TIMEOUT_MS);

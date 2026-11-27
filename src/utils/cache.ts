@@ -1,4 +1,4 @@
-// Short-TTL response cache and per-host token buckets for steamFetch.
+// Short-TTL response cache and token buckets for steamFetch.
 // Agents repeat the same lookups within a conversation, and the Store
 // appdetails endpoint allows only about 200 requests per 5 minutes per IP.
 
@@ -80,12 +80,25 @@ export function clearCache(): void {
 
 // --- Rate limiting -------------------------------------------------------
 
-/** [burst, refill per second] per host. Requests queue instead of failing. */
-const BUCKETS: Record<string, [number, number]> = {
-  "store.steampowered.com": [20, 200 / 300],
-  "api.steampowered.com": [20, 5],
-  "partner.steam-api.com": [10, 5],
-};
+/**
+ * [pattern on host+path, bucket name, burst, refill per second]. First match
+ * wins; no match is not limited. Requests queue instead of failing.
+ * Only appdetails has the documented ~200 per 5 minutes per IP limit, so the
+ * rest of the store host gets its own, looser bucket and relies on the 429
+ * retry (#112).
+ */
+const BUCKETS: Array<[RegExp, string, number, number]> = [
+  [/^store\.steampowered\.com\/api\/appdetails/, "store appdetails", 20, 200 / 300],
+  [/^store\.steampowered\.com(\/|$)/, "store", 20, 2],
+  [/^api\.steampowered\.com(\/|$)/, "api.steampowered.com", 20, 5],
+  [/^partner\.steam-api\.com(\/|$)/, "partner.steam-api.com", 10, 5],
+];
+
+/** The bucket a request to `target` (host + path) draws from, or undefined. */
+export function bucketFor(target: string): { name: string; burst: number; perSecond: number } | undefined {
+  const rule = BUCKETS.find(([pattern]) => pattern.test(target));
+  return rule ? { name: rule[1], burst: rule[2], perSecond: rule[3] } : undefined;
+}
 
 const state = new Map<string, { tokens: number; updated: number }>();
 
@@ -93,18 +106,21 @@ function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-/** Wait for a token for `host`. Returns the milliseconds waited. Unknown hosts pass through. */
-export async function acquireToken(host: string): Promise<number> {
-  const config = BUCKETS[host];
-  if (!config) return 0;
-  const [burst, perSecond] = config;
+/**
+ * Wait for a token from the bucket for `target` (host + path, no scheme).
+ * Returns the milliseconds waited. Unmatched targets pass through.
+ */
+export async function acquireToken(target: string): Promise<number> {
+  const bucket = bucketFor(target);
+  if (!bucket) return 0;
+  const { name, burst, perSecond } = bucket;
   let waited = 0;
   for (;;) {
     const now = Date.now();
-    const s = state.get(host) ?? { tokens: burst, updated: now };
+    const s = state.get(name) ?? { tokens: burst, updated: now };
     s.tokens = Math.min(burst, s.tokens + ((now - s.updated) / 1000) * perSecond);
     s.updated = now;
-    state.set(host, s);
+    state.set(name, s);
     if (s.tokens >= 1) {
       s.tokens -= 1;
       return waited;
