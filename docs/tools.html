@@ -224,13 +224,15 @@
       <article class="tool k-none" id="steam_getNewsForApp">
         <h3>Get News For App</h3>
         <p class="meta"><code>steam_getNewsForApp</code><span class="badge"><span class="sw k-none" aria-hidden="true"></span>No key</span><span class="badge">Read only</span></p>
-        <p class="desc">Get recent news articles for a Steam app. Returns titles, URLs, contents, dates, and authors. No API key required.</p>
+        <p class="desc">Get recent news articles for a Steam app, optionally only from given feeds (such as the developer's announcements) or before a date. Returns titles, URLs, contents, dates, authors, and feed names. No API key required.</p>
         <table class="params">
           <caption>Inputs</caption>
           <tbody>
           <tr><th scope="row"><code>appid</code> <span class="req">required</span></th><td>Steam application ID to get news for</td></tr>
           <tr><th scope="row"><code>count</code></th><td>Number of news items to return (1-20, default 5)</td></tr>
           <tr><th scope="row"><code>maxlength</code></th><td>Maximum length of each news item's contents in characters (default 500, 0 for full text)</td></tr>
+          <tr><th scope="row"><code>feeds</code></th><td>Only these feeds. Use [&quot;steam_community_announcements&quot;] for the developer's own posts (patch notes, events); each item's feedname shows its source.</td></tr>
+          <tr><th scope="row"><code>before</code></th><td>Only items published before this ISO date or datetime (UTC), to look further back than the latest items</td></tr>
           </tbody>
         </table>
       </article>

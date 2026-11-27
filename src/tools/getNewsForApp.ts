@@ -22,6 +22,18 @@ const inputSchema = {
     .min(0)
     .optional()
     .describe("Maximum length of each news item's contents in characters (default 500, 0 for full text)"),
+  feeds: z
+    .array(z.string().regex(/^[A-Za-z0-9_]+$/, "Feed names are letters, digits, and underscores"))
+    .min(1)
+    .optional()
+    .describe(
+      "Only these feeds. Use [\"steam_community_announcements\"] for the developer's own posts (patch notes, events); each item's feedname shows its source.",
+    ),
+  before: z
+    .string()
+    .refine((v) => !Number.isNaN(Date.parse(v)), "Use an ISO date such as 2026-06-01")
+    .optional()
+    .describe("Only items published before this ISO date or datetime (UTC), to look further back than the latest items"),
 };
 
 export function register(server: McpServer): void {
@@ -30,11 +42,11 @@ export function register(server: McpServer): void {
     {
       title: "Get News For App",
       description:
-        "Get recent news articles for a Steam app. Returns titles, URLs, contents, dates, and authors. No API key required.",
+        "Get recent news articles for a Steam app, optionally only from given feeds (such as the developer's announcements) or before a date. Returns titles, URLs, contents, dates, authors, and feed names. No API key required.",
       inputSchema,
       annotations: READ_ONLY,
     },
-    async ({ appid, count, maxlength }) => {
+    async ({ appid, count, maxlength, feeds, before }) => {
       try {
         const url = steamApiUrl(
           "/ISteamNews/GetNewsForApp/v2/",
@@ -42,6 +54,8 @@ export function register(server: McpServer): void {
             appid,
             count: count ?? 5,
             maxlength: maxlength ?? 500,
+            feeds: feeds?.join(","),
+            enddate: before ? Math.floor(Date.parse(before) / 1000) : undefined,
           },
         );
 

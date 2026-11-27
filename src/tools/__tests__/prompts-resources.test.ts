@@ -27,6 +27,9 @@ function promptsFor(available: ReadonlySet<string>) {
 
 const prompts = promptsFor(toolNamesFor(TOOLSET_NAMES));
 
+/** Tool names are camelCase (steam_getReviews), unlike feed names such as steam_community_announcements. */
+const TOOL_NAME = /\bsteam_[a-z]+[A-Z]\w*/g;
+
 registerResources({
   registerResource(_name: string, uri: string | { uriTemplate: { toString(): string } }, _meta: unknown, cb: ResourceCb) {
     resources.set(typeof uri === "string" ? uri : uri.uriTemplate.toString(), cb);
@@ -54,7 +57,7 @@ describe("prompts", () => {
     const prompt = prompts.get(name)!;
     expect(z.object(prompt.argsSchema).safeParse(args).success).toBe(true);
     const text = prompt.cb(args).messages[0].content.text;
-    const mentioned = text.match(/steam_\w+/g) ?? [];
+    const mentioned = text.match(TOOL_NAME) ?? [];
     expect(mentioned.length).toBeGreaterThan(0);
     for (const tool of mentioned) {
       expect(toolNames.has(tool), tool).toBe(true);
@@ -83,7 +86,7 @@ describe("prompts", () => {
     const available = toolNamesFor(selection);
     for (const [name, prompt] of promptsFor(available)) {
       const text = prompt.cb(sampleArgs[name]).messages[0].content.text;
-      for (const tool of text.match(/steam_\w+/g) ?? []) {
+      for (const tool of text.match(TOOL_NAME) ?? []) {
         expect(available.has(tool), `${name} mentions ${tool}`).toBe(true);
       }
     }

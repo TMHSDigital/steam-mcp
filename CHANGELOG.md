@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `steam_getNewsForApp` takes `feeds` (for example `["steam_community_announcements"]` for the developer's own posts) and `before` (an ISO date, sent as `enddate`) to look further back. The `competitor-snapshot` prompt reads only announcements. (#134)
 - `steam_compareApps` and the compact `steam_getAppDetails` summary return each app's top 10 user tags (`tags`), from the keyless `IStoreBrowseService/GetItems` and `IStoreService/GetTagList` (cached for a day). A failed tag lookup leaves `tags` out instead of failing the call. The nightly contract check covers both endpoints. (#118)
 - `steam_getReviews` takes `since` (ISO date or unix seconds) and `max_pages` (default 5, max 20) to read every review since a date in one bounded call: it pages the newest reviews until an older one, and adds `window: { since, oldest_seen, pages, complete }` so a cut-off is visible. The `review-digest` prompt takes an optional `since`. (#117)
 - Releases are listed in the official MCP Registry as `io.github.TMHSDigital/steam-mcp`. The publish workflow publishes `server.json` after each npm release; the first listing comes with the next release. (#46)
