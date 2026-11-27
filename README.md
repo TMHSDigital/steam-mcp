@@ -320,7 +320,7 @@ These require `STEAM_API_KEY` to be set:
 | `steam_getPlayerSummary` | Player profile: name, avatar, online status |
 | `steam_getOwnedGames` | Game library size and total playtime, plus the top 50 games by playtime (`sort`, `limit`, `appids`) |
 | `steam_queryWorkshop` | Search/browse Workshop items with filters. Titles and short descriptions are untrusted user-authored text. |
-| `steam_getLeaderboardEntries` | Leaderboard scores and rankings, by numeric `leaderboardid` or `leaderboard_name` |
+| `steam_getLeaderboardEntries` | Leaderboard scores and rankings, by numeric `leaderboardid` or `leaderboard_name`. Needs a publisher key. |
 | `steam_resolveVanityURL` | Convert vanity URL to 64-bit Steam ID |
 | `steam_getSchemaForGame` | Achievement/stat schema with display names and descriptions; up to 100 achievements, icons on request (`limit`, `include_icons`, `include_stats`) |
 | `steam_getPlayerAchievements` | Per-player achievement unlock status and timestamps |
@@ -400,11 +400,15 @@ npm run build       # Compile TypeScript to dist/
 npm start           # Run the compiled server
 npm test            # Run all tests (vitest)
 npm run test:watch  # Test watch mode
+npm run test:coverage  # Tests with the coverage floor CI enforces
+npm run typecheck   # Type-check src including tests
+npm run contract    # Live calls to every no-auth tool (after npm run build)
+npm run site        # Regenerate the GitHub Pages HTML in docs/ (commit it)
 ```
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for how to add new tools and submit PRs.
 
-Partner-admin tools (`steam_partnerLogin`, `steam_uploadStoreImage`, `steam_uploadTrailer`) are not registered by this package's default bin and are not in the npm tarball. They live in `src/partner/` for local use only (`STEAM_PARTNER_ADMIN=1` plus a cookie-jar path or Chromium profile dir outside the repo). `steam_uploadTrailer` is plan-only: live trailer upload is not implemented and returns `[NOT_IMPLEMENTED]`. There is no Publish tool.
+Partner-admin tools (`steam_partnerLogin`, `steam_uploadStoreImage`, `steam_uploadTrailer`) are not registered by this package's default bin and are not in the npm tarball. They live in `src/partner/` for local use only (`STEAM_PARTNER_ADMIN=1` plus `STEAM_PARTNER_COOKIES`, a cookie-jar path outside the repo). `steam_uploadTrailer` is plan-only: live trailer upload is not implemented and returns `[NOT_IMPLEMENTED]`. There is no Publish tool.
 
 **Use the Partner-admin tools at your own risk.** Valve publishes no API for store image upload. These tools post to the Steamworks partner site's own form fields with your logged-in session. Valve can change those fields without notice, and automated use of the partner site may not be allowed by the Steamworks terms you agreed to. Read those terms before you use them, check every upload on the partner site, and use the manual upload in Steamworks if you are unsure. `steam_validateStoreAsset` and `steam_validateStoreAssetDir` check your images without any of this.
 

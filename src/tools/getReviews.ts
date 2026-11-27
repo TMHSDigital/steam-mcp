@@ -132,8 +132,9 @@ export function register(server: McpServer): void {
     },
     async ({ appid, filter, language, review_type, purchase_type, num_per_page, cursor, since, max_pages }) => {
       try {
-        const languages = language
-          ?.split(",")
+        // Send the documented default instead of leaving it to Steam (#129).
+        const languages = (language ?? "english")
+          .split(",")
           .map((l) => l.trim())
           .filter(Boolean);
 

@@ -89,6 +89,13 @@ describe("steam_getReviews", () => {
     });
   });
 
+  it("sends english when no language is given, as documented (#129)", async () => {
+    const fetchMock = okFetch(fixture);
+    vi.stubGlobal("fetch", fetchMock);
+    await handler({ appid: 440 });
+    expect(requestedInput(fetchMock).languages).toEqual(["english"]);
+  });
+
   it("keeps the response shape and untrusted-content label", async () => {
     vi.stubGlobal("fetch", okFetch(fixture));
 

@@ -36,7 +36,7 @@ const date = z
 
 const inputSchema = {
   start_date: date,
-  end_date: date.optional().describe("Last date, inclusive (default: start_date). At most 31 days after start_date."),
+  end_date: date.optional().describe("Last date, inclusive (default: start_date). The range, both ends included, is at most 31 days."),
   appid: z.number().int().positive().optional().describe("Only count sales of this app (matches appid or primary_appid)"),
   group_by: z
     .enum(["country", "day", "app", "package", "platform"])

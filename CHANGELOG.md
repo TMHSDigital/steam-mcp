@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- `steam_getReviews` sends `languages: ["english"]` when no `language` is given, matching its documented default, instead of leaving the choice to Steam. Docs drift fixed: the `steam_getSalesSummary` `end_date` limit wording, the README leaderboard row (publisher key) and Development commands, the CONTRIBUTING tool template and key phrases, and the CLAUDE.md architecture map. (#129)
 - `steam_validateStoreAssetDir` reads each file once: a file whose slot is inferred from its pixel size is validated from the same bytes instead of being read again, and header-only PNG parsing no longer copies the image data. (#133)
 - MCP prompts are offered only when every tool they call is loaded, so `STEAM_MCP_TOOLSETS=store` or HTTP mode without the assets opt-in no longer advertises a slash command whose first step fails. The README prompts table lists the toolsets each one needs. (#125)
 - Store and library image sizes live in one data file, `src/storeAssets/store-specs.json`, with the date they were last checked against Valve's Steamworks pages and the pages checked. The validator, the folder audit, and the Partner uploader read it; a test fails if a size is copied into code. `SIZE_HALF` now flags any fixed-size slot exported at exactly half size, not only the library hero. (#25)

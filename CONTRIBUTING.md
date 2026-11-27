@@ -47,6 +47,12 @@ const inputSchema = {
   appid: z.number().int().positive().describe("Steam application ID"),
 };
 
+// Optional: declare the result shape and return it as structuredContent too.
+const outputSchema = {
+  appid: z.number().int(),
+  player_count: z.number().int().describe("Concurrent players right now"),
+};
+
 export function register(server: McpServer): void {
   server.registerTool(
     "steam_getPlayerCount",
@@ -55,15 +61,22 @@ export function register(server: McpServer): void {
       description:
         "Get the current number of concurrent players for a Steam app. No API key required.",
       inputSchema,
+      outputSchema,
       annotations: READ_ONLY,
     },
     async ({ appid }) => {
       try {
         const url = steamApiUrl("/ISteamUserStats/GetNumberOfCurrentPlayers/v1/", { appid });
-        const data = await steamFetch(url);
+        const data = (await steamFetch(url)) as { response?: { player_count?: number; result?: number } };
+        if (data.response?.result !== 1 || data.response.player_count === undefined) {
+          return errorResponse(new Error(`No player count data available for app ${appid}.`));
+        }
 
+        // Compact JSON (no indentation): results go into the agent's context.
+        const structured = { appid, player_count: data.response.player_count };
         return {
-          content: [{ type: "text", text: JSON.stringify(data, null, 2) }],
+          content: [{ type: "text", text: JSON.stringify(structured) }],
+          structuredContent: structured,
         };
       } catch (error) {
         return errorResponse(error);
@@ -85,7 +98,7 @@ export const TOOLSETS = {
 ```
 
    Add the tool to the README toolset table too.
-4. If the tool needs an API key, use `requireApiKey()` from `steam-api.ts` and mention it in the tool description.
+4. Every tool description, keyless ones included, must say which key it needs with one of these exact phrases, which the site build reads (`site/build.ts` `keyNeed`): "No API key required", "Requires STEAM_API_KEY", "publisher key", or "Financial API Group key". Tools in the `sdk` and `assets` toolsets are local and exempt. If the tool needs a key, use `requireApiKey()` from `steam-api.ts`.
 
 5. If the tool performs a live mutation (inventory grant, achievement/stat write, leaderboard write, Workshop metadata update, Partner-admin upload, or similar), spread `confirmSchema` from `src/utils/confirm.ts`, call `refuseIfUnconfirmed` before any network I/O, run the dry-run branch before `requireApiKey()`, and prepend a capability warning to the tool description. Do not add a new write tool that can send unconfirmed. Read-only Steam POSTs (for example `GetPublishedFileDetails`) are not mutations and must not use this gate.
 

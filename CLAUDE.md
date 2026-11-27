@@ -12,7 +12,7 @@ The plugin's skills reference these MCP tools to fetch live data from Steam - pl
 
 ```
 src/
-  index.ts              Entry point - parses --transport/--port/--host, selects toolsets, starts stdio or HTTP
+  index.ts              Entry point - parses --transport/--port/--host/--version, selects toolsets, starts stdio or HTTP
   server.ts             createServer(): McpServer with toolsets, prompts, resources, server-info
   http.ts               Stateless Streamable HTTP server (POST /mcp, GET /healthz, bearer token, Host/Origin allowlist)
   prompts.ts            MCP prompts (workflow slash commands)
@@ -30,14 +30,27 @@ src/
     slots.ts             Loads store-specs.json; unofficial Partner form field names
     png.ts               PNG/JPEG header parse plus PNG pixel decode
     heroHeuristics.ts    Library-hero ribbon / seam / wordmark checks
-    validate.ts          Pure validateStoreAsset(path, slot)
+    validate.ts          Pure validateStoreAsset(path, slot) and validateStoreAssetBuffer
+    audit.ts             Folder audit: slot inference by name or size, missing required slots
     safePath.ts          Every local file read goes through here: refuses network/device paths and links, caps size
   utils/
     steam-api.ts         Shared fetch wrapper, URL builders, API key helper, error formatting
+    cache.ts             Response cache TTLs and the per-endpoint rate-limit token buckets
     confirm.ts           Shared dry_run/confirm gate for any live mutation
     annotations.ts       MCP tool annotation presets (READ_ONLY, LOCAL_ONLY, LIVE_WRITE)
+    appdetails.ts        Store appdetails envelope and price classification, parsed once
     reviews.ts           IUserReviewsService/GetAppReviews client and enum mapping
+    tags.ts              Top user tags (IStoreBrowseService/GetItems + IStoreService/GetTagList)
+    leaderboards.ts      Leaderboard name/ID resolution
+    achievementWrite.ts  Shared confirm-gated achievement set/clear
+    pool.ts              mapPool: bounded concurrency, results in input order
+    steamid.ts           Steam ID / vanity URL resolution
+    env.ts               envFlag: boolean env parsing
+    log.ts               STEAM_MCP_DEBUG logging (never logs query values)
+    text.ts              HTML stripping and truncation
+    string-literal.ts    Escaping for generated SDK code
     errors.ts            Custom error classes (rate limit, missing key, unavailable)
+  partner/               Opt-in Partner-admin process (STEAM_PARTNER_ADMIN=1), not in the default bin or tarball
 site/
   build.ts               Renders the GitHub Pages HTML from the real registrations
   write.ts               `npm run site` writes it to docs/
@@ -48,7 +61,7 @@ docs/                    GitHub Pages site (generated HTML + hand-written styles
 
 - Each tool is a self-contained module that exports `register(server: McpServer)` and calls `server.registerTool()` (never the deprecated `server.tool()`). Add new tools to a toolset in `src/tools/index.ts` (live mutations go in `mutations`, which is off by default).
 - Every tool declares `annotations` from `src/utils/annotations.ts`. Confirm-gated writes use `LIVE_WRITE` or `LIVE_WRITE_IDEMPOTENT`; `annotations.test.ts` enforces this.
-- `steam-api.ts` provides `steamFetch()` which handles timeouts (15s via AbortController with `TimeoutError`), HTTP error detection (429 rate limits with up to 2 retries and exponential backoff, 5xx unavailable), and JSON parsing.
+- `steam-api.ts` provides `steamFetch()` which handles timeouts (15s via AbortController with `TimeoutError`), HTTP error detection (429 rate limits and transient 502/503/504 with up to 2 retries and exponential backoff, other 5xx unavailable), and JSON parsing. Public GETs are cached briefly (`cache.ts` TTLs, identical concurrent GETs share one request), and every request first takes a token from its endpoint's rate-limit bucket.
 - `errorResponse()` formats errors as MCP-compatible `{ isError: true }` responses.
 - Tools that need an API key call `requireApiKey()` which reads `STEAM_API_KEY` from env and throws `MissingApiKeyError` with setup instructions if missing.
 - Any tool that performs a live mutation must use the shared confirm gate in `src/utils/confirm.ts`: spread `confirmSchema`, call `refuseIfUnconfirmed` before any network I/O, run the dry-run branch before `requireApiKey()`, and never send unless `dry_run: false` and `confirm: true`.
