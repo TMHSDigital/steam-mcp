@@ -4,7 +4,15 @@ import { describe, it, expect, beforeAll, afterAll, vi } from "vitest";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
-import { startHttpServer, httpStartupProblem, isLoopbackHost } from "../../http.js";
+import {
+  startHttpServer,
+  httpStartupProblem,
+  isLoopbackHost,
+  httpToolsets,
+  allowedHostsFromEnv,
+  httpTokenFromEnv,
+} from "../../http.js";
+import { TOOLSET_NAMES } from "../../tools/index.js";
 
 let server: Server;
 let port: number;
@@ -156,5 +164,46 @@ describe("HTTP client authentication", () => {
   it("knows which hosts are loopback", () => {
     for (const h of ["127.0.0.1", "127.1.2.3", "localhost", "::1", "[::1]"]) expect(isLoopbackHost(h), h).toBe(true);
     for (const h of ["0.0.0.0", "::", "192.168.1.5", "example.com", "127.0.0.1.evil.com"]) expect(isLoopbackHost(h), h).toBe(false);
+  });
+});
+
+// #113: the HTTP-mode safety defaults, as pure functions index.ts calls.
+describe("httpToolsets", () => {
+  const all = [...TOOLSET_NAMES];
+
+  it("drops mutations and assets by default, with a notice for each", () => {
+    const { enabled, notices } = httpToolsets(all, {});
+    expect(enabled).not.toContain("mutations");
+    expect(enabled).not.toContain("assets");
+    expect(enabled).toContain("store");
+    expect(notices).toHaveLength(2);
+  });
+
+  it.each([
+    ["STEAM_MCP_HTTP_ALLOW_WRITES", "mutations"],
+    ["STEAM_MCP_HTTP_ALLOW_ASSETS", "assets"],
+  ] as const)("%s opts %s in", (name, toolset) => {
+    for (const value of ["1", "true", "YES"]) {
+      expect(httpToolsets(all, { [name]: value }).enabled, value).toContain(toolset);
+    }
+    for (const value of ["0", "on", ""]) {
+      expect(httpToolsets(all, { [name]: value }).enabled, value).not.toContain(toolset);
+    }
+  });
+
+  it("says nothing about toolsets that were not selected", () => {
+    expect(httpToolsets(["store"], {}).notices).toEqual([]);
+  });
+});
+
+describe("HTTP env parsing", () => {
+  it("normalizes STEAM_MCP_ALLOWED_HOSTS", () => {
+    expect(allowedHostsFromEnv({ STEAM_MCP_ALLOWED_HOSTS: " Example.COM ,,localhost" })).toEqual(["example.com", "localhost"]);
+    expect(allowedHostsFromEnv({})).toEqual(["localhost", "127.0.0.1", "[::1]"]);
+  });
+
+  it("treats a token of only spaces as unset", () => {
+    expect(httpTokenFromEnv({ STEAM_MCP_HTTP_TOKEN: "   " })).toBeUndefined();
+    expect(httpTokenFromEnv({ STEAM_MCP_HTTP_TOKEN: " abc " })).toBe("abc");
   });
 });

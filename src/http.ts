@@ -4,6 +4,7 @@ import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/
 
 import { createServer } from "./server.js";
 import type { ToolsetName } from "./tools/index.js";
+import { envFlag } from "./utils/env.js";
 import { debug } from "./utils/log.js";
 
 // Stateless Streamable HTTP: every POST /mcp gets a fresh server and
@@ -25,6 +26,41 @@ export interface HttpOptions {
 }
 
 export const MIN_TOKEN_LENGTH = 16;
+
+/**
+ * The toolsets HTTP mode loads. A network-reachable server must not mutate
+ * live Steam state, or read local files, unless the operator opts in
+ * separately from the toolset list. `notices` explains each one dropped.
+ */
+export function httpToolsets(
+  selected: readonly ToolsetName[],
+  env: NodeJS.ProcessEnv = process.env,
+): { enabled: ToolsetName[]; notices: string[] } {
+  const allowWrites = envFlag("STEAM_MCP_HTTP_ALLOW_WRITES", env);
+  const allowAssets = envFlag("STEAM_MCP_HTTP_ALLOW_ASSETS", env);
+  const notices: string[] = [];
+  if (!allowWrites && selected.includes("mutations")) {
+    notices.push("HTTP mode: mutations toolset disabled. Set STEAM_MCP_HTTP_ALLOW_WRITES=1 to enable it.");
+  }
+  if (!allowAssets && selected.includes("assets")) {
+    notices.push("HTTP mode: assets toolset (local file reads) disabled. Set STEAM_MCP_HTTP_ALLOW_ASSETS=1 to enable it.");
+  }
+  const enabled = selected.filter((n) => (n !== "mutations" || allowWrites) && (n !== "assets" || allowAssets));
+  return { enabled, notices };
+}
+
+/** STEAM_MCP_ALLOWED_HOSTS as a trimmed, lowercased list (default: loopback names). */
+export function allowedHostsFromEnv(env: NodeJS.ProcessEnv = process.env): string[] {
+  return (env.STEAM_MCP_ALLOWED_HOSTS ?? "localhost,127.0.0.1,[::1]")
+    .split(",")
+    .map((h) => h.trim().toLowerCase())
+    .filter(Boolean);
+}
+
+/** STEAM_MCP_HTTP_TOKEN, trimmed; blank counts as unset. */
+export function httpTokenFromEnv(env: NodeJS.ProcessEnv = process.env): string | undefined {
+  return env.STEAM_MCP_HTTP_TOKEN?.trim() || undefined;
+}
 
 /** True for addresses only this machine can reach. */
 export function isLoopbackHost(host: string): boolean {
