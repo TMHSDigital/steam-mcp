@@ -98,6 +98,23 @@ describe("auditStoreAssetDir", () => {
   });
 });
 
+describe("auditStoreAssetDir with surrounding whitespace (#109)", () => {
+  it.each([" ", "\n", "\r\n"])("gives the same result when the path ends in %j", (suffix) => {
+    const dir = mkdtempSync(join(tmpdir(), "steam-audit-"));
+    png(dir, "header.png", 920, 430);
+    png(dir, "small.png", 462, 174);
+    png(dir, "main.png", 1000, 700); // wrong size
+
+    const clean = auditStoreAssetDir(dir);
+    const padded = auditStoreAssetDir(dir + suffix);
+    // `directory` echoes the input as given; everything else must match.
+    expect({ ...padded, directory: dir }).toEqual(clean);
+    expect(padded.checked).toBe(3);
+    expect(padded.files.find((f) => f.file === "header.png")?.ok).toBe(true);
+    expect(padded.files.find((f) => f.file === "main.png")?.errors[0].code).toBe("SIZE");
+  });
+});
+
 describe("auditStoreAssetDir explicit slots (#104)", () => {
   it("validates an explicitly assigned file as that slot, size error included", () => {
     const dir = mkdtempSync(join(tmpdir(), "steam-audit-"));

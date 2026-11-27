@@ -464,6 +464,17 @@ describe("validateAchievementIconDir", () => {
     expect(result.files.filter((f) => !f.ok).map((f) => f.path)).toEqual([join(dir, "BIG_achieved.jpg")]);
   });
 
+  it.each([" ", "\n"])("finds the icons when the directory path ends in %j (#109)", (suffix) => {
+    const dir = tmpDir();
+    writeFileSync(join(dir, "WIN_achieved.jpg"), jpegBytes(256, 256));
+    writeFileSync(join(dir, "WIN_unachieved.jpg"), jpegBytes(256, 256));
+
+    const result = validateAchievementIconDir(dir + suffix);
+    expect({ ...result, directory: dir }).toEqual(validateAchievementIconDir(dir));
+    expect(result.ok).toBe(true);
+    expect(result.files.map((f) => f.path)).toEqual([join(dir, "WIN_achieved.jpg"), join(dir, "WIN_unachieved.jpg")]);
+  });
+
   it("an empty directory is not ok", () => {
     expect(validateAchievementIconDir(tmpDir()).ok).toBe(false);
   });

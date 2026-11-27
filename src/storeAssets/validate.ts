@@ -204,8 +204,9 @@ const PAIR_SUFFIX = /^(.*)_(achieved|unachieved)$/i;
  * and check that each `<name>_achieved` has a matching `<name>_unachieved`.
  */
 export function validateAchievementIconDir(directory: string): AchievementIconSetValidation {
-  const names = readdirSync(requireKind(directory, "directory").path).filter((n) => ICON_EXT.test(n)).sort();
-  const files = names.map((n) => validateStoreAsset(join(directory, n), "achievementIcon"));
+  const root = requireKind(directory, "directory").path; // trimmed and resolved (#109)
+  const names = readdirSync(root).filter((n) => ICON_EXT.test(n)).sort();
+  const files = names.map((n) => validateStoreAsset(join(root, n), "achievementIcon"));
 
   const pairs = new Map<string, Set<string>>();
   const unpaired: string[] = [];
