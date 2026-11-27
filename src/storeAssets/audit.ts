@@ -91,14 +91,17 @@ export function auditStoreAssetDir(
   directory: string,
   slots: Partial<Record<string, StoreAssetSlot>> = {},
 ): StoreAssetDirAudit {
-  const names = readdirSync(requireKind(directory, "directory").path).filter((n) => IMAGE.test(n)).sort();
+  // Join file names onto the resolved path: localPath() trims the input, so a
+  // trailing space or newline in `directory` would break every file read (#109).
+  const root = requireKind(directory, "directory").path;
+  const names = readdirSync(root).filter((n) => IMAGE.test(n)).sort();
   const files: StoreAssetDirAudit["files"] = [];
   const unrecognized: string[] = [];
   const present = new Set(names);
   const unknown = Object.keys(slots).filter((n) => !present.has(n));
 
   for (const name of names) {
-    const path = join(directory, name);
+    const path = join(root, name);
     const explicit = Object.hasOwn(slots, name) ? slots[name] : undefined;
     const { slot, by } = explicit ? { slot: explicit, by: "explicit" as const } : inferSlot(path, name);
     if (!slot || by === "none") {
