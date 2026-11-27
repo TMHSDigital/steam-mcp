@@ -82,7 +82,9 @@ export function register(server: McpServer): void {
           };
         };
 
-        if (!data.response || !data.response.games) {
+        // A private profile returns `response: {}`. A public empty library
+        // returns `game_count: 0` with no `games` key (#122).
+        if (!data.response?.games && typeof data.response?.game_count !== "number") {
           return errorResponse(
             new Error(
               `Could not retrieve games for Steam ID ${steamid}. The profile may be private or the ID may be invalid.`,
@@ -90,7 +92,7 @@ export function register(server: McpServer): void {
           );
         }
 
-        const all = data.response.games;
+        const all = data.response.games ?? [];
         const wanted = appids?.length ? new Set(appids) : undefined;
         const games = (wanted ? all.filter((g) => wanted.has(g.appid)) : [...all])
           .sort(SORTERS[sort ?? "playtime"])

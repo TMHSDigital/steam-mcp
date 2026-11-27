@@ -87,6 +87,23 @@ describe("steam_getOwnedGames output size", () => {
     );
     expect(data.games.map((g: { appid: number }) => g.appid)).toEqual([8, 15]);
   });
+
+  it("a public profile with no games is an empty library, not private (#122)", async () => {
+    process.env.STEAM_API_KEY = "TESTKEY_NOT_REAL";
+    // Steam leaves out the empty `games` array.
+    const { data } = await run("steam_getOwnedGames", { steamid: "76561197960435530" }, { response: { game_count: 0 } });
+    expect(data.game_count).toBe(0);
+    expect(data.games).toEqual([]);
+    expect(data.returned).toBe(0);
+  });
+
+  it("an empty response is still reported as private or invalid (#122)", async () => {
+    process.env.STEAM_API_KEY = "TESTKEY_NOT_REAL";
+    vi.stubGlobal("fetch", vi.fn(jsonFetch({ response: {} })));
+    const result = await tools.get("steam_getOwnedGames")!.handler({ steamid: "76561197960435530" });
+    expect(result.isError).toBe(true);
+    expect(result.content[0].text).toContain("may be private");
+  });
 });
 
 describe("steam_getSchemaForGame output size", () => {
