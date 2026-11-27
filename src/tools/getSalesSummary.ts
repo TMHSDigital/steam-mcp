@@ -2,6 +2,7 @@ import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { steamPartnerUrl, steamFetch, financialErrorResponse, errorResponse } from "../utils/steam-api.js";
 import { READ_ONLY } from "../utils/annotations.js";
+import { mapPool } from "../utils/pool.js";
 
 // IPartnerFinancialsService needs a Financial API Group key, which is separate
 // from a normal publisher key: https://partner.steamgames.com/doc/webapi/IPartnerFinancialsService
@@ -18,6 +19,8 @@ export function financialKey(): string {
 
 const MAX_DAYS = 31;
 const MAX_PAGES_PER_DATE = 50;
+/** Dates fetched at once. Each date's max_id pages stay serial; this fits the partner host's bucket (burst 10, 5/s). */
+const MAX_CONCURRENT_DATES = 4;
 
 function isRealDate(d: string): boolean {
   const parsed = new Date(`${d}T00:00:00Z`);
@@ -174,23 +177,25 @@ interface WindowTotals {
 }
 
 /**
- * Fetch and group every sales row for `days`. `dayLabel` names the group for
- * group_by day, so a previous period can be keyed by the matching current day.
+ * Group every sales row for `days`, whose fetched sales are in `sales`.
+ * `dayLabel` names the group for group_by day, so a previous period can be
+ * keyed by the matching current day. Days are added in order, so the output
+ * does not depend on the order the fetches finished in.
  */
-async function totalWindow(
-  key: string,
+function totalWindow(
   days: string[],
+  sales: Map<string, DaySales>,
   appid: number | undefined,
   groupBy: GroupBy,
   names: Map<string, string>,
   dayLabel: (day: string) => string = (d) => d,
-): Promise<WindowTotals> {
+): WindowTotals {
   const groups = new Map<string, Group>();
   let rowsSeen = 0;
   const truncatedDates: string[] = [];
 
   for (const day of days) {
-    const page = await salesForDate(key, day);
+    const page = sales.get(day)!;
     if (page.truncated) truncatedDates.push(day);
     for (const a of page.app_info) names.set(`app:${a.appid}`, a.app_name);
     for (const p of page.package_info) names.set(`package:${p.packageid}`, p.package_name);
@@ -274,10 +279,15 @@ export function register(server: McpServer): void {
         const groupBy = group_by ?? "country";
         const names = new Map<string, string>();
 
-        const current = await totalWindow(key, days, appid, groupBy, names);
         const previousDays = days.map((d) => addDays(d, -days.length));
+        // Both windows' dates share one pool (#111).
+        const toFetch = compare_previous ? [...days, ...previousDays] : days;
+        const fetched = await mapPool(toFetch, MAX_CONCURRENT_DATES, (day) => salesForDate(key, day));
+        const sales = new Map(toFetch.map((day, i) => [day, fetched[i]]));
+
+        const current = totalWindow(days, sales, appid, groupBy, names);
         const previous = compare_previous
-          ? await totalWindow(key, previousDays, appid, groupBy, names, (d) => addDays(d, days.length))
+          ? totalWindow(previousDays, sales, appid, groupBy, names, (d) => addDays(d, days.length))
           : undefined;
         if (previous) {
           // Groups that sold only in the previous period still show, with zeros for this one.

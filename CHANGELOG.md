@@ -24,6 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- `steam_getSalesSummary` fetches up to 4 dates at a time, with the current and `compare_previous` windows in one pool, instead of one date after another. A 31-day comparison no longer takes 124+ serial calls. Each date's pages are still read in order, and the output is unchanged (pinned by snapshot tests). (#111)
 - The store rate limiter applies appdetails' strict limit (about 200 per 5 minutes) only to `/api/appdetails`. Deck reports, store search, and featured lists draw from their own, looser bucket, so a regional-pricing fan-out no longer stalls them for tens of seconds. (#112)
 - `steam_getDeckCompatibility` keeps the other reports when one app's fetch fails (timeout, 5xx, rate limit) and records `error` and `error_type` on that app, as `steam_getRegionalPricing` does. It returns an error only when every fetch failed. `steam_compareApps` reports the real cause when an app's store call fails instead of guessing "missing, delisted, or region-locked". The two tools' worker pools now share `mapPool`. (#119)
 - `steam_updateWorkshopItem` refuses, before sending, an update that changes nothing: `tags: []` (which the Web API cannot use to clear tags) or no fields at all. Previously a confirmed call sent no changes and reported `success: true`. `updated` now lists `tags` once instead of `tags[0]`, `tags[1]`, ... (#120)

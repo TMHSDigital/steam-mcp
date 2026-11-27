@@ -25,10 +25,10 @@ afterEach(() => {
 
 describe("steam_getSalesSummary", () => {
   it("pages each date until max_id stops advancing and groups by country", async () => {
-    const fetchMock = vi
-      .fn()
+    // Routed by date and highwatermark: dates may be fetched concurrently (#111).
+    const pages: Record<string, () => Response> = {
       // 2026-10-01: two pages, then max_id repeats.
-      .mockResolvedValueOnce(
+      "2026-10-01@0": () =>
         page(
           [
             { appid: 620, country_code: "US", net_units_sold: 10, gross_units_sold: 11, gross_units_returned: 1, gross_sales_usd: "110.0000", net_sales_usd: "90.5000" },
@@ -37,11 +37,15 @@ describe("steam_getSalesSummary", () => {
           "5",
           { country_info: [{ country_code: "US", country_name: "United States" }] },
         ),
-      )
-      .mockResolvedValueOnce(page([{ appid: 999, country_code: "US", net_units_sold: 100, net_sales_usd: "1000.0000" }], "7"))
-      .mockResolvedValueOnce(page([], "7"))
+      "2026-10-01@5": () => page([{ appid: 999, country_code: "US", net_units_sold: 100, net_sales_usd: "1000.0000" }], "7"),
+      "2026-10-01@7": () => page([], "7"),
       // 2026-10-02: one page.
-      .mockResolvedValueOnce(page([{ primary_appid: 620, country_code: "DE", net_units_sold: 1, net_sales_usd: "9.9999" }], "0"));
+      "2026-10-02@0": () => page([{ primary_appid: 620, country_code: "DE", net_units_sold: 1, net_sales_usd: "9.9999" }], "0"),
+    };
+    const fetchMock = vi.fn().mockImplementation(async (url: string) => {
+      const q = new URL(url).searchParams;
+      return pages[`${q.get("date")}@${q.get("highwatermark_id")}`]();
+    });
     vi.stubGlobal("fetch", fetchMock);
 
     const result = await sales({ start_date: "2026-10-01", end_date: "2026-10-02", appid: 620 });
@@ -52,7 +56,11 @@ describe("steam_getSalesSummary", () => {
     expect(first.host).toBe("partner.steam-api.com");
     expect(first.searchParams.get("key")).toBe("FINKEY_NOT_REAL");
     expect(first.searchParams.get("highwatermark_id")).toBe("0");
-    expect(new URL(fetchMock.mock.calls[1][0] as string).searchParams.get("highwatermark_id")).toBe("5");
+    const marks = fetchMock.mock.calls
+      .map((call) => new URL(call[0] as string).searchParams)
+      .filter((q) => q.get("date") === "2026-10-01")
+      .map((q) => q.get("highwatermark_id"));
+    expect(marks).toEqual(["0", "5", "7"]);
 
     expect(body.rows_counted).toBe(3); // app 999 filtered out
     expect(body.groups).toEqual([
@@ -209,6 +217,59 @@ describe("steam_getSalesSummary", () => {
       expect(body).not.toHaveProperty("previous_start_date");
       expect(body.totals).toEqual({ net_units_sold: 14, gross_sales_usd: 0, net_sales_usd: 170 });
       expect(body.groups[0]).not.toHaveProperty("delta_pct");
+    });
+  });
+
+  describe("pinned output and concurrency (#111, #116)", () => {
+    // Two-page dates, names, a returned unit, and a previous-only group, so
+    // every field of groups and totals is exercised.
+    const rows: Record<string, unknown[][]> = {
+      "2026-10-06": [[{ appid: 620, packageid: 7, platform: "windows", country_code: "US", gross_units_sold: 6, gross_units_returned: 1, net_units_sold: 5, gross_units_activated: 2, gross_sales_usd: "60.00", net_sales_usd: "50.00" }], [{ appid: 620, country_code: "FR", gross_units_sold: 1, net_units_sold: 1, gross_sales_usd: "9.00", net_sales_usd: "8.00" }]],
+      "2026-10-07": [[{ appid: 620, country_code: "US", gross_units_sold: 5, net_units_sold: 5, gross_sales_usd: "55.00", net_sales_usd: "50.00" }]],
+      "2026-10-08": [[{ appid: 620, packageid: 7, platform: "linux", country_code: "US", gross_units_sold: 13, gross_units_returned: 1, net_units_sold: 12, gross_units_activated: 3, gross_sales_usd: "160.10", net_sales_usd: "150.05" }], [{ appid: 620, country_code: "DE", gross_units_sold: 2, net_units_sold: 2, gross_sales_usd: "22.00", net_sales_usd: "20.00" }]],
+      "2026-10-09": [[{ appid: 620, country_code: "DE", gross_units_sold: 1, net_units_sold: 1, gross_sales_usd: "11.00", net_sales_usd: "10.00" }]],
+    };
+    const info = {
+      app_info: [{ appid: 620, app_name: "Portal 2" }],
+      package_info: [{ packageid: 7, package_name: "Portal 2 Package" }],
+      country_info: [{ country_code: "US", country_name: "United States" }, { country_code: "DE", country_name: "Germany" }],
+    };
+    let inFlight = 0;
+    let peak = 0;
+    const routed = () =>
+      vi.fn().mockImplementation(async (url: string) => {
+        const q = new URL(url).searchParams;
+        const day = rows[q.get("date")!] ?? [];
+        const i = Number(q.get("highwatermark_id"));
+        inFlight++;
+        peak = Math.max(peak, inFlight);
+        await new Promise((r) => setTimeout(r, 2));
+        inFlight--;
+        // Page i holds day[i]; max_id stops advancing after the last page.
+        return page(day[i] ?? [], String(Math.min(i + 1, day.length)), i === 0 ? info : {});
+      });
+
+    it.each(["country", "day", "app", "package", "platform"])("pins the full JSON grouped by %s", async (group_by) => {
+      vi.stubGlobal("fetch", routed());
+      const text = (await sales({ start_date: "2026-10-08", end_date: "2026-10-09", group_by, compare_previous: true })).content[0].text;
+      expect(text).toMatchSnapshot();
+    });
+
+    it("pins the CSV", async () => {
+      vi.stubGlobal("fetch", routed());
+      const csv = (await sales({ start_date: "2026-10-08", end_date: "2026-10-09", format: "csv", compare_previous: true })).content[0].text;
+      expect(csv).toMatchSnapshot();
+    });
+
+    it("fetches dates concurrently, at most 4 at a time", async () => {
+      inFlight = 0;
+      peak = 0;
+      const fetchMock = routed();
+      vi.stubGlobal("fetch", fetchMock);
+      await sales({ start_date: "2026-10-01", end_date: "2026-10-09", compare_previous: true });
+      expect(fetchMock).toHaveBeenCalled();
+      expect(peak).toBeGreaterThan(1);
+      expect(peak).toBeLessThanOrEqual(4);
     });
   });
 
