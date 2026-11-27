@@ -10,15 +10,18 @@ import {
 import { MissingApiKeyError } from "../utils/errors.js";
 import { READ_ONLY } from "../utils/annotations.js";
 
+// GetGlobalStatsForGame takes at most this many names per request.
+const MAX_NAMES = 50;
+
 const inputSchema = {
   appid: z.number().int().positive().describe("Steam application ID"),
   stat_names: z
     .array(z.string().min(1))
     .min(1)
-    .max(50)
+    .max(MAX_NAMES)
     .optional()
     .describe(
-      "Stat API names to total. Only stats flagged as aggregated in Steamworks work. If omitted and STEAM_API_KEY is set, all stats from the app's schema are requested.",
+      "Stat API names to total. Only stats flagged as aggregated in Steamworks work. If omitted and STEAM_API_KEY is set, the first 50 stats from the app's schema are requested, and the output says how many were left out.",
     ),
   history_days: z
     .number()
@@ -31,7 +34,8 @@ const inputSchema = {
 
 type GlobalStats = Record<string, { total?: number | string | null; history?: Array<{ date: number; total: number | string }> }>;
 
-async function schemaStatNames(appid: number): Promise<string[]> {
+/** Stat names from the app's schema: the first MAX_NAMES, plus the full count. */
+async function schemaStatNames(appid: number): Promise<{ names: string[]; total: number }> {
   let key: string;
   try {
     key = requireApiKey();
@@ -48,7 +52,7 @@ async function schemaStatNames(appid: number): Promise<string[]> {
   if (names.length === 0) {
     throw new Error(`App ${appid} has no stats in its schema.`);
   }
-  return names.slice(0, 50);
+  return { names: names.slice(0, MAX_NAMES), total: names.length };
 }
 
 export function register(server: McpServer): void {
@@ -63,7 +67,8 @@ export function register(server: McpServer): void {
     },
     async ({ appid, stat_names, history_days }) => {
       try {
-        const names = stat_names ?? (await schemaStatNames(appid));
+        const schema = stat_names ? undefined : await schemaStatNames(appid);
+        const names = stat_names ?? schema!.names;
         const now = Math.floor(Date.now() / 1000);
         const url = steamApiUrl("/ISteamUserStats/GetGlobalStatsForGame/v1/", {
           appid,
@@ -90,7 +95,18 @@ export function register(server: McpServer): void {
           content: [
             {
               type: "text",
-              text: JSON.stringify({ appid, stats: response.globalstats }),
+              text: JSON.stringify({
+                appid,
+                stats: response.globalstats,
+                // Say when the schema had more stats than one request takes (#121).
+                ...(schema && schema.total > names.length
+                  ? {
+                      schema_stat_count: schema.total,
+                      skipped: schema.total - names.length,
+                      note: `Requested the first ${names.length} of ${schema.total} schema stats. Pass stat_names (up to ${MAX_NAMES}) for the others.`,
+                    }
+                  : {}),
+              }),
             },
           ],
         };

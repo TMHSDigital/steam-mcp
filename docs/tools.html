@@ -433,7 +433,7 @@
           <caption>Inputs</caption>
           <tbody>
           <tr><th scope="row"><code>appid</code> <span class="req">required</span></th><td>Steam application ID</td></tr>
-          <tr><th scope="row"><code>stat_names</code></th><td>Stat API names to total. Only stats flagged as aggregated in Steamworks work. If omitted and STEAM_API_KEY is set, all stats from the app's schema are requested.</td></tr>
+          <tr><th scope="row"><code>stat_names</code></th><td>Stat API names to total. Only stats flagged as aggregated in Steamworks work. If omitted and STEAM_API_KEY is set, the first 50 stats from the app's schema are requested, and the output says how many were left out.</td></tr>
           <tr><th scope="row"><code>history_days</code></th><td>Also return a daily total for each of the last N days (1-60)</td></tr>
           </tbody>
         </table>

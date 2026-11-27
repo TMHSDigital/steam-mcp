@@ -24,6 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- `steam_getGlobalStatsForGame` without `stat_names` no longer passes off the first 50 schema stats as all of them: when the schema has more, the output adds `schema_stat_count`, `skipped`, and a note to pass `stat_names` for the rest, and the parameter description says so. (#121)
 - `steam_getOwnedGames` returns `game_count: 0` and an empty `games` list for a public profile with no games, instead of calling it private. A response with neither field is still reported as private or invalid. (#122)
 - A timeout that fires while Steam is still sending the response body now raises the timeout error instead of "Unexpected non-JSON response", and a success body cut off mid-read is reported as a network failure. (#123)
 - `steam_getSalesSummary` and `steam_getChangedSalesDates` now explain a 401/403 in terms of the Financial API Group key and `STEAM_FINANCIAL_API_KEY` instead of telling users to set `STEAM_API_KEY` to a publisher key, and their 400 text names the dates and highwatermark they actually take. (#110)

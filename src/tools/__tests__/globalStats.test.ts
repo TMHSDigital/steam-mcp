@@ -59,5 +59,20 @@ describe("steam_getGlobalStatsForGame without stat_names", () => {
     expect(statsUrl.searchParams.get("count")).toBe("50");
     expect(statsUrl.searchParams.get("name[49]")).toBe("stat_49");
     expect(statsUrl.searchParams.has("name[50]")).toBe(false);
+
+    // The output says the rest were left out (#121).
+    const data = JSON.parse(result.content[0].text);
+    expect(data.schema_stat_count).toBe(60);
+    expect(data.skipped).toBe(10);
+    expect(data.note).toContain("stat_names");
+  });
+
+  it("adds no skip note when the schema fits in one request", async () => {
+    vi.stubEnv("STEAM_API_KEY", "TESTKEY_NOT_REAL");
+    vi.stubGlobal("fetch", steamWith(schemaWith(3)));
+
+    const data = JSON.parse((await handler({ appid: 480 })).content[0].text);
+    expect(data).not.toHaveProperty("skipped");
+    expect(data).not.toHaveProperty("schema_stat_count");
   });
 });
